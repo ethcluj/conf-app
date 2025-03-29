@@ -10,15 +10,17 @@ services:
       - /app/node_modules
     environment:
       - REACT_APP_API_URL=/api
+      - WDS_SOCKET_PORT=0
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     volumes:
-      - ./backend:/app
       - /app/node_modules
     environment:
       - DB_USER=postgres
@@ -27,7 +29,13 @@ services:
       - DB_PASSWORD=postgres
       - DB_PORT=5432
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3001/value"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db:
     image: postgres:15
@@ -37,16 +45,23 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=value_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   nginx:
     image: nginx:1.25
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data: 
