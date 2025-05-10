@@ -20,12 +20,14 @@ services:
   ui:
     build:
       context: ./ui
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     volumes:
       - ./ui:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+    ports:
+      - "3002:3000"
     depends_on:
       backend:
         condition: service_healthy

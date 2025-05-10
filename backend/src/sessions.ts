@@ -93,7 +93,7 @@ export const allSessions: Session[] = [
     "1",
     conferenceDays[0],
     9, 0, 60, "Main Stage",
-    "Opening Keynote: The Future of Ethereum Scaling",
+    "Opening Keynote!:: The Future of Ethereum Scaling",
     [{ name: "Dr. Michael Anderson", image: "/placeholder.svg?height=40&width=40", title: "Ethereum Foundation" }],
     "For everyone", true,
     "Join us for an inspiring opening keynote that explores the future of Ethereum scaling solutions and their impact on the blockchain ecosystem.",

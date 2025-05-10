@@ -48,29 +48,37 @@ const hydrateSession = (session: any): Session => {
   };
 }
 
-// Cache for sessions to avoid repeated API calls
-let sessionsCache: Session[] | null = null;
-
-// Fetch all sessions from backend API
-const fetchAllSessions = async (): Promise<Session[]> => {
-  if (sessionsCache) return sessionsCache;
-  
+// Fetch all sessions from backend API - no caching
+export const fetchAllSessions = async (): Promise<Session[]> => {
   try {
-    // Clear the cache to force a fresh fetch
-    sessionsCache = null;
+    // In development mode, always use the direct backend URL
+    // In production mode, use the API proxy
+    // Check if window is defined (client-side) to avoid SSR issues
+    let apiUrl = '/api/sessions';
     
-    // Use the absolute URL when accessing directly on port 3000
-    // or the relative URL when going through Nginx
-    const apiUrl = window.location.hostname === 'localhost' && window.location.port === '3000' 
-      ? 'http://localhost:8080/api/sessions'
-      : '/api/sessions';
+    if (typeof window !== 'undefined') {
+      // Force direct backend URL in development for testing
+      const isDev = process.env.NODE_ENV === 'development';
+      const isLocalhost = window.location.hostname === 'localhost';
       
-    console.log('Fetching sessions from:', apiUrl);
-    const res = await fetch(apiUrl);
+      if (isDev && isLocalhost) {
+        apiUrl = 'http://localhost:3001/sessions';
+      }
+    }
+      
+    // Fetch from the API
+    const res = await fetch(apiUrl, {
+      // Ensure we don't use browser cache
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    
     if (!res.ok) throw new Error("Failed to fetch sessions");
     const data = await res.json();
-    sessionsCache = data.map(hydrateSession);
-    return sessionsCache;
+    return data.map(hydrateSession);
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return [];
@@ -81,25 +89,28 @@ const fetchAllSessions = async (): Promise<Session[]> => {
 // This will be populated after the first fetch
 export let allSessions: Session[] = [];
 
-// Initialize sessions
-// Force a refresh on page load
-window.addEventListener('load', () => {
-  console.log('Page loaded, refreshing sessions...');
-  fetchAllSessions().then(sessions => {
+// Refresh sessions on every page navigation/interaction
+const refreshSessions = async () => {
+  try {
+    const sessions = await fetchAllSessions();
     allSessions = sessions;
-    console.log('Sessions refreshed:', allSessions.length);
-  }).catch(error => {
-    console.error("Failed to initialize sessions:", error);
-  });
-});
+  } catch (error) {
+  }
+};
 
-// Initial fetch
-fetchAllSessions().then(sessions => {
-  allSessions = sessions;
-  console.log('Initial sessions loaded:', allSessions.length);
-}).catch(error => {
-  console.error("Failed to initialize sessions:", error);
-});
+// Client-side only code
+if (typeof window !== 'undefined') {
+  // Initialize sessions on page load
+  window.addEventListener('load', refreshSessions);
+
+  // Also refresh when user returns to the page
+  window.addEventListener('focus', refreshSessions);
+
+  // Initial fetch on client-side
+  refreshSessions();
+} else {
+  // Server-side initialization - will be populated on client
+}
 
 // Session data is now fetched from the backend API
 // See fetchAllSessions() function above

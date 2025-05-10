@@ -3,23 +3,48 @@
 import { ArrowLeft, Clock, MapPin, Star } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { getSessionById, formatSessionDateTime, type Session } from "@/lib/data"
 import { ScrollHideHeader } from "@/components/scroll-hide-header"
 
-export default function SessionDetails({ params }: { params: { id: string } }) {
+export default function SessionDetails() {
+  // Use the useParams hook to get the id parameter safely
+  const params = useParams()
+  const sessionId = params.id as string
+  
   const [session, setSession] = useState<Session | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
 
   useEffect(() => {
-    const foundSession = getSessionById(params.id)
-    if (foundSession) {
-      setSession(foundSession)
-      setIsFavorite(foundSession.isFavorite)
+    const fetchSession = async () => {
+      try {
+        setIsLoading(true)
+        const foundSession = await getSessionById(sessionId)
+        if (foundSession) {
+          setSession(foundSession)
+          setIsFavorite(foundSession.isFavorite)
+        }
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error fetching session:', error)
+        setIsLoading(false)
+      }
     }
-  }, [params.id])
+    
+    fetchSession()
+  }, [sessionId])
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    )
+  }
+  
   if (!session) {
     return (
       <div className="min-h-screen bg-[#0d1117] text-white flex items-center justify-center">
