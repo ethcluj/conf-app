@@ -12,9 +12,14 @@ services:
       - REACT_APP_API_URL=/api
       - WDS_SOCKET_PORT=0
       - CHOKIDAR_USEPOLLING=true
+      - PUBLIC_URL=/test
     depends_on:
       backend:
         condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=PathPrefix(`/test`)
+      - traefik.http.services.frontend.loadbalancer.server.port=3000
 
   backend:
     build:
