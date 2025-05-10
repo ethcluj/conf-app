@@ -6,6 +6,7 @@ import { Star } from "lucide-react"
 import { allSessions } from "@/lib/data"
 import { SessionCard } from "@/components/session-card"
 import { TimeIndicator } from "@/components/time-indicator"
+import { ScrollHideHeader } from "@/components/scroll-hide-header"
 
 export default function FavouritesPage() {
   const router = useRouter()
@@ -29,32 +30,38 @@ export default function FavouritesPage() {
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white pb-20">
-      <div className="container mx-auto max-w-md px-4 py-6">
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold">Favourites</h1>
-          <p className="text-gray-400 mt-1">Your favourite sessions</p>
-        </header>
+      <ScrollHideHeader>
+        <div className="container mx-auto max-w-md px-4 py-6">
+          <header className="mb-6">
+            <h1 className="text-2xl font-bold">Favourites</h1>
+            <p className="text-gray-400 mt-1">Your favourite sessions</p>
+          </header>
+        </div>
+      </ScrollHideHeader>
 
-        <TimeIndicator />
+      <div className="container mx-auto max-w-md px-4">
+        <div className="pt-24">
+          <TimeIndicator />
 
-        {favouriteSessions.length > 0 ? (
-          <div className="space-y-4">
-            {favouriteSessions.map((session) => (
-              <SessionCard
-                key={session.id}
-                session={session}
-                onClick={() => handleSessionClick(session.id)}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Star className="h-16 w-16 text-gray-600 mb-4" />
-            <h3 className="text-xl font-medium mb-2">No favourites yet</h3>
-            <p className="text-gray-400">Mark sessions as favourites to see them here</p>
-          </div>
-        )}
+          {favouriteSessions.length > 0 ? (
+            <div className="space-y-4">
+              {favouriteSessions.map((session) => (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  onClick={() => handleSessionClick(session.id)}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Star className="h-16 w-16 text-gray-600 mb-4" />
+              <h3 className="text-xl font-medium mb-2">No favourites yet</h3>
+              <p className="text-gray-400">Mark sessions as favourites to see them here</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

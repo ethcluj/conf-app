@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { getSessionById, formatSessionDateTime, type Session } from "@/lib/data"
+import { ScrollHideHeader } from "@/components/scroll-hide-header"
 
 export default function SessionDetails({ params }: { params: { id: string } }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -38,10 +39,9 @@ export default function SessionDetails({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white pb-20">
-      <div className="container mx-auto max-w-md px-4 pb-6">
-        {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-10 bg-[#0d1117] px-4 py-4">
-          <div className="container mx-auto max-w-md flex items-center justify-between">
+      <ScrollHideHeader>
+        <div className="container mx-auto max-w-md px-4 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Link href="/" className="mr-4">
                 <ArrowLeft className="h-6 w-6" />
@@ -55,10 +55,12 @@ export default function SessionDetails({ params }: { params: { id: string } }) {
               <Star className={`h-5 w-5 ${isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
             </Button>
           </div>
-        </header>
+        </div>
+      </ScrollHideHeader>
 
+      <div className="container mx-auto max-w-md px-4 pb-6">
         {/* Content with padding to account for fixed header */}
-        <div className="pt-20">
+        <div className="pt-24">
           {/* Date, Time and Location */}
           <div className="mb-6 space-y-2">
             <div className="flex items-center text-gray-400">
