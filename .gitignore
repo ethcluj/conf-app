@@ -1,0 +1,12 @@
+# Node/JS/TS global
+node_modules/
+*.log
+*.tsbuildinfo
+
+# Archives and extracted folders
+ethereum-conference.zip
+ethereum-conference/
+
+# OS/system files
+.DS_Store
+Thumbs.db
