@@ -38,646 +38,128 @@ export interface Session {
   learningPoints?: string[]
 }
 
-// Helper function to create a session
-const createSession = (
-  id: string,
-  day: Date,
-  startHour: number,
-  startMinute: number,
-  durationMinutes: number,
-  stage: string,
-  title: string,
-  speakers: Speaker[],
-  level: SessionLevel,
-  isFavorite = false,
-  description?: string,
-  track?: SessionTrack,
-  difficulty?: SessionDifficulty,
-  learningPoints?: string[],
-): Session => {
-  const startTime = new Date(day)
-  startTime.setHours(startHour, startMinute, 0, 0)
-
-  const endTime = new Date(startTime)
-  endTime.setMinutes(endTime.getMinutes() + durationMinutes)
-
-  let levelColor: SessionLevelColor
-  switch (level) {
-    case "For everyone":
-      levelColor = "green"
-      break
-    case "Beginner":
-      levelColor = "blue"
-      break
-    case "Intermediate":
-      levelColor = "orange"
-      break
-    case "Advanced":
-      levelColor = "red"
-      break
-  }
-
+// Helper function to hydrate session objects from API (convert date strings to Date objects)
+const hydrateSession = (session: any): Session => {
   return {
-    id,
-    date: day,
-    startTime,
-    endTime,
-    stage,
-    title,
-    speakers,
-    level,
-    levelColor,
-    isFavorite,
-    description,
-    track,
-    difficulty,
-    learningPoints,
+    ...session,
+    date: new Date(session.date),
+    startTime: new Date(session.startTime),
+    endTime: new Date(session.endTime),
+  };
+}
+
+// Cache for sessions to avoid repeated API calls
+let sessionsCache: Session[] | null = null;
+
+// Fetch all sessions from backend API
+const fetchAllSessions = async (): Promise<Session[]> => {
+  if (sessionsCache) return sessionsCache;
+  
+  try {
+    // Clear the cache to force a fresh fetch
+    sessionsCache = null;
+    
+    // Use the absolute URL when accessing directly on port 3000
+    // or the relative URL when going through Nginx
+    const apiUrl = window.location.hostname === 'localhost' && window.location.port === '3000' 
+      ? 'http://localhost:8080/api/sessions'
+      : '/api/sessions';
+      
+    console.log('Fetching sessions from:', apiUrl);
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error("Failed to fetch sessions");
+    const data = await res.json();
+    sessionsCache = data.map(hydrateSession);
+    return sessionsCache;
+  } catch (error) {
+    console.error("Error fetching sessions:", error);
+    return [];
   }
 }
 
-// Generate all sessions for the conference
-export const allSessions: Session[] = [
-  // Day 1
-  createSession(
-    "1",
-    conferenceDays[0],
-    9,
-    0,
-    60,
-    "Main Stage",
-    "Opening Keynote: The Future of Ethereum Scaling",
-    [{ name: "Dr. Michael Anderson", image: "/placeholder.svg?height=40&width=40", title: "Ethereum Foundation" }],
-    "For everyone",
-    true,
-    "Join us for an inspiring opening keynote that explores the future of Ethereum scaling solutions and their impact on the blockchain ecosystem.",
-    "Ethereum Roadmap",
-    2,
-    [
-      "Current state of Ethereum scaling solutions",
-      "Upcoming developments in the Ethereum ecosystem",
-      "Long-term vision for blockchain scalability",
-    ],
-  ),
-  createSession(
-    "2",
-    conferenceDays[0],
-    10,
-    15,
-    90,
-    "Dev Stage",
-    "Zero Knowledge Proofs Workshop",
-    [
-      { name: "Sarah Chen", image: "/placeholder.svg?height=40&width=40", title: "ZK Research Lead" },
-      { name: "James Liu", image: "/placeholder.svg?height=40&width=40", title: "Protocol Engineer" },
-    ],
-    "Intermediate",
-    false,
-    "Join us for an in-depth exploration of Zero-Knowledge Proofs (ZKPs) and their transformative impact on blockchain scalability. We'll dive into the latest advancements in ZK-rollups, examine real-world implementations, and discuss future possibilities for scaling Ethereum through ZK technology.",
-    "Research",
-    3,
-    [
-      "Fundamental concepts of Zero-Knowledge Proofs",
-      "Current state of ZK-rollups in production",
-      "Future roadmap for ZK scaling solutions",
-    ],
-  ),
-  createSession(
-    "3",
-    conferenceDays[0],
-    12,
-    0,
-    60,
-    "Biz Stage",
-    "DeFi Market Analysis & Trends",
-    [{ name: "Emma Thompson", image: "/placeholder.svg?height=40&width=40", title: "DeFi Analyst" }],
-    "For everyone",
-    false,
-    "A comprehensive analysis of the current DeFi landscape, emerging trends, and predictions for the future of decentralized finance.",
-    "DeFi",
-    2,
-    [
-      "Current state of major DeFi protocols",
-      "Emerging trends in decentralized finance",
-      "Risk assessment and investment strategies",
-    ],
-  ),
-  createSession(
-    "4",
-    conferenceDays[0],
-    14,
-    0,
-    120,
-    "Workshop",
-    "Building Secure Smart Contracts",
-    [
-      { name: "Robert Wilson", image: "/placeholder.svg?height=40&width=40", title: "Security Researcher" },
-      { name: "Diana Lee", image: "/placeholder.svg?height=40&width=40", title: "Smart Contract Auditor" },
-    ],
-    "Advanced",
-    false,
-    "Learn best practices for writing secure smart contracts, common vulnerabilities to avoid, and tools for auditing your code.",
-    "Security",
-    4,
-    [
-      "Common smart contract vulnerabilities",
-      "Security best practices and patterns",
-      "Automated and manual auditing techniques",
-    ],
-  ),
-  createSession(
-    "5",
-    conferenceDays[0],
-    16,
-    15,
-    60,
-    "Main Stage",
-    "Layer 2 Solutions: Present and Future",
-    [{ name: "Dr. Alex Martinez", image: "/placeholder.svg?height=40&width=40", title: "L2 Researcher" }],
-    "Beginner",
-    false,
-    "An overview of current Layer 2 scaling solutions for Ethereum, their strengths and weaknesses, and what to expect in the future.",
-    "Ethereum Roadmap",
-    2,
-    [
-      "Comparison of different L2 approaches",
-      "Current state of major L2 networks",
-      "Integration challenges and opportunities",
-    ],
-  ),
-  createSession(
-    "6",
-    conferenceDays[0],
-    17,
-    30,
-    60,
-    "Dev Stage",
-    "Optimizing Gas Consumption",
-    [{ name: "Nina Rodriguez", image: "/placeholder.svg?height=40&width=40", title: "Core Developer" }],
-    "Intermediate",
-    false,
-    "Practical techniques for optimizing gas consumption in your smart contracts and dApps to reduce costs and improve efficiency.",
-    "Development",
-    3,
-    [
-      "Gas optimization techniques",
-      "Measuring and benchmarking gas usage",
-      "Trade-offs between gas efficiency and code readability",
-    ],
-  ),
-  createSession(
-    "7",
-    conferenceDays[0],
-    19,
-    0,
-    60,
-    "Dev Stage",
-    "Web3 Security Best Practices",
-    [{ name: "Multiple speakers", image: "/placeholder.svg?height=40&width=40", isMultiple: true }],
-    "Intermediate",
-    false,
-    "A panel discussion on security best practices for Web3 development, covering smart contracts, frontend security, and user protection.",
-    "Security",
-    3,
-    ["Frontend security considerations", "Wallet integration security", "User education and protection strategies"],
-  ),
-  createSession(
-    "8",
-    conferenceDays[0],
-    20,
-    15,
-    90,
-    "Workshop",
-    "Future of DeFi Panel Discussion",
-    [{ name: "Multiple speakers", image: "/placeholder.svg?height=40&width=40", isMultiple: true }],
-    "For everyone",
-    false,
-    "Industry experts discuss the future of DeFi, regulatory challenges, and emerging opportunities in the decentralized finance space.",
-    "DeFi",
-    2,
-    [
-      "Regulatory landscape and compliance",
-      "Institutional adoption of DeFi",
-      "Emerging DeFi primitives and innovations",
-    ],
-  ),
+// For backward compatibility with existing code
+// This will be populated after the first fetch
+export let allSessions: Session[] = [];
 
-  // Day 2
-  createSession(
-    "9",
-    conferenceDays[1],
-    9,
-    0,
-    60,
-    "Main Stage",
-    "Ethereum's Roadmap: What's Next After The Merge",
-    [{ name: "Vitalik Buterin", image: "/placeholder.svg?height=40&width=40", title: "Ethereum Co-founder" }],
-    "For everyone",
-    true,
-    "A comprehensive overview of Ethereum's roadmap following The Merge, including upcoming upgrades and their implications.",
-    "Ethereum Roadmap",
-    2,
-    ["Post-Merge Ethereum architecture", "Upcoming protocol upgrades", "Long-term vision for Ethereum"],
-  ),
-  createSession(
-    "10",
-    conferenceDays[1],
-    10,
-    15,
-    60,
-    "Dev Stage",
-    "EVM Deep Dive: Understanding the Execution Layer",
-    [{ name: "Justin Drake", image: "/placeholder.svg?height=40&width=40", title: "Ethereum Researcher" }],
-    "Advanced",
-    false,
-    "A technical deep dive into the Ethereum Virtual Machine (EVM), its architecture, and how it executes smart contracts.",
-    "Development",
-    5,
-    ["EVM architecture and execution model", "Opcodes and gas pricing", "Future EVM improvements"],
-  ),
-  createSession(
-    "11",
-    conferenceDays[1],
-    11,
-    30,
-    60,
-    "Biz Stage",
-    "Tokenomics: Designing Sustainable Crypto Economies",
-    [{ name: "Lisa Johnson", image: "/placeholder.svg?height=40&width=40", title: "Tokenomics Specialist" }],
-    "Intermediate",
-    false,
-    "Learn principles and best practices for designing sustainable token economies that align incentives and create long-term value.",
-    "Research",
-    3,
-    ["Token design principles", "Economic incentive alignment", "Case studies of successful and failed tokenomics"],
-  ),
-  createSession(
-    "12",
-    conferenceDays[1],
-    12,
-    45,
-    75,
-    "Workshop",
-    "NFT Marketplace Development Workshop",
-    [{ name: "Carlos Mendez", image: "/placeholder.svg?height=40&width=40", title: "NFT Developer" }],
-    "Intermediate",
-    false,
-    "A hands-on workshop on building an NFT marketplace, covering smart contracts, metadata standards, and frontend integration.",
-    "Development",
-    3,
-    ["NFT smart contract development", "Metadata standards and storage solutions", "Marketplace frontend integration"],
-  ),
-  createSession(
-    "13",
-    conferenceDays[1],
-    14,
-    15,
-    60,
-    "Main Stage",
-    "Interoperability: Connecting Blockchain Ecosystems",
-    [{ name: "Sophia Wang", image: "/placeholder.svg?height=40&width=40", title: "Cross-chain Protocol Lead" }],
-    "Beginner",
-    false,
-    "An exploration of blockchain interoperability solutions and how they're enabling a more connected and efficient ecosystem.",
-    "Research",
-    2,
-    ["Cross-chain communication protocols", "Bridge security considerations", "Multi-chain application design"],
-  ),
-  createSession(
-    "14",
-    conferenceDays[1],
-    15,
-    30,
-    90,
-    "Dev Stage",
-    "Solidity Advanced Patterns and Anti-patterns",
-    [{ name: "Aditya Gupta", image: "/placeholder.svg?height=40&width=40", title: "Smart Contract Expert" }],
-    "Advanced",
-    false,
-    "Advanced Solidity patterns for building robust smart contracts, and common anti-patterns to avoid in your development.",
-    "Development",
-    4,
-    ["Advanced Solidity design patterns", "Common anti-patterns and vulnerabilities", "Gas optimization techniques"],
-  ),
-  createSession(
-    "15",
-    conferenceDays[1],
-    17,
-    15,
-    60,
-    "Biz Stage",
-    "DAO Governance Models: Lessons Learned",
-    [
-      { name: "Maria Rodriguez", image: "/placeholder.svg?height=40&width=40", title: "DAO Researcher" },
-      { name: "Thomas Lee", image: "/placeholder.svg?height=40&width=40", title: "Governance Specialist" },
-    ],
-    "For everyone",
-    false,
-    "Insights from various DAO governance models, their strengths, weaknesses, and lessons learned for future decentralized organizations.",
-    "Community",
-    2,
-    ["Governance model comparison", "Voting mechanisms and participation", "Treasury management best practices"],
-  ),
-  createSession(
-    "16",
-    conferenceDays[1],
-    18,
-    30,
-    60,
-    "Workshop",
-    "Decentralized Identity Solutions",
-    [{ name: "David Kim", image: "/placeholder.svg?height=40&width=40", title: "Identity Protocol Developer" }],
-    "Intermediate",
-    false,
-    "An overview of decentralized identity solutions, their implementation, and how they can enhance privacy and security.",
-    "Security",
-    3,
-    [
-      "Self-sovereign identity principles",
-      "Verifiable credentials implementation",
-      "Privacy considerations in identity systems",
-    ],
-  ),
-  createSession(
-    "17",
-    conferenceDays[1],
-    19,
-    45,
-    75,
-    "Main Stage",
-    "The Future of Web3 Social Platforms",
-    [{ name: "Multiple speakers", image: "/placeholder.svg?height=40&width=40", isMultiple: true }],
-    "Beginner",
-    false,
-    "A panel discussion on the future of decentralized social platforms, their potential impact, and current challenges.",
-    "Community",
-    2,
-    ["Decentralized social media architecture", "Content moderation in Web3", "Monetization models for creators"],
-  ),
-  createSession(
-    "18",
-    conferenceDays[1],
-    21,
-    15,
-    60,
-    "Biz Stage",
-    "Crypto Venture Capital: Investment Strategies",
-    [{ name: "Alexandra Smith", image: "/placeholder.svg?height=40&width=40", title: "VC Partner" }],
-    "For everyone",
-    false,
-    "Insights into how crypto venture capital firms evaluate projects, current investment trends, and advice for founders.",
-    "DeFi",
-    2,
-    [
-      "Evaluation criteria for blockchain projects",
-      "Current investment trends",
-      "Fundraising strategies for Web3 startups",
-    ],
-  ),
+// Initialize sessions
+// Force a refresh on page load
+window.addEventListener('load', () => {
+  console.log('Page loaded, refreshing sessions...');
+  fetchAllSessions().then(sessions => {
+    allSessions = sessions;
+    console.log('Sessions refreshed:', allSessions.length);
+  }).catch(error => {
+    console.error("Failed to initialize sessions:", error);
+  });
+});
 
-  // Day 3
-  createSession(
-    "19",
-    conferenceDays[2],
-    9,
-    0,
-    60,
-    "Main Stage",
-    "Regulatory Landscape for Crypto in 2025",
-    [{ name: "Jennifer Morris", image: "/placeholder.svg?height=40&width=40", title: "Crypto Legal Expert" }],
-    "For everyone",
-    false,
-    "An analysis of the current and emerging regulatory landscape for cryptocurrencies and blockchain technology globally.",
-    "Community",
-    2,
-    ["Global regulatory developments", "Compliance strategies for projects", "Advocacy and policy engagement"],
-  ),
-  createSession(
-    "20",
-    conferenceDays[2],
-    10,
-    15,
-    90,
-    "Dev Stage",
-    "Rollups Deep Dive: ZK vs Optimistic",
-    [{ name: "Mikhail Petrov", image: "/placeholder.svg?height=40&width=40", title: "Scaling Solutions Architect" }],
-    "Advanced",
-    false,
-    "A technical comparison of ZK and Optimistic rollups, their trade-offs, and how to choose the right solution for your application.",
-    "Ethereum Roadmap",
-    4,
-    [
-      "Technical comparison of rollup technologies",
-      "Security and trust assumptions",
-      "Performance benchmarks and analysis",
-    ],
-  ),
-  createSession(
-    "21",
-    conferenceDays[2],
-    12,
-    0,
-    60,
-    "Biz Stage",
-    "Building Community-Driven Crypto Projects",
-    [{ name: "Rachel Torres", image: "/placeholder.svg?height=40&width=40", title: "Community Lead" }],
-    "Beginner",
-    false,
-    "Strategies for building and nurturing engaged communities around your blockchain project or protocol.",
-    "Community",
-    1,
-    ["Community building strategies", "Contributor incentivization", "Governance participation techniques"],
-  ),
-  createSession(
-    "22",
-    conferenceDays[2],
-    13,
-    15,
-    75,
-    "Workshop",
-    "MEV: Understanding and Mitigating Extraction",
-    [
-      { name: "Daniel Park", image: "/placeholder.svg?height=40&width=40", title: "MEV Researcher" },
-      { name: "Elena Kuznetsova", image: "/placeholder.svg?height=40&width=40", title: "Protocol Engineer" },
-    ],
-    "Intermediate",
-    false,
-    "Understanding Maximal Extractable Value (MEV), its implications for users and protocols, and strategies to mitigate its negative effects.",
-    "Research",
-    3,
-    ["MEV extraction techniques", "Impact on users and protocols", "Mitigation strategies and fair ordering"],
-  ),
-  createSession(
-    "23",
-    conferenceDays[2],
-    15,
-    0,
-    60,
-    "Main Stage",
-    "Sustainable Blockchain: Reducing Carbon Footprint",
-    [{ name: "Dr. Samuel Green", image: "/placeholder.svg?height=40&width=40", title: "Sustainability Researcher" }],
-    "For everyone",
-    false,
-    "Exploring strategies for making blockchain technology more environmentally sustainable and reducing its carbon footprint.",
-    "Research",
-    2,
-    [
-      "Environmental impact of different consensus mechanisms",
-      "Carbon offset strategies for blockchains",
-      "Sustainable blockchain design principles",
-    ],
-  ),
-  createSession(
-    "24",
-    conferenceDays[2],
-    16,
-    15,
-    60,
-    "Dev Stage",
-    "Smart Contract Formal Verification",
-    [{ name: "Olivia Chen", image: "/placeholder.svg?height=40&width=40", title: "Formal Methods Specialist" }],
-    "Advanced",
-    false,
-    "An introduction to formal verification methods for smart contracts to mathematically prove their correctness and security.",
-    "Security",
-    5,
-    [
-      "Formal verification principles",
-      "Tools and frameworks for smart contract verification",
-      "Integration into development workflow",
-    ],
-  ),
-  createSession(
-    "25",
-    conferenceDays[2],
-    17,
-    30,
-    90,
-    "Biz Stage",
-    "DeFi 3.0: Beyond Lending and DEXes",
-    [{ name: "Multiple speakers", image: "/placeholder.svg?height=40&width=40", isMultiple: true }],
-    "Intermediate",
-    false,
-    "Exploring the next generation of DeFi protocols and use cases that go beyond the current lending and exchange paradigms.",
-    "DeFi",
-    3,
-    ["Emerging DeFi primitives", "Real-world asset tokenization", "Institutional DeFi adoption"],
-  ),
-  createSession(
-    "26",
-    conferenceDays[2],
-    19,
-    15,
-    60,
-    "Workshop",
-    "Building On-Chain Games Workshop",
-    [{ name: "Marcus Johnson", image: "/placeholder.svg?height=40&width=40", title: "Blockchain Game Developer" }],
-    "Intermediate",
-    false,
-    "A hands-on workshop on building games with on-chain logic, covering smart contract design, randomness, and frontend integration.",
-    "Development",
-    3,
-    [
-      "On-chain game mechanics design",
-      "Randomness and fairness in blockchain games",
-      "Gas optimization for game contracts",
-    ],
-  ),
-  createSession(
-    "27",
-    conferenceDays[2],
-    20,
-    30,
-    60,
-    "Main Stage",
-    "The Road to Mass Adoption: UX Challenges",
-    [
-      { name: "Sophia Lee", image: "/placeholder.svg?height=40&width=40", title: "UX Designer" },
-      { name: "Robert Chen", image: "/placeholder.svg?height=40&width=40", title: "Product Manager" },
-    ],
-    "Beginner",
-    false,
-    "Addressing the UX challenges that need to be overcome for blockchain technology to achieve mainstream adoption.",
-    "Community",
-    2,
-    [
-      "Current UX pain points in blockchain applications",
-      "Abstraction techniques for better user experience",
-      "Case studies of successful Web3 UX",
-    ],
-  ),
-  createSession(
-    "28",
-    conferenceDays[2],
-    21,
-    45,
-    75,
-    "Main Stage",
-    "Closing Keynote: Ethereum in 2030",
-    [{ name: "Dr. Gavin Wood", image: "/placeholder.svg?height=40&width=40", title: "Ethereum Co-founder" }],
-    "For everyone",
-    false,
-    "A visionary closing keynote exploring the potential future of Ethereum and blockchain technology by 2030.",
-    "Ethereum Roadmap",
-    1,
-    [
-      "Long-term vision for Ethereum",
-      "Potential societal impacts of blockchain technology",
-      "Challenges and opportunities on the horizon",
-    ],
-  ),
-]
+// Initial fetch
+fetchAllSessions().then(sessions => {
+  allSessions = sessions;
+  console.log('Initial sessions loaded:', allSessions.length);
+}).catch(error => {
+  console.error("Failed to initialize sessions:", error);
+});
+
+// Session data is now fetched from the backend API
+// See fetchAllSessions() function above
 
 // Helper functions for session management
-export const getSessionsByDay = (day: Date) => {
-  return allSessions.filter((session) => isSameDay(session.date, day))
+export const getSessionsByDay = async (day: Date): Promise<Session[]> => {
+  const sessions = await fetchAllSessions();
+  return sessions.filter((session) => isSameDay(session.date, day));
 }
 
-export const getCurrentAndUpcomingSessions = () => {
-  const now = new Date()
-  return allSessions
+export const getCurrentAndUpcomingSessions = async (): Promise<Session[]> => {
+  const now = new Date();
+  const sessions = await fetchAllSessions();
+  return sessions
     .filter((session) => isAfter(session.endTime, now))
-    .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+    .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 }
 
-export const getPastSessions = () => {
-  const now = new Date()
-  return allSessions
+export const getPastSessions = async (): Promise<Session[]> => {
+  const now = new Date();
+  const sessions = await fetchAllSessions();
+  return sessions
     .filter((session) => isBefore(session.endTime, now))
-    .sort((a, b) => b.startTime.getTime() - a.startTime.getTime()) // Most recent first
+    .sort((a, b) => b.startTime.getTime() - a.startTime.getTime()); // Most recent first
 }
 
-export const isSessionActive = (session: Session) => {
-  const now = new Date()
-  return isAfter(now, session.startTime) && isBefore(now, session.endTime)
+// These functions don't need to be async as they operate on a single session
+export const isSessionActive = (session: Session): boolean => {
+  const now = new Date();
+  return isAfter(now, session.startTime) && isBefore(now, session.endTime);
 }
 
-export const isSessionUpcoming = (session: Session) => {
-  const now = new Date()
-  return isAfter(session.startTime, now)
+export const isSessionUpcoming = (session: Session): boolean => {
+  const now = new Date();
+  return isAfter(session.startTime, now);
 }
 
-export const isSessionPast = (session: Session) => {
-  const now = new Date()
-  return isBefore(session.endTime, now)
+export const isSessionPast = (session: Session): boolean => {
+  const now = new Date();
+  return isBefore(session.endTime, now);
 }
 
-export const formatSessionTime = (session: Session) => {
-  return `${format(session.startTime, "HH:mm")} - ${format(session.endTime, "HH:mm")}`
+export const formatSessionTime = (session: Session): string => {
+  return `${format(session.startTime, "HH:mm")} - ${format(session.endTime, "HH:mm")}`;
 }
 
-export const formatSessionDateTime = (session: Session) => {
-  return `${format(session.date, "MMMM d, yyyy")} • ${format(session.startTime, "HH:mm")} - ${format(session.endTime, "HH:mm")}`
+export const formatSessionDateTime = (session: Session): string => {
+  return `${format(session.date, "MMMM d, yyyy")} • ${format(session.startTime, "HH:mm")} - ${format(session.endTime, "HH:mm")}`;
 }
 
-export const formatDayDate = (date: Date) => {
-  return format(date, "EEE, MMM d")
+export const formatDayDate = (date: Date): string => {
+  return format(date, "EEE, MMM d");
 }
 
-export const isToday = (date: Date) => {
-  return isSameDay(date, new Date())
+export const isToday = (date: Date): boolean => {
+  return isSameDay(date, new Date());
 }
 
-export const getSessionById = (id: string): Session | undefined => {
-  return allSessions.find((session) => session.id === id)
+export const getSessionById = async (id: string): Promise<Session | undefined> => {
+  const sessions = await fetchAllSessions();
+  return sessions.find((session) => session.id === id);
 }
 
