@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { allSessions } from './sessions';
 
 dotenv.config();
 
@@ -39,6 +40,11 @@ const initDb = async () => {
     client.release();
   }
 };
+
+// Sessions endpoint
+app.get('/sessions', (req, res) => {
+  res.json(allSessions);
+});
 
 // Routes
 app.get('/value', async (req, res) => {

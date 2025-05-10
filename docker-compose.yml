@@ -34,6 +34,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
     volumes:
       - /app/node_modules
     environment:
