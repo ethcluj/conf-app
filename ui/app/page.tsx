@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { allSessions, conferenceDays, getSessionsByDay, isSessionActive, isToday } from "@/lib/data"
+import { allSessions, conferenceDays, getSessionsByDay, isSessionActive, isToday, fetchAllSessions } from "@/lib/data"
 import { DateSelector } from "@/components/date-selector"
 import { TimeIndicator } from "@/components/time-indicator"
 import { SessionCard } from "@/components/session-card"
@@ -21,7 +21,41 @@ export default function ConferenceSchedule() {
 
   const [activeTab, setActiveTab] = useState("All")
   const [sessions, setSessions] = useState(allSessions)
+  const [sessionsForSelectedDay, setSessionsForSelectedDay] = useState<typeof allSessions>([])
+  const [isLoading, setIsLoading] = useState(true)
   const currentSessionRef = useRef<HTMLDivElement>(null)
+  
+  // Fetch all sessions on component mount
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        setIsLoading(true)
+        const fetchedSessions = await fetchAllSessions()
+        setSessions(fetchedSessions)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error loading sessions:', error)
+        setIsLoading(false)
+      }
+    }
+    
+    loadSessions()
+  }, [])
+  
+  // Update filtered sessions when selected date changes
+  useEffect(() => {
+    const filterSessionsByDay = async () => {
+      try {
+        const filteredSessions = await getSessionsByDay(selectedDate)
+        setSessionsForSelectedDay(filteredSessions)
+      } catch (error) {
+        console.error('Error filtering sessions by day:', error)
+        setSessionsForSelectedDay([])
+      }
+    }
+    
+    filterSessionsByDay()
+  }, [selectedDate, sessions])
 
   const handleSessionClick = (sessionId: string) => {
     router.push(`/session/${sessionId}`)
@@ -43,15 +77,16 @@ export default function ConferenceSchedule() {
 
   const tabs = ["All", "Main", "Dev", "Biz", "Workshop"]
 
-  // Filter sessions by selected date and category
-  const sessionsForSelectedDay = getSessionsByDay(selectedDate)
+  // Filter sessions by category
   const filteredSessions =
     activeTab === "All"
       ? sessionsForSelectedDay
       : sessionsForSelectedDay.filter((session) => session.stage.includes(activeTab))
 
   // Sort sessions by start time
-  const sortedSessions = [...filteredSessions].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+  const sortedSessions = filteredSessions.length > 0
+    ? [...filteredSessions].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+    : []
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white pb-20">
@@ -88,6 +123,11 @@ export default function ConferenceSchedule() {
         <div className="pt-32">
           <TimeIndicator />
 
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+            </div>
+          ) : (
           <div className="space-y-4">
             {sortedSessions.length > 0 ? (
               sortedSessions.map((session) => (
@@ -105,6 +145,7 @@ export default function ConferenceSchedule() {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 
