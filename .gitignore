@@ -2,6 +2,8 @@
 node_modules/
 *.log
 *.tsbuildinfo
+dist/
+build/
 
 # Environment variables
 .env
