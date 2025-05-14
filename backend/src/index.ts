@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import { allSessions } from './sessions';
+import { allSessions, refreshSessions } from './sessions';
 
 dotenv.config();
 
@@ -42,8 +42,28 @@ const initDb = async () => {
 };
 
 // Sessions endpoint
-app.get('/sessions', (req, res) => {
-  res.json(allSessions);
+app.get('/sessions', async (req, res) => {
+  try {
+    // Force refresh if requested
+    if (req.query.refresh === 'true') {
+      await refreshSessions();
+    }
+    res.json(allSessions);
+  } catch (error) {
+    console.error('Error serving sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+// Endpoint to manually refresh sessions
+app.post('/refresh-sessions', async (req, res) => {
+  try {
+    const sessions = await refreshSessions();
+    res.json({ success: true, count: sessions.length });
+  } catch (error) {
+    console.error('Error refreshing sessions:', error);
+    res.status(500).json({ error: 'Failed to refresh sessions' });
+  }
 });
 
 // Routes
@@ -73,11 +93,35 @@ app.put('/value', async (req, res) => {
 });
 
 // Initialize database and start server
-initDb().then(() => {
+const startServer = async () => {
+  // Initial session data load
+  try {
+    await refreshSessions();
+    console.log(`Loaded ${allSessions.length} sessions`);
+  } catch (error) {
+    console.error('Failed to load initial session data:', error);
+  }
+  
+  // Set up periodic refresh (every 5 minutes)
+  const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+  setInterval(async () => {
+    try {
+      await refreshSessions();
+      console.log(`Sessions refreshed: ${allSessions.length} total`);
+    } catch (error) {
+      console.error('Failed to refresh sessions:', error);
+    }
+  }, REFRESH_INTERVAL);
+  
+  // Start the server
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
   });
-}).catch(error => {
+};
+
+// Try to initialize database, but if it fails, still start the server
+initDb().then(startServer).catch(error => {
   console.error('Failed to initialize database:', error);
-  process.exit(1);
+  console.log('Starting server without database...');
+  startServer();
 }); 
