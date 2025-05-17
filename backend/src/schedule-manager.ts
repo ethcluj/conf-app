@@ -64,6 +64,18 @@ function getMonthIndex(month: string): number {
 
 // Process the raw schedule data into session objects
 export function processSchedule(rawData: RawScheduleRow[]): Session[] {
+  // Filter out rows where visible is false or missing, or stage is 'NA' and not visible
+  // This prevents invisible breaks (Coffee, Lunch, etc.) from being included
+  // Only allow breaks (Lunch, Coffee, Break) with stage 'NA' if visible; filter out all other 'NA' stage sessions
+  const allowedBreakTitles = ['lunch', 'coffee', 'break'];
+  const filteredData = rawData.filter(row => {
+    if (!row.visible) return false;
+    if (row.stage === 'NA') {
+      const normalizedTitle = row.title.trim().toLowerCase();
+      return allowedBreakTitles.includes(normalizedTitle);
+    }
+    return true;
+  });
   
   // Group consecutive slots with the same title
   const sessions: Session[] = [];
@@ -71,8 +83,8 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
   let slotCount = 0;
   let sessionId = 1;
   
-  for (let i = 0; i < rawData.length; i++) {
-    const row = rawData[i];
+  for (let i = 0; i < filteredData.length; i++) {
+    const row = filteredData[i];
     
     // Skip completely empty slots (no title, no stage, not visible)
     if (!row.title && (row.stage === 'NA' || !row.stage) && !row.visible) {
