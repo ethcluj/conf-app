@@ -46,6 +46,10 @@ services:
       - DB_NAME=value_db
       - DB_PASSWORD=postgres
       - DB_PORT=5432
+      # Google Sheets configuration
+      - DATA_SOURCE=google-sheet
+      - GOOGLE_SHEET_ID=1aPt1iOte5468HOelLkg5L__iMj37FnGX_WZRuLyRIcw
+      - GOOGLE_SHEET_NAME=APP
     depends_on:
       db:
         condition: service_healthy
