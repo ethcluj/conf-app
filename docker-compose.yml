@@ -48,7 +48,7 @@ services:
       - DB_PORT=5432
       # Google Sheets configuration
       - DATA_SOURCE=google-sheet
-      - GOOGLE_SHEET_ID=1aPt1iOte5468HOelLkg5L__iMj37FnGX_WZRuLyRIcw
+      - GOOGLE_SHEET_ID=1r4Y7tWSdyRc-XIW21b9x8felxgBUDKikglFZTB61o5E
       - GOOGLE_SHEET_NAME=APP
     depends_on:
       db:

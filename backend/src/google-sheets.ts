@@ -34,26 +34,30 @@ export async function fetchFromGoogleSheet(config: GoogleSheetsConfig): Promise<
       return [];
     }
 
-    // Skip the header row and convert to RawScheduleRow objects
-    return rows.slice(1).map((row: any) => {
-      // Ensure we have enough columns, pad with empty strings if needed
-      const paddedRow = [...row];
-      while (paddedRow.length < 9) {
-        paddedRow.push('');
-      }
+    // Debug: log the first 5 rows of raw data
+    console.log('[DEBUG] google-sheets.ts raw rows:', JSON.stringify(rows.slice(0, 6), null, 2));
+    // Skip the header row and convert to RawScheduleRow objects, filtering only visible rows
+    return rows.slice(1)
+      .map((row: any) => {
+        // Ensure we have enough columns, pad with empty strings if needed
+        const paddedRow = [...row];
+        while (paddedRow.length < 9) {
+          paddedRow.push('');
+        }
 
-      return {
-        timeSlot: paddedRow[0] || '',
-        visible: (paddedRow[1] || '').toLowerCase() === 'true',
-        stage: paddedRow[2] || '',
-        title: paddedRow[3] || '',
-        speakers: paddedRow[4] || '',
-        description: paddedRow[5] || '',
-        type: paddedRow[6] || '',
-        track: paddedRow[7] || '',
-        notes: paddedRow[8] || ''
-      };
-    });
+        return {
+          timeSlot: paddedRow[0] || '',
+          visible: paddedRow[1] && paddedRow[1].trim().toLowerCase() === 'true',
+          stage: paddedRow[2] || '',
+          title: paddedRow[3] || '',
+          speakers: paddedRow[4] || '',
+          description: paddedRow[5] || '',
+          type: paddedRow[6] || '',
+          track: paddedRow[7] || '',
+          notes: paddedRow[8] || ''
+        };
+      })
+      .filter((row: RawScheduleRow) => row.visible);
   } catch (error: any) {
     console.error('Error fetching data from Google Sheet:', error.message);
     throw error;

@@ -93,7 +93,7 @@ export function createSession(
 const DATA_SOURCE = 'google-sheet';
 
 // Google Sheets configuration
-const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '1aPt1iOte5468HOelLkg5L__iMj37FnGX_WZRuLyRIcw';
+const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '1r4Y7tWSdyRc-XIW21b9x8felxgBUDKikglFZTB61o5E';
 const GOOGLE_SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'APP';
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 

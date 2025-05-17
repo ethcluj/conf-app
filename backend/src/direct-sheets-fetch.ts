@@ -27,6 +27,8 @@ export async function fetchPublicGoogleSheet(
     
     // Split into rows and parse
     const rows = csvData.split('\n');
+    // Debug: log the first 5 rows of CSV data
+    console.log('[DEBUG] direct-sheets-fetch.ts raw CSV rows:', JSON.stringify(rows.slice(0, 6), null, 2));
     
     if (rows.length <= 1) {
       console.warn('No data rows found in the CSV');
@@ -59,7 +61,7 @@ export async function fetchPublicGoogleSheet(
         
         return {
           timeSlot: cleanColumns[0] || '',
-          visible: (cleanColumns[1] || '').toLowerCase() === 'true',
+          visible: cleanColumns[1] && cleanColumns[1].trim().toLowerCase() === 'true',
           stage: cleanColumns[2] || '',
           title: cleanColumns[3] || '',
           speakers: cleanColumns[4] || '',
@@ -86,7 +88,16 @@ export async function fetchPublicGoogleSheet(
       }
     });
     
-    return result;
+    // Only allow visible rows, and for stage 'NA', only allow visible breaks (Lunch, Coffee, Break)
+    const allowedBreakTitles = ['lunch', 'coffee', 'break'];
+    return result.filter((row: RawScheduleRow) => {
+      if (!row.visible) return false;
+      if (row.stage === 'NA') {
+        const normalizedTitle = row.title.trim().toLowerCase();
+        return allowedBreakTitles.includes(normalizedTitle);
+      }
+      return true;
+    });
   } catch (error: any) {
     console.error('Error in direct fetch from Google Sheet:', error.message);
     return [];
