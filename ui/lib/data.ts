@@ -1,12 +1,12 @@
 import { format, addDays, isBefore, isAfter, isSameDay } from "date-fns"
 
 // Create conference dates (3 days)
-const today = new Date()
-const conferenceStartDate = new Date(today)
-// Set conference to start today
-conferenceStartDate.setHours(9, 0, 0, 0)
-
-export const conferenceDays = [conferenceStartDate, addDays(conferenceStartDate, 1), addDays(conferenceStartDate, 2)]
+// Set conference days to match the actual event dates (as in backend session data)
+export const conferenceDays = [
+  new Date('2025-06-26T00:00:00.000Z'),
+  new Date('2025-06-27T00:00:00.000Z'),
+  new Date('2025-06-28T00:00:00.000Z'),
+]
 
 export type SessionLevel = "For everyone" | "Beginner" | "Intermediate" | "Advanced"
 export type SessionLevelColor = "green" | "blue" | "orange" | "red"
@@ -51,39 +51,34 @@ const hydrateSession = (session: any): Session => {
 // Fetch all sessions from backend API - no caching
 export const fetchAllSessions = async (): Promise<Session[]> => {
   try {
-    // In development mode, always use the direct backend URL
-    // In production mode, use the API proxy
-    // Check if window is defined (client-side) to avoid SSR issues
     let apiUrl = '/api/sessions';
-    
     if (typeof window !== 'undefined') {
-      // Force direct backend URL in development for testing
       const isDev = process.env.NODE_ENV === 'development';
       const isLocalhost = window.location.hostname === 'localhost';
-      
       if (isDev && isLocalhost) {
         apiUrl = 'http://localhost:3001/sessions';
       }
     }
-      
-    // Fetch from the API
     const res = await fetch(apiUrl, {
-      // Ensure we don't use browser cache
       cache: 'no-store',
       headers: {
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache'
       }
     });
-    
     if (!res.ok) throw new Error("Failed to fetch sessions");
     const data = await res.json();
-    return data.map(hydrateSession);
+    console.log('DEBUG_FETCH_RAW_SESSIONS', JSON.stringify(data));
+    const hydrated = data.map(hydrateSession);
+    console.log('DEBUG_FETCH_HYDRATED_SESSIONS', JSON.stringify(hydrated.map(s => ({id: s.id, date: s.date.toISOString(), startTime: s.startTime.toISOString(), endTime: s.endTime.toISOString()}))));
+    return hydrated;
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return [];
   }
 }
+
+      
 
 // For backward compatibility with existing code
 // This will be populated after the first fetch
@@ -118,7 +113,12 @@ if (typeof window !== 'undefined') {
 // Helper functions for session management
 export const getSessionsByDay = async (day: Date): Promise<Session[]> => {
   const sessions = await fetchAllSessions();
-  return sessions.filter((session) => isSameDay(session.date, day));
+  // Log the selected day and all hydrated session dates in ISO format
+  console.log('DEBUG_FILTER_DAY', day.toISOString(), JSON.stringify(sessions.map(s => ({id: s.id, date: s.date.toISOString()}))));
+  const filtered = sessions.filter((session) => isSameDay(session.date, day));
+  // Log the filtered sessions (id and date)
+  console.log('DEBUG_FILTER_RESULT', JSON.stringify(filtered.map(s => ({id: s.id, date: s.date.toISOString()}))));
+  return filtered;
 }
 
 export const getCurrentAndUpcomingSessions = async (): Promise<Session[]> => {
