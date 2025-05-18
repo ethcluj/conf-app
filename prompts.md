@@ -23,5 +23,7 @@ Visible - if false, the speaker is not displayed.
 
 The name acts as an identifier. 
 
+Edit all the necessary files to add the speakers API endpoint. Run it and test it. (fyi the docker backend container might need to be stoped if you need to run the backend locally on the same port)
+
 ### Speaker image (both in schedule and session details page)
 ### Speaker info page
