@@ -3,6 +3,7 @@ import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import { allSessions, refreshSessions } from './sessions';
+import { allSpeakers, refreshSpeakers } from './speakers';
 
 dotenv.config();
 
@@ -66,6 +67,30 @@ app.post('/refresh-sessions', async (req, res) => {
   }
 });
 
+// Speakers endpoint
+app.get('/speakers', async (req, res) => {
+  try {
+    if (req.query.refresh === 'true') {
+      await refreshSpeakers();
+    }
+    res.json(allSpeakers);
+  } catch (error) {
+    console.error('Error serving speakers:', error);
+    res.status(500).json({ error: 'Failed to fetch speakers' });
+  }
+});
+
+// Endpoint to manually refresh speakers
+app.post('/refresh-speakers', async (req, res) => {
+  try {
+    const speakers = await refreshSpeakers();
+    res.json({ success: true, count: speakers.length });
+  } catch (error) {
+    console.error('Error refreshing speakers:', error);
+    res.status(500).json({ error: 'Failed to refresh speakers' });
+  }
+});
+
 // Routes
 app.get('/value', async (req, res) => {
   try {
@@ -101,7 +126,15 @@ const startServer = async () => {
   } catch (error) {
     console.error('Failed to load initial session data:', error);
   }
-  
+
+  // Initial speakers data load
+  try {
+    await refreshSpeakers();
+    console.log(`Loaded ${allSpeakers.length} speakers`);
+  } catch (error) {
+    console.error('Failed to load initial speakers data:', error);
+  }
+
   // Set up periodic refresh (every 5 minutes)
   const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
   setInterval(async () => {
@@ -112,7 +145,17 @@ const startServer = async () => {
       console.error('Failed to refresh sessions:', error);
     }
   }, REFRESH_INTERVAL);
-  
+
+  // Set up periodic refresh for speakers
+  setInterval(async () => {
+    try {
+      await refreshSpeakers();
+      console.log(`Speakers refreshed: ${allSpeakers.length} total`);
+    } catch (error) {
+      console.error('Failed to refresh speakers:', error);
+    }
+  }, REFRESH_INTERVAL);
+
   // Start the server
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
