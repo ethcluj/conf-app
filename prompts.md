@@ -7,6 +7,18 @@
 
 ## Session details
 ### Session difficulty
+Make the following changes in the sessions API on the backend:
+1. Add a "type" field to the sessions API. Read it from the google sheet, "Type" column.
+2. The value of the "track" field should be read from the google sheet, "Track" column.
+
+
+
+Now on the session details screen:
+1. rename the "Session Details" heading to "Details" 
+2. Intead of the difficutly card, Add a "Type" card displaying the type of session. The value can be found in the sessions API "type" field.
+3. Change the "Track" card to display the "track" field from the sessions API.
+
+
 ### Sessions with Multiple Speakers
 
 ## Q&A
