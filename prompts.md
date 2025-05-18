@@ -1,18 +1,19 @@
 # Features
 
-## Schedule
-### Session Cards
+## [DONE] Schedule
+### [DONE] Session Cards
 - Bug: Descriptions with newlines are truncated.
 ### "Break" slots (e.g. Lunch, Coffee)
 
 ## Session details
 ### Session difficulty
+### Sessions with Multiple Speakers
 
 ## Q&A
 
 ## Notifications
 
-## Speakers
+## [DONE] Speakers
 BACKEND Speakers Info: Now let's add a new feature on the backend - we need a new API (/speakers) that lists information related to speakers. The data is read from another tab ("Speakers") of the same google sheet that has the following format:
 
 Name	Org	Social	Photo	Visible	Bio
@@ -25,5 +26,8 @@ The name acts as an identifier.
 
 Edit all the necessary files to add the speakers API endpoint. Run it and test it. (fyi the docker backend container might need to be stoped if you need to run the backend locally on the same port)
 
-### Speaker image (both in schedule and session details page)
+### [DONE] Speaker image (both in schedule and session details page)
 ### Speaker info page
+
+
+## Favorite Sessions
