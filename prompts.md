@@ -31,3 +31,6 @@ Edit all the necessary files to add the speakers API endpoint. Run it and test i
 
 
 ## Favorite Sessions
+
+## Optimizations
+### Speaker images cache
