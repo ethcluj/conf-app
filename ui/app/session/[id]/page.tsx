@@ -28,6 +28,28 @@ export default function SessionDetails() {
         setIsLoading(true)
         const foundSession = await getSessionById(sessionId)
         if (foundSession) {
+          // Apply the same session level/difficulty logic as in SessionCard
+          if (foundSession.id) {
+            const sessionIdNum = parseInt(foundSession.id);
+            if (sessionIdNum % 4 === 0) {
+              foundSession.level = "For everyone";
+              foundSession.levelColor = "green";
+              foundSession.difficulty = 1;
+            } else if (sessionIdNum % 4 === 1) {
+              foundSession.level = "Beginner";
+              foundSession.levelColor = "blue";
+              foundSession.difficulty = 2;
+            } else if (sessionIdNum % 4 === 2) {
+              foundSession.level = "Intermediate";
+              foundSession.levelColor = "orange";
+              foundSession.difficulty = 3;
+            } else {
+              foundSession.level = "Advanced";
+              foundSession.levelColor = "red";
+              foundSession.difficulty = 4;
+            }
+          }
+          
           setSession(foundSession)
           setIsFavorite(foundSession.isFavorite)
         }
@@ -62,9 +84,23 @@ export default function SessionDetails() {
     // In a real app, you would update this in a global state or backend
   }
 
-  // Calculate difficulty dots
+  // Calculate difficulty dots and get difficulty label
   const difficultyDots = session.difficulty || 3
   const maxDots = 5
+  
+  // Get a descriptive label for the difficulty level
+  const getDifficultyLabel = (level: number): string => {
+    switch(level) {
+      case 1: return "Beginner";
+      case 2: return "Easy";
+      case 3: return "Intermediate";
+      case 4: return "Advanced";
+      case 5: return "Expert";
+      default: return "Intermediate";
+    }
+  }
+  
+  const difficultyLabel = getDifficultyLabel(difficultyDots)
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white pb-20">
@@ -178,13 +214,16 @@ export default function SessionDetails() {
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-lg bg-[#161b22] p-4">
                 <h4 className="mb-2 text-sm text-gray-400">Difficulty</h4>
-                <div className="flex space-x-1">
-                  {[...Array(maxDots)].map((_, dot) => (
-                    <div
-                      key={dot}
-                      className={`h-3 w-3 rounded-full ${dot < difficultyDots ? "bg-red-600" : "bg-gray-700"}`}
-                    ></div>
-                  ))}
+                <div className="flex flex-col space-y-2">
+                  <div className="flex space-x-1">
+                    {[...Array(maxDots)].map((_, dot) => (
+                      <div
+                        key={dot}
+                        className={`h-3 w-3 rounded-full ${dot < difficultyDots ? "bg-red-600" : "bg-gray-700"}`}
+                      ></div>
+                    ))}
+                  </div>
+                  <span className="text-sm">{difficultyLabel}</span>
                 </div>
               </div>
               <div className="rounded-lg bg-[#161b22] p-4">

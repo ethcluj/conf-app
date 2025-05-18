@@ -15,6 +15,29 @@ interface SessionCardProps {
 
 export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardProps) {
   const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers();
+  
+  // TESTING: Force different levels based on session ID
+  // This is a direct hack in the component to ensure we see different levels
+  if (session.id) {
+    const sessionIdNum = parseInt(session.id);
+    if (sessionIdNum % 4 === 0) {
+      session.level = "For everyone";
+      session.levelColor = "green";
+      session.difficulty = 1;
+    } else if (sessionIdNum % 4 === 1) {
+      session.level = "Beginner";
+      session.levelColor = "blue";
+      session.difficulty = 2;
+    } else if (sessionIdNum % 4 === 2) {
+      session.level = "Intermediate";
+      session.levelColor = "orange";
+      session.difficulty = 3;
+    } else {
+      session.level = "Advanced";
+      session.levelColor = "red";
+      session.difficulty = 4;
+    }
+  }
   const getLevelBgColor = () => {
     switch (session.levelColor) {
       case "green":

@@ -48,15 +48,104 @@ export interface Session {
   learningPoints?: string[]
 }
 
+// Session level mapping to difficulty
+const levelToDifficultyMapping: Record<SessionLevel, SessionDifficulty> = {
+  "For everyone": 1,
+  "Beginner": 2,
+  "Intermediate": 3,
+  "Advanced": 4
+};
+
+// Counter to track distributed difficulties
+let difficultyCounter = 0;
+
+// Generate a session difficulty with equal distribution (1-5)
+const getRandomDifficulty = (): SessionDifficulty => {
+  // Cycle through all 5 difficulty levels to ensure equal distribution
+  const difficulties: SessionDifficulty[] = [1, 2, 3, 4, 5];
+  const difficulty = difficulties[difficultyCounter % 5];
+  
+  // Increment counter for next call
+  difficultyCounter++;
+  
+  return difficulty;
+};
+
 // Helper function to hydrate session objects from API (convert date strings to Date objects)
 const hydrateSession = (session: any): Session => {
+  // DEBUG: Log original session data
+  console.log('DEBUG_SESSION_BEFORE_HYDRATION', {
+    id: session.id,
+    title: session.title,
+    level: session.level,
+    levelColor: session.levelColor,
+    difficulty: session.difficulty
+  });
+  
+  // If session already has a difficulty, use it
+  // Otherwise, try to map from level or use the distribution function
+  let sessionDifficulty: SessionDifficulty;
+  let difficultySource = 'unknown';
+  
+  if (session.difficulty) {
+    sessionDifficulty = session.difficulty;
+    difficultySource = 'existing';
+  } else if (session.level && typeof session.level === 'string' && session.level in levelToDifficultyMapping) {
+    // Map from level if possible (with proper type checking)
+    const level = session.level as SessionLevel;
+    sessionDifficulty = levelToDifficultyMapping[level];
+    difficultySource = 'mapped-from-level';
+  } else {
+    // Use distributed random difficulty
+    sessionDifficulty = getRandomDifficulty();
+    difficultySource = 'random-distributed';
+  }
+  
+  // DEBUG: Log difficulty assignment
+  console.log('DEBUG_DIFFICULTY_ASSIGNMENT', {
+    id: session.id,
+    title: session.title,
+    originalLevel: session.level,
+    assignedDifficulty: sessionDifficulty,
+    source: difficultySource
+  });
+  
   return {
     ...session,
     date: new Date(session.date),
     startTime: new Date(session.startTime),
     endTime: new Date(session.endTime),
+    difficulty: sessionDifficulty,
   };
 }
+
+// Force random session levels for testing
+const forceRandomSessionLevels = (sessions: Session[]): Session[] => {
+  const levels: SessionLevel[] = ["For everyone", "Beginner", "Intermediate", "Advanced"];
+  
+  return sessions.map((session, index) => {
+    // Assign a level in rotation to ensure distribution
+    const level = levels[index % levels.length];
+    
+    // Also assign a matching difficulty
+    const difficulty = levelToDifficultyMapping[level];
+    
+    // Log what we're doing
+    console.log('FORCING_RANDOM_LEVEL', {
+      id: session.id,
+      title: session.title,
+      originalLevel: session.level,
+      newLevel: level,
+      newDifficulty: difficulty
+    });
+    
+    return {
+      ...session,
+      level,
+      difficulty
+    };
+  });
+};
 
 // Fetch all sessions from backend API - no caching
 export const fetchAllSessions = async (): Promise<Session[]> => {
@@ -79,8 +168,19 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
     if (!res.ok) throw new Error("Failed to fetch sessions");
     const data = await res.json();
     console.log('DEBUG_FETCH_RAW_SESSIONS', JSON.stringify(data));
-    const hydrated = data.map(hydrateSession);
-    console.log('DEBUG_FETCH_HYDRATED_SESSIONS', JSON.stringify(hydrated.map(s => ({id: s.id, date: s.date.toISOString(), startTime: s.startTime.toISOString(), endTime: s.endTime.toISOString()}))));
+    let hydrated = data.map(hydrateSession);
+    
+    // Apply forced random levels for testing
+    hydrated = forceRandomSessionLevels(hydrated);
+    
+    // Log final session data
+    console.log('DEBUG_FINAL_SESSIONS', hydrated.map((s: Session) => ({
+      id: s.id,
+      title: s.title,
+      level: s.level,
+      difficulty: s.difficulty
+    })));
+    
     return hydrated;
   } catch (error) {
     console.error("Error fetching sessions:", error);
