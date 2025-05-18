@@ -3,8 +3,9 @@
 import { Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { type Session, formatSessionTime, isSessionPast, isSessionActive } from "@/lib/data"
+import { type Session, formatSessionTime, isSessionPast, isSessionActive, mapApiSpeakerToUiSpeaker } from "@/lib/data"
 import { SessionStatus } from "@/components/session-status"
+import { useSpeakers } from "@/hooks/use-speakers"
 
 interface SessionCardProps {
   session: Session
@@ -13,6 +14,7 @@ interface SessionCardProps {
 }
 
 export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardProps) {
+  const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers();
   const getLevelBgColor = () => {
     switch (session.levelColor) {
       case "green":
@@ -72,12 +74,18 @@ export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardP
             </div>
           ) : (
             <div className="flex -space-x-2">
-              {session.speakers.map((speaker, i) => (
-                <Avatar key={i} className="h-6 w-6 border border-[#161b22]">
-                  <AvatarImage src={speaker.image} alt={speaker.name} />
-                  <AvatarFallback>{speaker.name[0]}</AvatarFallback>
-                </Avatar>
-              ))}
+              {session.speakers.map((speaker, i) => {
+                // Try to find the speaker in our API data
+                const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
+                const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image;
+                
+                return (
+                  <Avatar key={i} className="h-6 w-6 border border-[#161b22]">
+                    <AvatarImage src={speakerImage} alt={speaker.name} />
+                    <AvatarFallback>{speaker.name[0]}</AvatarFallback>
+                  </Avatar>
+                );
+              })}
             </div>
           )}
           <span className="ml-2 text-sm text-gray-400">

@@ -1,4 +1,5 @@
 import { format, addDays, isBefore, isAfter, isSameDay } from "date-fns"
+import { Speaker as ApiSpeaker } from "@/hooks/use-speakers"
 
 // Create conference dates (3 days)
 // Set conference days to match the actual event dates (as in backend session data)
@@ -19,6 +20,15 @@ export interface Speaker {
   title?: string
   isMultiple?: boolean
 }
+
+// Map API speaker to UI speaker format
+export const mapApiSpeakerToUiSpeaker = (apiSpeaker: ApiSpeaker): Speaker => {
+  return {
+    name: apiSpeaker.name,
+    image: apiSpeaker.photo,
+    title: apiSpeaker.org
+  };
+};
 
 export interface Session {
   id: string

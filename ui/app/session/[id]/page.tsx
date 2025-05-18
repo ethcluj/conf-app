@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { getSessionById, formatSessionDateTime, type Session } from "@/lib/data"
 import { ScrollHideHeader } from "@/components/scroll-hide-header"
+import { useSpeakers } from "@/hooks/use-speakers"
 
 export default function SessionDetails() {
   // Use the useParams hook to get the id parameter safely
@@ -17,6 +18,9 @@ export default function SessionDetails() {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
+  
+  // Get speakers data from API
+  const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers()
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -119,7 +123,12 @@ export default function SessionDetails() {
                   !speaker.isMultiple && (
                     <div key={index} className="flex flex-col items-center">
                       <Avatar className="mb-2 h-16 w-16">
-                        <AvatarImage src={speaker.image.replace("40&width=40", "64&width=64")} alt={speaker.name} />
+                        {/* Try to find the speaker in our API data */}
+                        {(() => {
+                          const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
+                          const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image.replace("40&width=40", "64&width=64");
+                          return <AvatarImage src={speakerImage} alt={speaker.name} />;
+                        })()}
                         <AvatarFallback>{speaker.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium">{speaker.name}</span>
