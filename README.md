@@ -1,92 +1,90 @@
-# Value Editor Application
+# Conference App
 
-A full-stack application that allows users to view and edit a stored value. The application consists of a React frontend, Node.js backend, and PostgreSQL database, all orchestrated with Docker Compose.
+The official ETHCluj conference application with frontend, backend, and UI components.
 
-## Features
+## Docker Compose Setup
 
-- View stored value
-- Edit value through an interactive interface
-- Persistent storage in PostgreSQL
-- Load balanced with Nginx
-- Containerized with Docker
+### Prerequisites
+- Docker and Docker Compose installed
 
-## Prerequisites
-
-- Docker
-- Docker Compose
-
-## Project Structure
-
-```
-.
-├── frontend/           # React frontend application
-├── backend/           # Node.js backend API
-├── nginx/             # Nginx configuration
-├── docker-compose.yml # Docker Compose configuration
-└── README.md          # This file
-```
-
-## Getting Started
-
-1. Clone the repository:
+### Running the Application
+1. Start all services:
    ```bash
-   git clone <repository-url>
-   cd conf-app
+   docker-compose up
    ```
 
-2. Start the application:
+2. Access the application:
+   - UI: http://localhost:8080
+   - Backend API: http://localhost:8080/api
+
+3. Stop all services:
+   ```bash
+   docker-compose down
+   ```
+
+4. Rebuild containers after changes:
    ```bash
    docker-compose up --build
    ```
 
-3. Access the application:
-   - Frontend: http://localhost
-   - Backend API: http://localhost/api
-   - Nginx: http://localhost
-
-## Testing
-
-### Frontend Tests
-```bash
-docker-compose exec frontend npm test
-```
-
-### Backend Tests
-```bash
-docker-compose exec backend npm test
-```
-
-### API Testing
-You can test the API endpoints using curl or any API testing tool:
-
-1. Get the current value:
+5. View logs:
    ```bash
-   curl http://localhost/api/value
+   docker-compose logs -f [service_name]
    ```
 
-2. Update the value:
+## Development Mode
+
+### Backend Development
+1. Navigate to backend directory:
    ```bash
-   curl -X PUT http://localhost/api/value \
-     -H "Content-Type: application/json" \
-     -d '{"value": "new value"}'
+   cd backend
    ```
 
-## Development
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-The application is set up for development with hot-reloading:
+3. Create `.env` file with required environment variables:
+   ```
+   DATA_SOURCE=google-sheet
+   GOOGLE_SHEET_ID=your_sheet_id
+   GOOGLE_SHEET_NAME=APP
+   GOOGLE_SPEAKERS_SHEET_NAME=Speakers
+   GOOGLE_API_KEY=your_api_key
+   ```
 
-- Frontend changes will automatically reload
-- Backend changes will automatically restart
-- Database changes require container restart
+4. Run in development mode:
+   ```bash
+   npm run dev
+   ```
 
-## Stopping the Application
+### UI Development (New Interface)
+1. Navigate to UI directory:
+   ```bash
+   cd ui
+   ```
 
-To stop the application:
-```bash
-docker-compose down
-```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-To stop and remove all data (including the database):
-```bash
-docker-compose down -v
-```
+3. Run in development mode:
+   ```bash
+   npm run dev
+   ```
+
+4. Access at http://localhost:3000
+
+## Architecture
+
+The application consists of:
+- **Backend**: Node.js/Express API server
+- **UI**: Next.js-based modern interface
+- **Nginx**: Reverse proxy that routes requests to appropriate services
+- **Database**: PostgreSQL database
+
+## Environment Configuration
+
+See docker-compose.yml for all environment variables used by each service.

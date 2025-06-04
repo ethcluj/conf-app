@@ -3,6 +3,7 @@
 ## [DONE] Schedule
 ### [DONE] Session Cards
 - Bug: Descriptions with newlines are truncated.
+- Bug: Time displayed in UTC. Must display in EEST (no matter the timezone of the user).
 ### "Break" slots (e.g. Lunch, Coffee)
 
 ## Session details
