@@ -1,6 +1,6 @@
 # Conference App
 
-The official ETHCluj conference application with frontend, backend, and UI components.
+The official ETHCluj conference application with backend and UI components.
 
 ## Docker Compose Setup
 
