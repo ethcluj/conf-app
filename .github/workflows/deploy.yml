@@ -29,6 +29,19 @@ jobs:
         npm ci
         npm run build
         
+    - name: Debug SSH connection
+      run: |
+        echo "Checking SSH connection..."
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        echo "Extracting public key..."
+        ssh-keygen -y -f ~/.ssh/id_ed25519 || echo "Failed to extract public key"
+        echo "VPS_HOST: ${{ secrets.VPS_HOST }}"
+        echo "VPS_USERNAME: ${{ secrets.VPS_USERNAME }}"
+        echo "Testing SSH connection with verbose output..."
+        ssh -v -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "echo Connection successful" || echo "SSH connection failed"
+        
     - name: Deploy to VPS
       uses: appleboy/ssh-action@master
       with:
