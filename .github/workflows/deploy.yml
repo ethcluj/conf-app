@@ -55,9 +55,39 @@ jobs:
           # Deploy with Docker Compose
           docker-compose -f docker-compose.prod.yml down
           docker-compose -f docker-compose.prod.yml build --no-cache
+          
+          # Debug: Check if docker-compose.prod.yml exists
+          ls -la
+          echo "Content of docker-compose.prod.yml:"
+          cat docker-compose.prod.yml
+          
+          # Start containers in debug mode
           docker-compose -f docker-compose.prod.yml up -d
+          
+          # Wait a bit for containers to start
+          sleep 10
+          
+          # Debug: Check container status
+          echo "Container status:"
+          docker-compose -f docker-compose.prod.yml ps
+          
+          # Debug: Check backend logs
+          echo "Backend logs:"
+          docker-compose -f docker-compose.prod.yml logs backend
+          
+          # Debug: Check backend environment variables
+          echo "Backend environment variables:"
+          docker-compose -f docker-compose.prod.yml exec -T backend env || echo "Failed to get backend env"
+          
+          # Debug: Check if backend is running
+          echo "Backend process status:"
+          docker-compose -f docker-compose.prod.yml exec -T backend ps aux || echo "Failed to check processes"
+          
+          # Debug: Check network connectivity
+          echo "Network connectivity to database:"
+          docker-compose -f docker-compose.prod.yml exec -T backend ping -c 2 db || echo "Failed to ping database"
           
           # Test deployment
           echo "Testing backend API endpoints..."
-          curl -s http://localhost/api/value
-          curl -s -I http://localhost/ | grep "HTTP"
+          curl -s http://localhost/api/value || echo "Failed to reach backend API"
+          curl -s -I http://localhost/ | grep "HTTP" || echo "Failed to reach frontend"
