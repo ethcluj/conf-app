@@ -20,8 +20,8 @@ jobs:
     - name: Install dependencies and build UI
       run: |
         cd ui
-        yarn install --frozen-lockfile
-        yarn build
+        npm ci
+        npm run build
         
     - name: Install dependencies and build Backend
       run: |
