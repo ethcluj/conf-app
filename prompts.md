@@ -6,6 +6,13 @@
 - Bug: Time displayed in UTC. Must display in EEST (no matter the timezone of the user).
 ### "Break" slots (e.g. Lunch, Coffee)
 
+
+### Time awareness
+Mark current slot (red dot next to stage name)
+Auto scroll to current slot (upon reload only?)
+Update the current day marker. 
+Auto switch to current date upon reload.
+
 ## Session details
 ### Session difficulty
 Make the following changes in the sessions API on the backend:
