@@ -11,7 +11,6 @@ module.exports = {
     '!**/node_modules/**',
     '!**/dist/**'
   ],
-  // Coverage thresholds removed to prevent test failures based on coverage
-  // Tests will still collect coverage information but won't fail if thresholds aren't met
+  // No coverage thresholds to prevent test failures based on coverage metrics
   verbose: true,
 };
