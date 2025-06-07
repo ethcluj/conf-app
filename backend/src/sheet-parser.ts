@@ -12,14 +12,8 @@ export interface RawScheduleRow {
   notes: string;
 }
 
-// Map stage names from the CSV to the ones used in the application
-export const stageMapping: Record<string, string> = {
-  'Main': 'Main Stage',
-  'Tech': 'Dev Stage',
-  'Biz': 'Biz Stage',
-  'Work': 'Workshop',
-  'NA': 'NA' // For breaks, etc.
-};
+// No stage mapping - using raw values from Google Sheet
+// Valid stage values: 'Main', 'Tech', 'Biz', 'Work', 'NA'
 
 // Map session types to session levels
 export const typeToLevelMapping: Record<string, SessionLevel> = {
