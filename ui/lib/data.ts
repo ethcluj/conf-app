@@ -311,7 +311,21 @@ export const getSessionById = async (id: string): Promise<Session | undefined> =
 }
 
 // Map stage codes to full stage names with floor information
-export const getFullStageName = (stageCode: string): string => {
+export const getFullStageName = (stageCode: string, sessionTitle?: string): string => {
+  // Special handling for break sessions (NA stage) based on title
+  if (stageCode === 'NA' && sessionTitle) {
+    const normalizedTitle = sessionTitle.toLowerCase().trim();
+    
+    if (normalizedTitle.includes('doors open')) {
+      return 'Check-in Desk (ground floor)';
+    } else if (normalizedTitle.includes('coffee')) {
+      return 'Sponsors area (ground floor)';
+    } else if (normalizedTitle.includes('lunch')) {
+      return 'Cafeteria (first floor)';
+    }
+  }
+  
+  // Default stage names
   switch (stageCode) {
     case 'Main':
       return 'Main Stage (3rd floor)';

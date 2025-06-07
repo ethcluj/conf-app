@@ -129,7 +129,7 @@ export default function SessionDetails() {
                 <Clock className="mr-2 h-4 w-4" />
                 <span className="mr-4">{formatSessionDateTime(session)}</span>
                 <MapPin className="mr-2 h-4 w-4" />
-                <span>{getFullStageName(session.stage)}</span>
+                <span>{getFullStageName(session.stage, session.title)}</span>
               </div>  
               {/* Break Session Details */}
               <BreakSessionDetails session={session} />
@@ -172,7 +172,7 @@ export default function SessionDetails() {
             </div>
             <div className="flex items-center text-gray-400">
               <MapPin className="mr-2 h-4 w-4" />
-              <span className="text-sm">{getFullStageName(session.stage)}</span>
+              <span className="text-sm">{getFullStageName(session.stage, session.title)}</span>
             </div>
           </div>
 

@@ -1,8 +1,8 @@
 "use client"
 
-import { Clock } from "lucide-react"
+import { Clock, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { type Session, formatSessionTime, isSessionPast, isSessionActive } from "@/lib/data"
+import { type Session, formatSessionTime, isSessionPast, isSessionActive, getFullStageName } from "@/lib/data"
 
 interface BreakSessionCardProps {
   session: Session
@@ -28,6 +28,11 @@ export function BreakSessionCard({ session, onClick }: BreakSessionCardProps) {
       </div>
       
       <h3 className="text-lg font-medium text-center">{session.title}</h3>
+      
+      <div className="flex items-center justify-center mt-2">
+        <MapPin className="h-4 w-4 mr-1 text-gray-400" />
+        <div className="text-sm text-gray-400">{getFullStageName(session.stage, session.title)}</div>
+      </div>
     </div>
   )
 }
