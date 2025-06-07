@@ -53,13 +53,25 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
         script: |
+          # Source profile to ensure PATH is set correctly
+          source ~/.profile
+          source ~/.bashrc
+          
+          # Ensure NVM is available
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
           cd /opt/conf-app
           
           # Pull latest code
           git pull
           
+          # Use Node.js v18
+          nvm use 18 || nvm install 18
+          
           # Install and build UI
           cd ui
+          npm install -g yarn
           yarn install --frozen-lockfile
           yarn build
           
@@ -76,5 +88,8 @@ jobs:
             # or use GitHub secrets to populate them
           fi
           
-          # Restart the application (assuming PM2 is used)
+          # Install PM2 if not available
+          npm list -g pm2 || npm install -g pm2
+          
+          # Restart the application
           pm2 restart conf-app-backend || pm2 start npm --name "conf-app-backend" -- start
