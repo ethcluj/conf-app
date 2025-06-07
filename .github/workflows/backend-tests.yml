@@ -9,10 +9,19 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**'
+  # Add workflow_call trigger so it can be called by other workflows
+  workflow_call:
+    outputs:
+      status:
+        description: "Status of the backend tests"
+        value: ${{ jobs.test.outputs.status }}
 
 jobs:
   test:
+    name: Run Backend Tests
     runs-on: ubuntu-latest
+    outputs:
+      status: ${{ job.status }}
 
     defaults:
       run:
