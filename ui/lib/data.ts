@@ -310,3 +310,45 @@ export const getSessionById = async (id: string): Promise<Session | undefined> =
   return sessions.find((session) => session.id === id);
 }
 
+// Map stage codes to full stage names with floor information
+export const getFullStageName = (stageCode: string, sessionTitle?: string): string => {
+  // Special handling for break sessions (NA stage) based on title
+  if (stageCode === 'NA' && sessionTitle) {
+    const normalizedTitle = sessionTitle.toLowerCase().trim();
+    
+    if (normalizedTitle.includes('doors open')) {
+      return 'Check-in Desk (ground floor)';
+    } else if (normalizedTitle.includes('coffee')) {
+      return 'Sponsors area (ground floor)';
+    } else if (normalizedTitle.includes('lunch')) {
+      return 'Cafeteria (1st floor)';
+    }
+  }
+  
+  // Default stage names
+  switch (stageCode) {
+    case 'Main':
+      return 'Main Stage (3rd floor)';
+    case 'Tech':
+      return 'Tech Stage (1st floor)';
+    case 'Biz':
+      return 'Business Room (3rd floor)';
+    case 'Work':
+      return 'Workshop Room (3rd floor)';
+    case 'NA':
+      return 'All Stages';
+    default:
+      return stageCode;
+  }
+}
+
+// Map stage codes to display names for the filter menu
+export const getStageDisplayName = (stageCode: string): string => {
+  switch (stageCode) {
+    case 'Work':
+      return 'Workshop';
+    default:
+      return stageCode;
+  }
+}
+

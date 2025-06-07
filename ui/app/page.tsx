@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { allSessions, conferenceDays, getSessionsByDay, isSessionActive, isToday, fetchAllSessions } from "@/lib/data"
+import { allSessions, conferenceDays, getSessionsByDay, isSessionActive, isToday, fetchAllSessions, getStageDisplayName } from "@/lib/data"
 import { DateSelector } from "@/components/date-selector"
 import { TimeIndicator } from "@/components/time-indicator"
 import { SessionCard } from "@/components/session-card"
@@ -134,7 +134,7 @@ export default function ConferenceSchedule() {
                   )}
                   onClick={() => setActiveTab(tab)}
                 >
-                  {tab}
+                  {tab === "All" ? tab : getStageDisplayName(tab)}
                 </button>
               ))}
             </div>

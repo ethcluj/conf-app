@@ -3,7 +3,7 @@
 import { Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { type Session, formatSessionTime, isSessionPast, isSessionActive, mapApiSpeakerToUiSpeaker } from "@/lib/data"
+import { type Session, formatSessionTime, isSessionPast, isSessionActive, mapApiSpeakerToUiSpeaker, getFullStageName } from "@/lib/data"
 import { SessionStatus } from "@/components/session-status"
 import { useSpeakers } from "@/hooks/use-speakers"
 
@@ -75,7 +75,7 @@ export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardP
 
       <div className="flex justify-between mb-1">
         <div className="text-sm font-medium text-red-500 flex items-center">
-          {session.stage}
+          {getFullStageName(session.stage, session.title)}
           {isActive && <span className="ml-2 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
         </div>
         <SessionStatus session={session} />
