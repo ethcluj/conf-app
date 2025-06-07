@@ -1,21 +1,38 @@
 import { Session, Speaker, SessionLevel, SessionTrack, SessionLevelColor } from './sessions';
 
+/**
+ * Represents a row from the Google Sheet containing schedule data
+ * 
+ * This interface maps directly to the columns in the Google Sheet.
+ * Each property corresponds to a specific column in the sheet.
+ */
 export interface RawScheduleRow {
+  /** Time slot in format "DD Month HH:MM" (e.g., "26 June 13:00") */
   timeSlot: string;
+  /** Whether this session should be visible in the app */
   visible: boolean;
+  /** Stage where the session takes place ('Main', 'Tech', 'Biz', 'Work', 'NA') */
   stage: string;
+  /** Session title */
   title: string;
+  /** Semicolon-separated list of speaker names */
   speakers: string;
+  /** Session description */
   description: string;
+  /** Session type (e.g., 'Keynote', 'Panel', 'Workshop') */
   type: string;
+  /** Session track (e.g., 'Builders Onboarding', 'Ethereum Roadmap') */
   track: string;
+  /** Additional notes */
   notes: string;
 }
 
-// No stage mapping - using raw values from Google Sheet
-// Valid stage values: 'Main', 'Tech', 'Biz', 'Work', 'NA'
-
-// Map session types to session levels
+/**
+ * Map of session types to session levels
+ * 
+ * As per our standardization, we use raw values from the Google Sheet
+ * without transformation. Valid stage values: 'Main', 'Tech', 'Biz', 'Work', 'NA'
+ */
 export const typeToLevelMapping: Record<string, SessionLevel> = {
   'Keynote': 'For everyone',
   'Panel': 'Beginner',
@@ -23,7 +40,12 @@ export const typeToLevelMapping: Record<string, SessionLevel> = {
   'NA': 'For everyone'
 };
 
-// Map tracks from CSV to the application's SessionTrack type
+/**
+ * Map of tracks from CSV to the application's SessionTrack type
+ * 
+ * This mapping converts the track names in the Google Sheet to
+ * the standardized SessionTrack type used in the application.
+ */
 export const trackMapping: Record<string, SessionTrack | undefined> = {
   'Builders Onboarding': 'Development',
   'Ethereum Roadmap': 'Ethereum Roadmap',
@@ -34,52 +56,99 @@ export const trackMapping: Record<string, SessionTrack | undefined> = {
   'NA': undefined
 };
 
-// This function has been removed as we're only using Google Sheets API now
-
-// Process multiple speakers from a semicolon-separated string
+/**
+ * Process multiple speakers from a semicolon-separated string
+ * 
+ * Parses a string containing semicolon-separated speaker names and
+ * converts it into an array of Speaker objects with placeholder images.
+ * 
+ * @param speakersString Semicolon-separated list of speaker names
+ * @returns Array of Speaker objects
+ */
 export function processSpeakers(speakersString: string): Speaker[] {
-  if (!speakersString) return [];
-  
-  const speakerNames = speakersString.split(';').map(s => s.trim()).filter(Boolean);
-  
-  if (speakerNames.length === 0) return [];
-  
-  if (speakerNames.length === 1) {
-    return [{
-      name: speakerNames[0],
-      image: '/placeholder.svg?height=40&width=40'
-    }];
+  if (!speakersString || typeof speakersString !== 'string') {
+    return [];
   }
   
-  // Multiple speakers
-  return speakerNames.map(name => ({
-    name,
-    image: '/placeholder.svg?height=40&width=40'
-  }));
+  try {
+    // Split by semicolon, trim whitespace, and filter out empty strings
+    const speakerNames = speakersString.split(';')
+      .map(s => s.trim())
+      .filter(Boolean);
+    
+    if (speakerNames.length === 0) {
+      return [];
+    }
+    
+    // Create Speaker objects with placeholder images
+    return speakerNames.map(name => ({
+      name,
+      image: '/placeholder.svg?height=40&width=40'
+    }));
+  } catch (error) {
+    console.error('Error processing speakers string:', error);
+    return [];
+  }
 }
 
-// Map session type to difficulty level
+/**
+ * Map session type to difficulty level
+ * 
+ * Converts a session type string to a numeric difficulty level:
+ * 1 = Beginner, 2 = Intermediate, 3 = Advanced
+ * 
+ * @param type Session type from the Google Sheet
+ * @returns Numeric difficulty level (1-3)
+ */
 export function mapTypeToDifficulty(type: string): number {
-  switch (type) {
+  if (!type || typeof type !== 'string') {
+    return 1; // Default to beginner level
+  }
+  
+  const normalizedType = type.trim();
+  
+  switch (normalizedType) {
     case 'Keynote': return 1;
     case 'Panel': return 2;
     case 'Workshop': return 3;
-    default: return 1;
+    default: return 1; // Default to beginner level
   }
 }
 
-// Determine level color based on session level
+/**
+ * Determine level color based on session level
+ * 
+ * Maps a SessionLevel to a corresponding color for UI display.
+ * 
+ * @param level Session level
+ * @returns Color string for the session level
+ */
 export function getLevelColor(level: SessionLevel): SessionLevelColor {
+  if (!level) {
+    return 'green'; // Default color
+  }
+  
   switch (level) {
     case 'For everyone': return 'green';
     case 'Beginner': return 'blue';
     case 'Intermediate': return 'orange';
     case 'Advanced': return 'red';
-    default: return 'green';
+    default: return 'green'; // Default color
   }
 }
 
-// Ensure a string is a valid SessionTrack or return undefined
+/**
+ * Ensure a string is a valid SessionTrack or return undefined
+ * 
+ * Maps a track string from the Google Sheet to a standardized SessionTrack.
+ * 
+ * @param track Track string from the Google Sheet
+ * @returns Mapped SessionTrack or undefined if no mapping exists
+ */
 export function validateSessionTrack(track: string): SessionTrack | undefined {
-  return trackMapping[track];
+  if (!track || typeof track !== 'string') {
+    return undefined;
+  }
+  
+  return trackMapping[track.trim()];
 }
