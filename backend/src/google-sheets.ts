@@ -71,6 +71,7 @@ export async function fetchFromGoogleSheet(config: GoogleSheetsConfig): Promise<
  */
 export function validateGoogleSheetsConfig(config: any): config is GoogleSheetsConfig {
   return (
+    config !== null &&
     typeof config === 'object' &&
     typeof config.spreadsheetId === 'string' &&
     config.spreadsheetId.length > 0 &&

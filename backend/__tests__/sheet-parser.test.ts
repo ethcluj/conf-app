@@ -1,0 +1,86 @@
+import { 
+  processSpeakers, 
+  mapTypeToDifficulty, 
+  getLevelColor,
+  validateSessionTrack,
+  typeToLevelMapping
+} from '../src/sheet-parser';
+import { SessionLevel } from '../src/sessions';
+
+describe('Sheet Parser Module', () => {
+  describe('processSpeakers', () => {
+    it('should return an empty array for empty input', () => {
+      expect(processSpeakers('')).toEqual([]);
+      expect(processSpeakers(undefined as any)).toEqual([]);
+    });
+
+    it('should process a single speaker correctly', () => {
+      const result = processSpeakers('John Doe');
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('John Doe');
+      expect(result[0].image).toBe('/placeholder.svg?height=40&width=40');
+    });
+
+    it('should process multiple speakers correctly', () => {
+      const result = processSpeakers('John Doe; Jane Smith;Alice Johnson');
+      expect(result).toHaveLength(3);
+      expect(result[0].name).toBe('John Doe');
+      expect(result[1].name).toBe('Jane Smith');
+      expect(result[2].name).toBe('Alice Johnson');
+    });
+
+    it('should handle whitespace in speaker names', () => {
+      const result = processSpeakers('  John Doe  ;  Jane Smith  ');
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('John Doe');
+      expect(result[1].name).toBe('Jane Smith');
+    });
+  });
+
+  describe('mapTypeToDifficulty', () => {
+    it('should map known types to correct difficulty levels', () => {
+      expect(mapTypeToDifficulty('Keynote')).toBe(1);
+      expect(mapTypeToDifficulty('Panel')).toBe(2);
+      expect(mapTypeToDifficulty('Workshop')).toBe(3);
+    });
+
+    it('should default to difficulty level 1 for unknown types', () => {
+      expect(mapTypeToDifficulty('Unknown')).toBe(1);
+      expect(mapTypeToDifficulty('')).toBe(1);
+    });
+  });
+
+  describe('getLevelColor', () => {
+    it('should return correct color for each session level', () => {
+      expect(getLevelColor('For everyone')).toBe('green');
+      expect(getLevelColor('Beginner')).toBe('blue');
+      expect(getLevelColor('Intermediate')).toBe('orange');
+      expect(getLevelColor('Advanced')).toBe('red');
+    });
+
+    it('should default to green for unknown levels', () => {
+      expect(getLevelColor('Unknown' as SessionLevel)).toBe('green');
+    });
+  });
+
+  describe('validateSessionTrack', () => {
+    it('should return correct track for valid inputs', () => {
+      expect(validateSessionTrack('Ethereum Roadmap')).toBe('Ethereum Roadmap');
+      expect(validateSessionTrack('DeFi')).toBe('DeFi');
+    });
+
+    it('should return undefined for invalid tracks', () => {
+      expect(validateSessionTrack('Invalid Track')).toBeUndefined();
+      expect(validateSessionTrack('')).toBeUndefined();
+    });
+  });
+
+  describe('typeToLevelMapping', () => {
+    it('should have correct mappings', () => {
+      expect(typeToLevelMapping['Keynote']).toBe('For everyone');
+      expect(typeToLevelMapping['Panel']).toBe('Beginner');
+      expect(typeToLevelMapping['Workshop']).toBe('Intermediate');
+      expect(typeToLevelMapping['NA']).toBe('For everyone');
+    });
+  });
+});

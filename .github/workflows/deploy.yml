@@ -5,23 +5,40 @@ on:
     branches: [ main ]
 
 jobs:
+  # Call the backend tests workflow first
+  test:
+    name: Run Backend Tests
+    uses: ./.github/workflows/backend-tests.yml
+
   deploy:
+    name: Deploy Application
     runs-on: ubuntu-latest
+    # Make deployment dependent on tests passing
+    needs: test
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
       
-    - name: Set up Node.js
+    - name: Set up Node.js for UI
       uses: actions/setup-node@v3
       with:
         node-version: '18'
+        cache: 'yarn'
+        cache-dependency-path: ui/yarn.lock
         
     - name: Install dependencies and build UI
       run: |
         cd ui
         yarn install --frozen-lockfile
         yarn build
+    
+    - name: Set up Node.js for Backend
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
         
     - name: Install dependencies and build Backend
       run: |
@@ -29,7 +46,6 @@ jobs:
         npm ci
         npm run build
         
-
     - name: Deploy to VPS
       uses: appleboy/ssh-action@master
       with:
@@ -42,52 +58,23 @@ jobs:
           # Pull latest code
           git pull
           
-          # Create .env file
-          cat > .env << EOF
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}
-          GOOGLE_SHEET_NAME=${{ secrets.GOOGLE_SHEET_NAME }}
-          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
-          GOOGLE_SPEAKERS_SHEET_NAME=${{ secrets.GOOGLE_SPEAKERS_SHEET_NAME }}
-          DATA_SOURCE=google-sheet
-          EOF
+          # Install and build UI
+          cd ui
+          yarn install --frozen-lockfile
+          yarn build
           
-          # Deploy with Docker Compose
-          docker-compose -f docker-compose.prod.yml down
-          docker-compose -f docker-compose.prod.yml build --no-cache
+          # Install and build backend
+          cd ../backend
+          npm ci
+          npm run build
           
-          # Debug: Check if docker-compose.prod.yml exists
-          ls -la
-          echo "Content of docker-compose.prod.yml:"
-          cat docker-compose.prod.yml
+          # Set up environment variables if not already done
+          if [ ! -f .env ]; then
+            echo "Creating .env file"
+            cp .env.example .env
+            # You would need to manually set these values on the server
+            # or use GitHub secrets to populate them
+          fi
           
-          # Start containers in debug mode
-          docker-compose -f docker-compose.prod.yml up -d
-          
-          # Wait a bit for containers to start
-          sleep 10
-          
-          # Debug: Check container status
-          echo "Container status:"
-          docker-compose -f docker-compose.prod.yml ps
-          
-          # Debug: Check backend logs
-          echo "Backend logs:"
-          docker-compose -f docker-compose.prod.yml logs backend
-          
-          # Debug: Check backend environment variables
-          echo "Backend environment variables:"
-          docker-compose -f docker-compose.prod.yml exec -T backend env || echo "Failed to get backend env"
-          
-          # Debug: Check if backend is running
-          echo "Backend process status:"
-          docker-compose -f docker-compose.prod.yml exec -T backend ps aux || echo "Failed to check processes"
-          
-          # Debug: Check network connectivity
-          echo "Network connectivity to database:"
-          docker-compose -f docker-compose.prod.yml exec -T backend ping -c 2 db || echo "Failed to ping database"
-          
-          # Test deployment
-          echo "Testing backend API endpoints..."
-          curl -s http://localhost/api/value || echo "Failed to reach backend API"
-          curl -s -I http://localhost/ | grep "HTTP" || echo "Failed to reach frontend"
+          # Restart the application (assuming PM2 is used)
+          pm2 restart conf-app-backend || pm2 start npm --name "conf-app-backend" -- start

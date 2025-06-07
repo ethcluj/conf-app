@@ -1,0 +1,49 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  # Add workflow_call trigger so it can be called by other workflows
+  workflow_call:
+    outputs:
+      status:
+        description: "Status of the backend tests"
+        value: ${{ jobs.test.outputs.status }}
+
+jobs:
+  test:
+    name: Run Backend Tests
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ job.status }}
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests
+      run: npm test
+      env:
+        GOOGLE_SHEET_ID: test-sheet-id
+        GOOGLE_API_KEY: test-api-key
+        GOOGLE_SHEET_NAME: test-sheet-name
+        GOOGLE_SPEAKERS_SHEET_NAME: test-speakers-sheet
