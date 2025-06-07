@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { getSessionById, formatSessionDateTime, type Session } from "@/lib/data"
 import { ScrollHideHeader } from "@/components/scroll-hide-header"
 import { useSpeakers } from "@/hooks/use-speakers"
+import { BreakSessionDetails } from "@/components/break-session-details"
 
 export default function SessionDetails() {
   // Use the useParams hook to get the id parameter safely
@@ -102,6 +103,42 @@ export default function SessionDetails() {
   
   const difficultyLabel = getDifficultyLabel(difficultyDots)
 
+  // Check if this is a break session (stage is NA)
+  const isBreakSession = session.stage === 'NA';
+  
+  if (isBreakSession) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] text-white pb-20">
+        <ScrollHideHeader>
+          <div className="container mx-auto max-w-md px-4 py-4">
+            <div className="flex items-center">
+              <Link href="/" className="mr-4">
+                <ArrowLeft className="h-6 w-6" />
+              </Link>
+              <h1 className="text-xl font-bold">{session.title}</h1>
+            </div>
+          </div>
+        </ScrollHideHeader>
+
+        <div className="container mx-auto max-w-md px-4 pb-6">
+          {/* Content with padding to account for fixed header */}
+          <div className="pt-24">
+            {/* Date and Time */}
+            <div className="mb-8">
+              <div className="flex items-center text-gray-400">
+                <Clock className="mr-2 h-4 w-4" />
+                <span className="text-sm">{formatSessionDateTime(session)}</span>
+              </div>
+            </div>
+            
+            {/* Break Session Details */}
+            <BreakSessionDetails session={session} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0d1117] text-white pb-20">
       <ScrollHideHeader>
@@ -112,8 +149,8 @@ export default function SessionDetails() {
                 <ArrowLeft className="h-6 w-6" />
               </Link>
               <div>
-                <h1 className="text-lg font-bold">ETHCluj 2025</h1>
-                <p className="text-sm text-gray-400">Starting in 23 minutes</p>
+                <h1 className="text-lg font-bold">{session.title}</h1>
+                <p className="text-xs text-gray-400">{session.track || "General"}</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFavorite}>
@@ -170,7 +207,7 @@ export default function SessionDetails() {
                       <span className="text-sm font-medium">{speaker.name}</span>
                       {speaker.title && <span className="text-xs text-gray-400">{speaker.title}</span>}
                     </div>
-                  ),
+                  )
               )}
               {session.speakers.some((speaker) => speaker.isMultiple) && (
                 <div className="flex flex-col items-center">
@@ -240,4 +277,3 @@ export default function SessionDetails() {
     </div>
   )
 }
-

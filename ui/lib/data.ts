@@ -71,7 +71,8 @@ const getRandomDifficulty = (): SessionDifficulty => {
   return difficulty;
 };
 
-// Helper function to hydrate session objects from API (convert date strings to Date objects)
+// Helper function to hydrate session objects from API
+// Note: We treat API times as local times, ignoring timezone information
 const hydrateSession = (session: any): Session => {
   // DEBUG: Log original session data
   console.log('DEBUG_SESSION_BEFORE_HYDRATION', {
@@ -110,11 +111,30 @@ const hydrateSession = (session: any): Session => {
     source: difficultySource
   });
   
+  // Parse dates treating them as local time
+  // This ignores the timezone part of the ISO string
+  const parseLocalTime = (dateStr: string) => {
+    // Extract date parts from the ISO string, ignoring timezone
+    const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (!match) return new Date(dateStr); // Fallback to standard parsing
+    
+    const [_, year, month, day, hours, minutes, seconds] = match;
+    // Create date using local time components
+    return new Date(
+      parseInt(year), 
+      parseInt(month) - 1, // Month is 0-indexed in JS Date
+      parseInt(day),
+      parseInt(hours),
+      parseInt(minutes),
+      parseInt(seconds)
+    );
+  };
+  
   return {
     ...session,
-    date: new Date(session.date),
-    startTime: new Date(session.startTime),
-    endTime: new Date(session.endTime),
+    date: parseLocalTime(session.date),
+    startTime: parseLocalTime(session.startTime),
+    endTime: parseLocalTime(session.endTime),
     difficulty: sessionDifficulty,
   };
 }
@@ -264,11 +284,17 @@ export const isSessionPast = (session: Session): boolean => {
 }
 
 export const formatSessionTime = (session: Session): string => {
-  return `${format(session.startTime, "HH:mm")} - ${format(session.endTime, "HH:mm")}`;
+  // Format times in a.m./p.m. format with minutes, treating API times as local times
+  // Convert to lowercase for better visual appearance
+  const startTime = format(session.startTime, "h:mm a").toLowerCase();
+  const endTime = format(session.endTime, "h:mm a").toLowerCase();
+  return `${startTime} - ${endTime}`;
 }
 
 export const formatSessionDateTime = (session: Session): string => {
-  return `${format(session.date, "MMMM d, yyyy")} • ${format(session.startTime, "HH:mm")} - ${format(session.endTime, "HH:mm")}`;
+  const startTime = format(session.startTime, "h:mm a").toLowerCase();
+  const endTime = format(session.endTime, "h:mm a").toLowerCase();
+  return `${format(session.date, "MMMM d, yyyy")} • ${startTime} - ${endTime}`;
 }
 
 export const formatDayDate = (date: Date): string => {

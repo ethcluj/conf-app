@@ -20,10 +20,11 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "3001:3001"
     volumes:
+      - ./backend:/app
       - /app/node_modules
     environment:
       - DB_USER=postgres

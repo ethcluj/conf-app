@@ -7,6 +7,7 @@ import { allSessions, conferenceDays, getSessionsByDay, isSessionActive, isToday
 import { DateSelector } from "@/components/date-selector"
 import { TimeIndicator } from "@/components/time-indicator"
 import { SessionCard } from "@/components/session-card"
+import { BreakSessionCard } from "@/components/break-session-card"
 import { JumpToNow } from "@/components/jump-to-now"
 import { ScrollHideHeader } from "@/components/scroll-hide-header"
 
@@ -77,15 +78,38 @@ export default function ConferenceSchedule() {
 
   const tabs = ["All", "Main", "Dev", "Biz", "Workshop"]
 
-  // Filter sessions by category
-  const filteredSessions =
+  // Separate break sessions (NA stage) from regular sessions
+  const breakSessions = sessionsForSelectedDay.filter(session => session.stage === 'NA');
+  const regularSessions = sessionsForSelectedDay.filter(session => session.stage !== 'NA');
+  
+  // Filter regular sessions by category
+  const filteredRegularSessions =
     activeTab === "All"
-      ? sessionsForSelectedDay
-      : sessionsForSelectedDay.filter((session) => session.stage.includes(activeTab))
+      ? regularSessions
+      : regularSessions.filter((session) => session.stage.includes(activeTab));
+      
+  // Combine filtered regular sessions with break sessions (which appear in all tabs)
+  // We need to deduplicate break sessions that happen at the same time
+  const uniqueBreakSessions = breakSessions.reduce((unique, session) => {
+    // Check if we already have a break session at this time
+    const existingSessionIndex = unique.findIndex(s => 
+      s.startTime.getTime() === session.startTime.getTime() && 
+      s.endTime.getTime() === session.endTime.getTime()
+    );
+    
+    if (existingSessionIndex === -1) {
+      unique.push(session);
+    }
+    
+    return unique;
+  }, [] as typeof breakSessions);
+  
+  // Combine regular and break sessions
+  const combinedSessions = [...filteredRegularSessions, ...uniqueBreakSessions];
 
   // Sort sessions by start time
-  const sortedSessions = filteredSessions.length > 0
-    ? [...filteredSessions].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+  const sortedSessions = combinedSessions.length > 0
+    ? [...combinedSessions].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
     : []
 
   return (
@@ -119,7 +143,7 @@ export default function ConferenceSchedule() {
       </ScrollHideHeader>
 
       <div className="container mx-auto max-w-md px-4">
-        {/* Add padding to account for fixed header height */}
+        {/* Add padding to account for fixed header height - ensure no overlap */}
         <div className="pt-32">
           <TimeIndicator />
 
@@ -128,15 +152,22 @@ export default function ConferenceSchedule() {
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
             </div>
           ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-20 pt-4">
             {sortedSessions.length > 0 ? (
               sortedSessions.map((session) => (
                 <div key={session.id} ref={isSessionActive(session) ? currentSessionRef : undefined}>
-                  <SessionCard
-                    session={session}
-                    onClick={() => handleSessionClick(session.id)}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
+                  {session.stage === 'NA' ? (
+                    <BreakSessionCard
+                      session={session}
+                      onClick={() => handleSessionClick(session.id)}
+                    />
+                  ) : (
+                    <SessionCard
+                      session={session}
+                      onClick={() => handleSessionClick(session.id)}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  )}
                 </div>
               ))
             ) : (

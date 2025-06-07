@@ -1,6 +1,5 @@
 import { 
   RawScheduleRow, 
-  stageMapping, 
   typeToLevelMapping, 
   validateSessionTrack, 
   processSpeakers, 
@@ -64,18 +63,19 @@ function getMonthIndex(month: string): number {
 
 // Process the raw schedule data into session objects
 export function processSchedule(rawData: RawScheduleRow[]): Session[] {
-  // Filter out rows where visible is false or missing, or stage is 'NA' and not visible
-  // This prevents invisible breaks (Coffee, Lunch, etc.) from being included
-  // Only allow breaks (Lunch, Coffee, Break) with stage 'NA' if visible; filter out all other 'NA' stage sessions
-  const allowedBreakTitles = ['lunch', 'coffee', 'break'];
+  console.log('Starting processSchedule with', rawData.length, 'raw rows');
+  
+  // Debug: Check for Doors Open sessions in raw data
+  const doorsOpenSessions = rawData.filter(row => row.title && row.title.includes('Doors Open'));
+  console.log('Found Doors Open sessions in raw data:', doorsOpenSessions);
+  
+  // Filter out rows where visible is false or missing
+  // Treat 'NA' stage as applicable to all stages rather than filtering them out
   const filteredData = rawData.filter(row => {
-    if (!row.visible) return false;
-    if (row.stage === 'NA') {
-      const normalizedTitle = row.title.trim().toLowerCase();
-      return allowedBreakTitles.includes(normalizedTitle);
-    }
-    return true;
+    return row.visible; // Only filter by visibility, keep all visible rows including 'NA' stage
   });
+  
+  console.log('Filtered data rows:', filteredData.length);
   
   // Group consecutive slots with the same title
   const sessions: Session[] = [];
@@ -83,8 +83,14 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
   let slotCount = 0;
   let sessionId = 1;
   
+  
   for (let i = 0; i < filteredData.length; i++) {
     const row = filteredData[i];
+    
+    // Debug log for Doors Open sessions
+    if (row.title && row.title.includes('Doors Open')) {
+      console.log('Found Doors Open session:', row);
+    }
     
     // Skip completely empty slots (no title, no stage, not visible)
     if (!row.title && (row.stage === 'NA' || !row.stage) && !row.visible) {
@@ -98,14 +104,11 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
       continue;
     }
     
-    // Include breaks (NA stage but with title)
-    const isBreak = row.stage === 'NA' && row.title;
-    
     // Start a new session if:
     // 1. We don't have a current session, or
-    // 2. The current session has a different title than this row, or
-    // 3. This is a break session (always treat as individual)
-    if (!currentSession || currentSession.title !== row.title || isBreak) {
+    // 2. The current session has a different title than this row
+    // Note: We merge all consecutive sessions with the same title, regardless of stage
+    if (!currentSession || currentSession.title !== row.title) {
       // End previous session if it exists
       if (currentSession) {
         sessions.push(createSessionFromRow(currentSession, slotCount, sessionId.toString()));
@@ -137,8 +140,8 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
   // Calculate duration based on slot count
   const durationMinutes = slotCount * SLOT_DURATION;
   
-  // Map stage from CSV to application stage
-  const stage = stageMapping[row.stage] || row.stage;
+  // Use raw stage value directly from Google Sheet
+  const stage = row.stage;
   
   // Determine session level based on type
   const level: SessionLevel = typeToLevelMapping[row.type] || 'For everyone';
@@ -181,10 +184,13 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
  * @returns Array of Session objects
  */
 export async function getSessionsFromGoogleSheet(
-  spreadsheetId: string,
-  sheetName: string = 'Agenda  - APP - Visible',
+  spreadsheetId: string = process.env.GOOGLE_SHEET_ID || '',
+  sheetName: string = process.env.GOOGLE_SHEET_NAME || 'Agenda  - APP - Visible',
   apiKey?: string
 ): Promise<Session[]> {
+  console.log('Starting getSessionsFromGoogleSheet with:');
+  console.log('- Spreadsheet ID:', spreadsheetId);
+  console.log('- Sheet Name:', sheetName);
   try {
     const config = { spreadsheetId, sheetName, apiKey };
     
