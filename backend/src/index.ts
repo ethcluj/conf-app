@@ -5,12 +5,14 @@ import dotenv from 'dotenv';
 import { allSessions, refreshSessions } from './sessions';
 import { allSpeakers, refreshSpeakers } from './speakers';
 
+// Load environment variables
 dotenv.config();
 
+// Create Express application
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Middleware
+// Configure middleware
 app.use(cors());
 app.use(express.json());
 
@@ -23,7 +25,9 @@ const pool = new Pool({
   port: parseInt(process.env.DB_PORT || '5432'),
 });
 
-// Initialize database
+/**
+ * Initialize database with required tables
+ */
 const initDb = async () => {
   const client = await pool.connect();
   try {
@@ -37,89 +41,106 @@ const initDb = async () => {
       SELECT 'Default Value'
       WHERE NOT EXISTS (SELECT 1 FROM values);
     `);
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    throw error;
   } finally {
     client.release();
   }
 };
 
-// Sessions endpoint
+// API response standardization
+const createSuccessResponse = (data: any) => ({ success: true, data });
+const createErrorResponse = (message: string, details?: any) => ({ 
+  success: false, 
+  error: message,
+  ...(details && { details })
+});
+
+// Sessions endpoints
 app.get('/sessions', async (req, res) => {
   try {
     // Force refresh if requested
     if (req.query.refresh === 'true') {
       await refreshSessions();
     }
-    res.json(allSessions);
+    res.json(createSuccessResponse(allSessions));
   } catch (error) {
     console.error('Error serving sessions:', error);
-    res.status(500).json({ error: 'Failed to fetch sessions' });
+    res.status(500).json(createErrorResponse('Failed to fetch sessions', { message: (error as Error).message }));
   }
 });
 
-// Endpoint to manually refresh sessions
 app.post('/refresh-sessions', async (req, res) => {
   try {
     const sessions = await refreshSessions();
-    res.json({ success: true, count: sessions.length });
+    res.json(createSuccessResponse({ count: sessions.length }));
   } catch (error) {
     console.error('Error refreshing sessions:', error);
-    res.status(500).json({ error: 'Failed to refresh sessions' });
+    res.status(500).json(createErrorResponse('Failed to refresh sessions', { message: (error as Error).message }));
   }
 });
 
-// Speakers endpoint
+// Speakers endpoints
 app.get('/speakers', async (req, res) => {
   try {
     if (req.query.refresh === 'true') {
       await refreshSpeakers();
     }
-    res.json(allSpeakers);
+    res.json(createSuccessResponse(allSpeakers));
   } catch (error) {
     console.error('Error serving speakers:', error);
-    res.status(500).json({ error: 'Failed to fetch speakers' });
+    res.status(500).json(createErrorResponse('Failed to fetch speakers', { message: (error as Error).message }));
   }
 });
 
-// Endpoint to manually refresh speakers
 app.post('/refresh-speakers', async (req, res) => {
   try {
     const speakers = await refreshSpeakers();
-    res.json({ success: true, count: speakers.length });
+    res.json(createSuccessResponse({ count: speakers.length }));
   } catch (error) {
     console.error('Error refreshing speakers:', error);
-    res.status(500).json({ error: 'Failed to refresh speakers' });
+    res.status(500).json(createErrorResponse('Failed to refresh speakers', { message: (error as Error).message }));
   }
 });
 
-// Routes
+// Database routes
 app.get('/value', async (req, res) => {
   try {
     const result = await pool.query('SELECT value FROM values ORDER BY id DESC LIMIT 1');
-    res.json({ value: result.rows[0]?.value || 'Default Value' });
+    res.json(createSuccessResponse({ value: result.rows[0]?.value || 'Default Value' }));
   } catch (error) {
     console.error('Error fetching value:', error);
-    res.status(500).json({ error: 'Failed to fetch value' });
+    res.status(500).json(createErrorResponse('Failed to fetch value', { message: (error as Error).message }));
   }
 });
 
 app.put('/value', async (req, res) => {
   const { value } = req.body;
   if (!value) {
-    return res.status(400).json({ error: 'Value is required' });
+    return res.status(400).json(createErrorResponse('Value is required'));
   }
 
   try {
     await pool.query('INSERT INTO values (value) VALUES ($1)', [value]);
-    res.json({ value });
+    res.json(createSuccessResponse({ value }));
   } catch (error) {
     console.error('Error updating value:', error);
-    res.status(500).json({ error: 'Failed to update value' });
+    res.status(500).json(createErrorResponse('Failed to update value', { message: (error as Error).message }));
   }
 });
 
-// Initialize database and start server
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json(createSuccessResponse({ status: 'ok', timestamp: new Date().toISOString() }));
+});
+
+/**
+ * Initialize and start the server
+ */
 const startServer = async () => {
-  // Initial session data load
+  // Initial data load
   try {
     await refreshSessions();
     console.log(`Loaded ${allSessions.length} sessions`);
@@ -127,7 +148,6 @@ const startServer = async () => {
     console.error('Failed to load initial session data:', error);
   }
 
-  // Initial speakers data load
   try {
     await refreshSpeakers();
     console.log(`Loaded ${allSpeakers.length} speakers`);
@@ -135,8 +155,9 @@ const startServer = async () => {
     console.error('Failed to load initial speakers data:', error);
   }
 
-  // Set up periodic refresh (every 5 minutes)
-  const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+  // Set up periodic refresh
+  const REFRESH_INTERVAL = parseInt(process.env.REFRESH_INTERVAL || '300000'); // 5 minutes in milliseconds
+  
   setInterval(async () => {
     try {
       await refreshSessions();
@@ -146,7 +167,6 @@ const startServer = async () => {
     }
   }, REFRESH_INTERVAL);
 
-  // Set up periodic refresh for speakers
   setInterval(async () => {
     try {
       await refreshSpeakers();
@@ -159,6 +179,7 @@ const startServer = async () => {
   // Start the server
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    console.log(`Data refresh interval: ${REFRESH_INTERVAL}ms`);
   });
 };
 
@@ -167,4 +188,4 @@ initDb().then(startServer).catch(error => {
   console.error('Failed to initialize database:', error);
   console.log('Starting server without database...');
   startServer();
-}); 
+});
