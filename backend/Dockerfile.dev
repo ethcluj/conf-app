@@ -1,0 +1,20 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Install nodemon for development
+RUN npm install -g nodemon
+
+EXPOSE 3001
+
+# Use nodemon to watch for changes and restart the server
+CMD ["npm", "run", "dev"]

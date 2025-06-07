@@ -6,9 +6,14 @@ import { RawScheduleRow } from './sheet-parser';
  * This works for publicly accessible sheets without requiring authentication
  */
 export async function fetchPublicGoogleSheet(
-  spreadsheetId: string,
-  sheetName: string
+  spreadsheetId: string = process.env.GOOGLE_SHEET_ID || '',
+  sheetName: string = process.env.GOOGLE_SHEET_NAME || 'Agenda  - APP - Visible'
 ): Promise<RawScheduleRow[]> {
+  console.log('fetchPublicGoogleSheet called with:');
+  console.log('- Spreadsheet ID:', spreadsheetId);
+  console.log('- Sheet Name:', sheetName);
+  console.log('- GOOGLE_SHEET_ID env:', process.env.GOOGLE_SHEET_ID);
+  console.log('- GOOGLE_SHEET_NAME env:', process.env.GOOGLE_SHEET_NAME);
   try {
     // Add timestamp to URL to bypass caching
     const timestamp = new Date().getTime();
@@ -88,16 +93,16 @@ export async function fetchPublicGoogleSheet(
       }
     });
     
-    // Only allow visible rows, and for stage 'NA', only allow visible breaks (Lunch, Coffee, Break)
-    const allowedBreakTitles = ['lunch', 'coffee', 'break'];
-    return result.filter((row: RawScheduleRow) => {
-      if (!row.visible) return false;
-      if (row.stage === 'NA') {
-        const normalizedTitle = row.title.trim().toLowerCase();
-        return allowedBreakTitles.includes(normalizedTitle);
-      }
-      return true;
+    // Only filter out non-visible rows, treat 'NA' stage as applicable to all stages
+    const filteredResult = result.filter((row: RawScheduleRow) => {
+      return row.visible; // Only filter by visibility, keep all visible rows including 'NA' stage
     });
+    
+    // Debug: Check for Doors Open sessions
+    const doorsOpenSessions = filteredResult.filter((row: RawScheduleRow) => row.title && row.title.includes('Doors Open'));
+    console.log('Direct-sheets-fetch: Found Doors Open sessions after filtering:', doorsOpenSessions);
+    
+    return filteredResult;
   } catch (error: any) {
     console.error('Error in direct fetch from Google Sheet:', error.message);
     return [];
