@@ -1,6 +1,6 @@
 # ETHCluj Conference App Deployment Automation
 
-This document outlines strategies for automating the deployment of the ETHCluj conference application to minimize manual steps when setting up on a new server.
+This document outlines strategies for automating the deployment of the ETHCluj 2025 conference application to minimize manual steps when setting up on a new server.
 
 ## Current Manual Steps
 
@@ -35,6 +35,7 @@ This document outlines strategies for automating the deployment of the ETHCluj c
 1. **Initial Server Provisioning Script**:
    - Create a bash script that automates the initial server setup
    - Install required packages (Docker, Docker Compose, Certbot)
+   - Configure environment variables
    - Create the `deploy` user with appropriate permissions
    - Set up SSH key authentication
    - Configure firewall rules
@@ -65,11 +66,13 @@ This document outlines strategies for automating the deployment of the ETHCluj c
    - Create a setup wizard for generating the `.env` file
    - Implement secure secrets management
    - Add validation for required environment variables
+   - Auto-detection for sheet names and structure
 
 7. **Monitoring and Self-healing**:
    - Add monitoring for container health
    - Implement automatic recovery for failed containers
    - Set up logging and alerting
+   - Add data source fallback mechanisms
 
 8. **Backup and Restore**:
    - Automate database backups
@@ -85,6 +88,7 @@ This document outlines strategies for automating the deployment of the ETHCluj c
     - Add automated tests for the deployment process
     - Implement smoke tests to verify the deployment
     - Create a staging environment for testing changes
+    - Include data validation tests
 
 ## Next Steps
 

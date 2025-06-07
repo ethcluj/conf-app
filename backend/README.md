@@ -1,6 +1,6 @@
 # ETHCluj Conference App Backend
 
-Backend service for the ETHCluj conference app, providing API endpoints for sessions, speakers, and a simple key-value store.
+Backend service for the ETHCluj 2025 conference app, providing API endpoints for sessions, speakers, and a simple key-value store. This service integrates with Google Sheets to provide real-time event data.
 
 ## Setup
 
@@ -196,9 +196,10 @@ The schedule sheet must have the following columns in order:
 4. Title
 5. Speakers
 6. Description
-7. Type
-8. Track
+7. Type (Session Level: For everyone, Beginner, Intermediate, Advanced)
+8. Track (Ethereum Roadmap, DeFi, Security, Development, Research, Community)
 9. Notes
+10. Learning Points (optional)
 
 #### Speakers Sheet
 The speakers sheet must have the following columns in order:
@@ -211,21 +212,21 @@ The speakers sheet must have the following columns in order:
 
 ## Data Sources
 
-The app can fetch data from Google Sheets using two methods:
-1. Direct CSV fetch (primary method)
-2. Google Sheets API (fallback method)
+The app fetches data from Google Sheets using two methods:
+1. Direct CSV fetch (primary method) - Implemented in `direct-sheets-fetch.ts`
+2. Google Sheets API (fallback method) - Implemented in `google-sheets.ts`
 
-This dual approach provides redundancy in case one method fails.
+This dual approach provides redundancy in case one method fails. The app automatically refreshes data periodically based on the configured `REFRESH_INTERVAL`.
 
 ## Architecture
 
 The backend follows a modular architecture:
 - `index.ts`: Main entry point and API routes
-- `sessions.ts`: Session data management
-- `speakers.ts`: Speaker data management
-- `schedule-manager.ts`: Schedule processing logic
+- `sessions.ts`: Session data management and type definitions
+- `speakers.ts`: Speaker data management and type definitions
+- `schedule-manager.ts`: Schedule processing and transformation logic
 - `google-sheets.ts`: Google Sheets API integration
-- `direct-sheets-fetch.ts`: Direct CSV fetching
+- `direct-sheets-fetch.ts`: Direct CSV fetching from public Google Sheets
 - `sheet-parser.ts`: Utility functions for parsing sheet data
 
 ## Error Handling and Logging

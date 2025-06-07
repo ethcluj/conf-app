@@ -1,6 +1,6 @@
 # ETHCluj Conference App
 
-The official ETHCluj conference application with backend and UI components. This application provides conference schedule, speaker information, and other event details.
+The official ETHCluj conference application with backend and UI components. This application provides conference schedule, speaker information, and other event details for the ETHCluj 2025 conference.
 
 ## Features
 
@@ -8,6 +8,9 @@ The official ETHCluj conference application with backend and UI components. This
 - Speaker profiles and information
 - Multiple stages and tracks support
 - Responsive design for mobile and desktop
+- Session favoriting and filtering
+- Jump-to-current session functionality
+- Session difficulty level indicators
 
 ## Docker Compose Setup (Recommended)
 
@@ -24,6 +27,7 @@ GOOGLE_SHEET_NAME=APP
 GOOGLE_SPEAKERS_SHEET_NAME=Speakers
 GOOGLE_API_KEY=your_api_key
 DATA_SOURCE=google-sheet
+REFRESH_INTERVAL=60000
 ```
 
 ### Running the Application
@@ -38,7 +42,8 @@ DATA_SOURCE=google-sheet
    - API endpoints:
      - Schedule: http://localhost:8080/api/sessions
      - Speakers: http://localhost:8080/api/speakers
-     - Value: http://localhost:8080/api/value (health check)
+     - Health check: http://localhost:8080/api/health
+     - Value (database): http://localhost:8080/api/value
 
 3. Stop all services:
    ```bash
@@ -126,7 +131,13 @@ The application consists of:
 
 ## Data Sources
 
-The application can be configured to use different data sources:
-- **Google Sheets**: Set `DATA_SOURCE=google-sheet` (recommended)
-- **CSV**: Set `DATA_SOURCE=csv` and provide CSV files
-- **Hardcoded**: Set `DATA_SOURCE=hardcoded` for development/testing
+The application fetches data from Google Sheets using two methods:
+1. **Direct CSV fetch**: Primary method that downloads sheets as CSV
+2. **Google Sheets API**: Fallback method using the Google API
+
+To configure:
+- **Google Sheets**: Set `GOOGLE_SHEET_ID` to your spreadsheet ID
+- **Sheet Names**: Set `GOOGLE_SHEET_NAME` and `GOOGLE_SPEAKERS_SHEET_NAME` appropriately
+- **API Key**: Optionally set `GOOGLE_API_KEY` for API fallback method
+
+The application periodically refreshes data based on `REFRESH_INTERVAL` (default: 1 minute)
