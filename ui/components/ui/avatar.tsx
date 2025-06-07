@@ -4,6 +4,7 @@ import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
 import { cn } from "@/lib/utils"
+import { shouldUseCenterFocusedImage } from "@/lib/config"
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
@@ -20,16 +21,29 @@ const Avatar = React.forwardRef<
 ))
 Avatar.displayName = AvatarPrimitive.Root.displayName
 
+interface AvatarImageProps extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image> {
+  speakerName?: string;
+}
+
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-))
+  AvatarImageProps
+>(({ className, speakerName, ...props }, ref) => {
+  // Determine image positioning based on speaker name
+  const useCenter = speakerName ? shouldUseCenterFocusedImage(speakerName) : false;
+  
+  return (
+    <AvatarPrimitive.Image
+      ref={ref}
+      className={cn("h-full w-full", className)}
+      style={{ 
+        objectFit: "cover", 
+        objectPosition: useCenter ? "center" : "top" 
+      }}
+      {...props}
+    />
+  );
+})
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
 const AvatarFallback = React.forwardRef<

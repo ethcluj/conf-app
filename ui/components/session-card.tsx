@@ -104,7 +104,7 @@ export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardP
                 
                 return (
                   <Avatar key={i} className="h-6 w-6 border border-[#161b22]">
-                    <AvatarImage src={speakerImage} alt={speaker.name} />
+                    <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />
                     <AvatarFallback>{speaker.name[0]}</AvatarFallback>
                   </Avatar>
                 );
