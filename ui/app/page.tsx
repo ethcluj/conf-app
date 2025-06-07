@@ -76,7 +76,7 @@ export default function ConferenceSchedule() {
     }
   }
 
-  const tabs = ["All", "Main", "Dev", "Biz", "Workshop"]
+  const tabs = ["All", "Main", "Tech", "Biz", "Work"]
 
   // Separate break sessions (NA stage) from regular sessions
   const breakSessions = sessionsForSelectedDay.filter(session => session.stage === 'NA');
@@ -86,7 +86,7 @@ export default function ConferenceSchedule() {
   const filteredRegularSessions =
     activeTab === "All"
       ? regularSessions
-      : regularSessions.filter((session) => session.stage.includes(activeTab));
+      : regularSessions.filter((session) => session.stage === activeTab);
       
   // Combine filtered regular sessions with break sessions (which appear in all tabs)
   // We need to deduplicate break sessions that happen at the same time
