@@ -53,29 +53,45 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
         script: |
-          # Source profile to ensure PATH is set correctly
-          source ~/.profile
-          source ~/.bashrc
+          # Install NVM if not already installed
+          if [ ! -d "$HOME/.nvm" ]; then
+            echo "Installing NVM..."
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+          fi
           
-          # Ensure NVM is available
+          # Load NVM
           export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+          
+          # Verify NVM is working
+          echo "NVM version: $(nvm --version || echo 'NVM not found')"
+          
+          # Install Node.js v22.16.0
+          echo "Installing Node.js v22.16.0..."
+          nvm install 22.16.0
+          nvm use 22.16.0
+          
+          # Verify Node.js version
+          echo "Node.js version: $(node -v)"
+          echo "NPM version: $(npm -v)"
           
           cd /opt/conf-app
           
           # Pull latest code
           git pull
           
-          # Use Node.js v18
-          nvm use 18 || nvm install 18
+          # Install global dependencies
+          echo "Installing global dependencies..."
+          npm install -g yarn pm2
           
           # Install and build UI
+          echo "Building UI..."
           cd ui
-          npm install -g yarn
           yarn install --frozen-lockfile
           yarn build
           
           # Install and build backend
+          echo "Building backend..."
           cd ../backend
           npm ci
           npm run build
@@ -88,8 +104,6 @@ jobs:
             # or use GitHub secrets to populate them
           fi
           
-          # Install PM2 if not available
-          npm list -g pm2 || npm install -g pm2
-          
           # Restart the application
+          echo "Restarting application..."
           pm2 restart conf-app-backend || pm2 start npm --name "conf-app-backend" -- start
