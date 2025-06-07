@@ -4,7 +4,6 @@ import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
 import { cn } from "@/lib/utils"
-import { shouldUseCenterFocusedImage } from "@/lib/config"
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
@@ -29,8 +28,18 @@ const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   AvatarImageProps
 >(({ className, speakerName, ...props }, ref) => {
+  // List of speakers that should have center-focused images instead of top-focused
+  const CENTER_FOCUSED_SPEAKERS = [
+    "George Loukovitis",
+    "Anders Holmbjerg Kristiansen",
+    "Luis"
+  ];
+  
   // Determine image positioning based on speaker name
-  const useCenter = speakerName ? shouldUseCenterFocusedImage(speakerName) : false;
+  const useCenter = speakerName ? 
+    CENTER_FOCUSED_SPEAKERS.some(name => 
+      name.toLowerCase() === speakerName.toLowerCase()
+    ) : false;
   
   return (
     <AvatarPrimitive.Image

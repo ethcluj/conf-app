@@ -56,60 +56,22 @@ const levelToDifficultyMapping: Record<SessionLevel, SessionDifficulty> = {
   "Advanced": 4
 };
 
-// Counter to track distributed difficulties
-let difficultyCounter = 0;
-
-// Generate a session difficulty with equal distribution (1-5)
-const getRandomDifficulty = (): SessionDifficulty => {
-  // Cycle through all 5 difficulty levels to ensure equal distribution
-  const difficulties: SessionDifficulty[] = [1, 2, 3, 4, 5];
-  const difficulty = difficulties[difficultyCounter % 5];
-  
-  // Increment counter for next call
-  difficultyCounter++;
-  
-  return difficulty;
-};
-
 // Helper function to hydrate session objects from API
 // Note: We treat API times as local times, ignoring timezone information
 const hydrateSession = (session: any): Session => {
-  // DEBUG: Log original session data
-  console.log('DEBUG_SESSION_BEFORE_HYDRATION', {
-    id: session.id,
-    title: session.title,
-    level: session.level,
-    levelColor: session.levelColor,
-    difficulty: session.difficulty
-  });
-  
-  // If session already has a difficulty, use it
-  // Otherwise, try to map from level or use the distribution function
+  // Determine session difficulty based on level or use default
   let sessionDifficulty: SessionDifficulty;
-  let difficultySource = 'unknown';
   
   if (session.difficulty) {
     sessionDifficulty = session.difficulty;
-    difficultySource = 'existing';
   } else if (session.level && typeof session.level === 'string' && session.level in levelToDifficultyMapping) {
     // Map from level if possible (with proper type checking)
     const level = session.level as SessionLevel;
     sessionDifficulty = levelToDifficultyMapping[level];
-    difficultySource = 'mapped-from-level';
   } else {
-    // Use distributed random difficulty
-    sessionDifficulty = getRandomDifficulty();
-    difficultySource = 'random-distributed';
+    // Default to intermediate
+    sessionDifficulty = 3;
   }
-  
-  // DEBUG: Log difficulty assignment
-  console.log('DEBUG_DIFFICULTY_ASSIGNMENT', {
-    id: session.id,
-    title: session.title,
-    originalLevel: session.level,
-    assignedDifficulty: sessionDifficulty,
-    source: difficultySource
-  });
   
   // Parse dates treating them as local time
   // This ignores the timezone part of the ISO string
@@ -139,34 +101,6 @@ const hydrateSession = (session: any): Session => {
   };
 }
 
-// Force random session levels for testing
-const forceRandomSessionLevels = (sessions: Session[]): Session[] => {
-  const levels: SessionLevel[] = ["For everyone", "Beginner", "Intermediate", "Advanced"];
-  
-  return sessions.map((session, index) => {
-    // Assign a level in rotation to ensure distribution
-    const level = levels[index % levels.length];
-    
-    // Also assign a matching difficulty
-    const difficulty = levelToDifficultyMapping[level];
-    
-    // Log what we're doing
-    console.log('FORCING_RANDOM_LEVEL', {
-      id: session.id,
-      title: session.title,
-      originalLevel: session.level,
-      newLevel: level,
-      newDifficulty: difficulty
-    });
-    
-    return {
-      ...session,
-      level,
-      difficulty
-    };
-  });
-};
-
 // Fetch all sessions from backend API - no caching
 export const fetchAllSessions = async (): Promise<Session[]> => {
   try {
@@ -187,20 +121,7 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
     });
     if (!res.ok) throw new Error("Failed to fetch sessions");
     const data = await res.json();
-    console.log('DEBUG_FETCH_RAW_SESSIONS', JSON.stringify(data));
-    let hydrated = data.map(hydrateSession);
-    
-    // Apply forced random levels for testing
-    hydrated = forceRandomSessionLevels(hydrated);
-    
-    // Log final session data
-    console.log('DEBUG_FINAL_SESSIONS', hydrated.map((s: Session) => ({
-      id: s.id,
-      title: s.title,
-      level: s.level,
-      difficulty: s.difficulty
-    })));
-    
+    const hydrated = data.map(hydrateSession);
     return hydrated;
   } catch (error) {
     console.error("Error fetching sessions:", error);
@@ -208,46 +129,30 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
   }
 }
 
-      
-
 // For backward compatibility with existing code
 // This will be populated after the first fetch
 export let allSessions: Session[] = [];
 
-// Refresh sessions on every page navigation/interaction
-const refreshSessions = async () => {
+// Refresh sessions function - simplified to avoid memory leaks
+export const refreshSessions = async () => {
   try {
     const sessions = await fetchAllSessions();
     allSessions = sessions;
   } catch (error) {
+    console.error("Error refreshing sessions:", error);
   }
 };
 
-// Client-side only code
+// Client-side only code - initial fetch without event listeners
 if (typeof window !== 'undefined') {
-  // Initialize sessions on page load
-  window.addEventListener('load', refreshSessions);
-
-  // Also refresh when user returns to the page
-  window.addEventListener('focus', refreshSessions);
-
   // Initial fetch on client-side
   refreshSessions();
-} else {
-  // Server-side initialization - will be populated on client
 }
-
-// Session data is now fetched from the backend API
-// See fetchAllSessions() function above
 
 // Helper functions for session management
 export const getSessionsByDay = async (day: Date): Promise<Session[]> => {
   const sessions = await fetchAllSessions();
-  // Log the selected day and all hydrated session dates in ISO format
-  console.log('DEBUG_FILTER_DAY', day.toISOString(), JSON.stringify(sessions.map(s => ({id: s.id, date: s.date.toISOString()}))));
   const filtered = sessions.filter((session) => isSameDay(session.date, day));
-  // Log the filtered sessions (id and date)
-  console.log('DEBUG_FILTER_RESULT', JSON.stringify(filtered.map(s => ({id: s.id, date: s.date.toISOString()}))));
   return filtered;
 }
 
