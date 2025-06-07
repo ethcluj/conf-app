@@ -1,0 +1,197 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { ArrowLeft, MessageCircle } from "lucide-react"
+import Link from "next/link"
+import { 
+  getQuestionsBySession, 
+  mockCurrentUser, 
+  type QnaQuestion, 
+  type QnaUser, 
+  addQuestion,
+  toggleVote,
+  deleteQuestion 
+} from "@/lib/qna-data"
+import { getSessionById, type Session } from "@/lib/data"
+import { ScrollHideHeader } from "@/components/scroll-hide-header"
+import { QnaQuestionCard } from "@/components/qna-question-card"
+import { QnaQuestionInput } from "@/components/qna-question-input"
+import { QnaAuthModal } from "@/components/qna-auth-modal"
+
+export default function QnaPage() {
+  const router = useRouter()
+  const params = useParams()
+  const sessionId = params.sessionId as string
+  
+  const [user, setUser] = useState<QnaUser>(mockCurrentUser)
+  const [session, setSession] = useState<Session | null>(null)
+  const [questions, setQuestions] = useState<QnaQuestion[]>([])
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load session data
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      try {
+        setIsLoading(true)
+        
+        // Get session details
+        const sessionData = await getSessionById(sessionId)
+        if (sessionData) {
+          setSession(sessionData)
+        }
+        
+        // Get questions for this session
+        const sessionQuestions = getQuestionsBySession(sessionId)
+        setQuestions(sessionQuestions)
+        
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error loading session data:", error)
+        setIsLoading(false)
+      }
+    }
+    
+    fetchSessionData()
+  }, [sessionId])
+
+  const handleVote = (questionId: string) => {
+    const updatedQuestions = toggleVote(questionId, user.id)
+    setQuestions([...updatedQuestions])
+  }
+  
+  const handleDeleteQuestion = (questionId: string) => {
+    const updatedQuestions = deleteQuestion(questionId, user.id)
+    setQuestions([...updatedQuestions])
+  }
+
+  const handleQuestionSubmit = (questionContent: string) => {
+    if (!user.isAuthenticated || !session) return
+    
+    const newQuestion = addQuestion(questionContent, sessionId, user)
+    
+    // Add the new question to the list and resort
+    const updatedQuestions = [...questions, newQuestion]
+      .sort((a, b) => b.votes - a.votes)
+    
+    setQuestions(updatedQuestions)
+  }
+
+  const handleAuthenticate = (email: string) => {
+    // In a real app, we would store the auth token and handle user session
+    setUser({
+      ...user,
+      email,
+      isAuthenticated: true,
+      authToken: `mock-token-${Date.now()}`
+    })
+  }
+
+  const handleAuthRequest = () => {
+    setIsAuthModalOpen(true)
+  }
+  
+  const handleUpdateDisplayName = (newName: string) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      displayName: newName
+    }))
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] text-white flex flex-col items-center justify-center">
+        <p>Session not found</p>
+        <Link href="/" className="mt-4 text-red-500 hover:text-red-400">
+          Return to schedule
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0d1117] text-white flex flex-col">
+      <QnaAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthenticate={handleAuthenticate}
+      />
+      
+      <ScrollHideHeader>
+        <div className="container mx-auto max-w-md px-4 py-4">
+          <div className="flex items-center">
+            <Link href={`/session/${sessionId}`} className="mr-4">
+              <ArrowLeft className="h-6 w-6" />
+            </Link>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold truncate">{session.title}</h1>
+              <p className="text-sm text-gray-400">
+                {session.stage} · Q&A
+              </p>
+            </div>
+          </div>
+        </div>
+      </ScrollHideHeader>
+
+      {/* Chat-like interface with fixed header and footer */}
+      <div className="flex flex-col h-[calc(100vh-64px)] pt-16">
+        {/* Messages area with auto scroll */}
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <div className="container mx-auto max-w-md">
+            {questions.length > 0 ? (
+              <div className="space-y-4">
+                {questions.map((question) => (
+                  <QnaQuestionCard
+                    key={question.id}
+                    question={question}
+                    onVote={handleVote}
+                    isAuthenticated={user.isAuthenticated}
+                    onAuthRequest={handleAuthRequest}
+                    currentUserId={user.id}
+                    onDelete={handleDeleteQuestion}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#161b22] rounded-lg p-8 text-center">
+                <div className="flex justify-center mb-4">
+                  <MessageCircle className="h-12 w-12 text-gray-600" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">No questions yet</h3>
+                <p className="text-gray-400 text-sm mb-6">
+                  Be the first to ask a question for this session!
+                </p>
+                <button
+                  onClick={handleAuthRequest}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
+                >
+                  Ask a Question
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Input area fixed at bottom */}
+        <div className="bg-[#161b22] border-t border-[#21262d]">
+          <QnaQuestionInput
+            onSubmit={handleQuestionSubmit}
+            isAuthenticated={user.isAuthenticated}
+            onAuthRequest={handleAuthRequest}
+            user={user}
+            onUpdateDisplayName={handleUpdateDisplayName}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

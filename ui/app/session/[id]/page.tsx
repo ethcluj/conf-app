@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Clock, MapPin, Star } from "lucide-react"
+import { ArrowLeft, Clock, MapPin, Star, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
@@ -269,7 +269,14 @@ export default function SessionDetails() {
             </div>
           </div>
 
-          {/* Q&A button removed */}
+          {/* Q&A Button */}
+          <div className="mb-8">
+            <Link href={`/qna/${sessionId}`}>
+              <Button className="w-full bg-red-600 hover:bg-red-700 py-6 font-medium text-white">
+                Join Q&A
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

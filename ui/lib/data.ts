@@ -120,9 +120,29 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
       }
     });
     if (!res.ok) throw new Error("Failed to fetch sessions");
-    const data = await res.json();
-    const hydrated = data.map(hydrateSession);
-    return hydrated;
+    const response = await res.json();
+    
+    // Check if the response has the expected structure
+    if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
+      // This is the standard API response format with {success: true, data: [...]} structure
+      const { data } = response;
+      
+      // Ensure data is an array before mapping
+      if (!Array.isArray(data)) {
+        console.error("API returned data but it's not an array:", data);
+        return [];
+      }
+      
+      const hydrated = data.map(hydrateSession);
+      return hydrated;
+    } else if (Array.isArray(response)) {
+      // Direct array response (fallback for backward compatibility)
+      const hydrated = response.map(hydrateSession);
+      return hydrated;
+    } else {
+      console.error("Unexpected API response format for sessions:", response);
+      return [];
+    }
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return [];
