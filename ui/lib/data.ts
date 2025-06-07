@@ -321,7 +321,7 @@ export const getFullStageName = (stageCode: string, sessionTitle?: string): stri
     } else if (normalizedTitle.includes('coffee')) {
       return 'Sponsors area (ground floor)';
     } else if (normalizedTitle.includes('lunch')) {
-      return 'Cafeteria (first floor)';
+      return 'Cafeteria (1st floor)';
     }
   }
   

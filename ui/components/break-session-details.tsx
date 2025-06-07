@@ -14,12 +14,12 @@ export function BreakSessionDetails({ session }: BreakSessionDetailsProps) {
     
     if (normalizedTitle.includes("doors open")) {
       return {
-        message: "Welcome to ETHCluj 2025! Registration is now open. Please collect your badge and welcome pack at the check-in desk on the ground floor.",
+        message: "Welcome to ETHCluj 2025! Registration is now open. Please collect your wristband, badge and food voucher at the check-in desk on the ground floor.",
         icon: "🚪"
       }
     } else if (normalizedTitle.includes("coffee")) {
       return {
-        message: "Good morning. Let's start with a break! Coffee and refreshments are available in the sponsors area on the ground floor.",
+        message: "gm. Let's start with a break! Coffee and refreshments are available in the sponsors area on the ground floor.",
         icon: "☕"
       }
     } else if (normalizedTitle.includes("lunch")) {

@@ -127,9 +127,7 @@ export default function SessionDetails() {
             <div className="mb-8">
               <div className="flex items-center mb-4 text-gray-400">
                 <Clock className="mr-2 h-4 w-4" />
-                <span className="mr-4">{formatSessionDateTime(session)}</span>
-                <MapPin className="mr-2 h-4 w-4" />
-                <span>{getFullStageName(session.stage, session.title)}</span>
+                <span>{formatSessionDateTime(session)}</span>
               </div>  
               {/* Break Session Details */}
               <BreakSessionDetails session={session} />
