@@ -200,7 +200,7 @@ export default function SessionDetails() {
                         {(() => {
                           const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
                           const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image.replace("40&width=40", "64&width=64");
-                          return <AvatarImage src={speakerImage} alt={speaker.name} />;
+                          return <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />;
                         })()}
                         <AvatarFallback>{speaker.name.charAt(0)}</AvatarFallback>
                       </Avatar>
@@ -212,7 +212,7 @@ export default function SessionDetails() {
               {session.speakers.some((speaker) => speaker.isMultiple) && (
                 <div className="flex flex-col items-center">
                   <Avatar className="mb-2 h-16 w-16">
-                    <AvatarImage src="/placeholder.svg?height=64&width=64" alt="Multiple Speakers" />
+                    <AvatarImage src="/placeholder.svg?height=64&width=64" alt="Multiple Speakers" speakerName="Multiple Speakers" />
                     <AvatarFallback>MS</AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium">Multiple Speakers</span>
