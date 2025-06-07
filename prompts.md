@@ -55,6 +55,7 @@ Edit all the necessary files to add the speakers API endpoint. Run it and test i
 ## Optimizations
 ### Speaker images cache
 ### UX: remember navigation for the back and home buttons
+### No downtime deployments
 
 ## PWA
 ### Add webpace ico and PWA icon
