@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { getSessionById, formatSessionDateTime, type Session } from "@/lib/data"
+import { getSessionById, formatSessionDateTime, type Session, getFullStageName } from "@/lib/data"
 import { ScrollHideHeader } from "@/components/scroll-hide-header"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { BreakSessionDetails } from "@/components/break-session-details"
@@ -125,14 +125,15 @@ export default function SessionDetails() {
           <div className="pt-24">
             {/* Date and Time */}
             <div className="mb-8">
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center mb-4 text-gray-400">
                 <Clock className="mr-2 h-4 w-4" />
-                <span className="text-sm">{formatSessionDateTime(session)}</span>
-              </div>
+                <span className="mr-4">{formatSessionDateTime(session)}</span>
+                <MapPin className="mr-2 h-4 w-4" />
+                <span>{getFullStageName(session.stage)}</span>
+              </div>  
+              {/* Break Session Details */}
+              <BreakSessionDetails session={session} />
             </div>
-            
-            {/* Break Session Details */}
-            <BreakSessionDetails session={session} />
           </div>
         </div>
       </div>
@@ -171,7 +172,7 @@ export default function SessionDetails() {
             </div>
             <div className="flex items-center text-gray-400">
               <MapPin className="mr-2 h-4 w-4" />
-              <span className="text-sm">{session.stage}</span>
+              <span className="text-sm">{getFullStageName(session.stage)}</span>
             </div>
           </div>
 
@@ -270,8 +271,7 @@ export default function SessionDetails() {
             </div>
           </div>
 
-          {/* Action Button */}
-          <Button className="w-full bg-red-600 hover:bg-red-700 text-white py-3">Ask & Vote Questions</Button>
+          {/* Q&A button removed */}
         </div>
       </div>
     </div>

@@ -310,3 +310,31 @@ export const getSessionById = async (id: string): Promise<Session | undefined> =
   return sessions.find((session) => session.id === id);
 }
 
+// Map stage codes to full stage names with floor information
+export const getFullStageName = (stageCode: string): string => {
+  switch (stageCode) {
+    case 'Main':
+      return 'Main Stage (3rd floor)';
+    case 'Tech':
+      return 'Tech Stage (1st floor)';
+    case 'Biz':
+      return 'Business Room (3rd floor)';
+    case 'Work':
+      return 'Workshop Room (3rd floor)';
+    case 'NA':
+      return 'All Stages';
+    default:
+      return stageCode;
+  }
+}
+
+// Map stage codes to display names for the filter menu
+export const getStageDisplayName = (stageCode: string): string => {
+  switch (stageCode) {
+    case 'Work':
+      return 'Workshop';
+    default:
+      return stageCode;
+  }
+}
+
