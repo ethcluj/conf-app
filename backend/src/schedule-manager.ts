@@ -104,17 +104,11 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
       continue;
     }
     
-    // Include breaks (NA stage but with title)
-    // Only treat certain titles as breaks that shouldn't be combined
-    const breakTitles = ['lunch', 'coffee', 'break'];
-    const normalizedTitle = row.title.trim().toLowerCase();
-    const isBreak = row.stage === 'NA' && breakTitles.includes(normalizedTitle);
-    
     // Start a new session if:
     // 1. We don't have a current session, or
-    // 2. The current session has a different title than this row, or
-    // 3. This is a break session (always treat as individual)
-    if (!currentSession || currentSession.title !== row.title || isBreak) {
+    // 2. The current session has a different title than this row
+    // Note: We merge all consecutive sessions with the same title, regardless of stage
+    if (!currentSession || currentSession.title !== row.title) {
       // End previous session if it exists
       if (currentSession) {
         sessions.push(createSessionFromRow(currentSession, slotCount, sessionId.toString()));
