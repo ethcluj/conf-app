@@ -321,7 +321,7 @@ export function UnifiedPresenterView({
   
   // Default: Session info mode
   return (
-    <div ref={containerRef} className="fixed inset-0 z-50 bg-[#0d1117] text-white">
+    <div ref={containerRef} className="fixed inset-0 z-50 text-white bg-cover bg-center" style={{ backgroundImage: 'url("/ethcluj-background02.png")' }}>
       {!isFullscreen && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50">
           <div className="text-center p-8 bg-[#161b22] rounded-lg shadow-xl max-w-md border border-gray-700">
@@ -349,12 +349,12 @@ export function UnifiedPresenterView({
         {/* Main content area with 3 sections */}
         <div className="flex flex-col h-full">
           {/* Top section - Session Title */}
-          <div className="flex-grow-0 pt-8 pb-4">
+          <div className="flex-grow-0 pt-8 pb-4 mt-[8vh]">
             <h1 className="text-6xl font-bold text-center">{session.title}</h1>
           </div>
           
           {/* Middle section - QR Code (centered) */}
-          <div className="flex-grow flex items-center justify-center">
+          <div className="flex-grow flex items-center justify-center mt-[2vh]">
             <div className="text-center">
               <div className="bg-white p-6 rounded-lg inline-block mb-4">
                 <QRCodeSVG
@@ -364,7 +364,7 @@ export function UnifiedPresenterView({
                 />
               </div>
               <div className="text-2xl mb-2">Scan to ask questions</div>
-              <div className="text-lg text-gray-400">{qrCodeUrl}</div>
+              <div className="text-lg font-bold text-white">{qrCodeUrl}</div>
             </div>
           </div>
           
