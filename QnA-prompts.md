@@ -6,13 +6,11 @@ The ETHCluj Conference Q&A System allows attendees to submit and upvote question
 
 ## User Access Points
 
-Attendees can access the Q&A system through multiple entry points:
+Attendees can access the Q&A system through two entry points:
 
 1. **Session-specific QR Code**: Located at each stage, directs users to the Q&A for that specific stage and automatically selects the current/upcoming session based on time.
 
-2. **Generic QR Code**: Available on attendee badges, requires manual stage selection but automatically selects the appropriate session based on time.
-
-3. **In-App Access**: Users can navigate to a session in the conference app and tap the Q&A button at the bottom of the session details screen.
+2. **In-App Access**: Users can navigate to a session in the conference app and tap the Q&A button at the bottom of the session details screen.
 
 ## Core Functionality
 

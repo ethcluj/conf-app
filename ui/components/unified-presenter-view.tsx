@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { type Session } from "@/lib/data"
 import { getQuestionsBySession, type QnaQuestion } from "@/lib/qna-data"
+import { useSpeakers } from "@/hooks/use-speakers"
 
 // Mock QR code component until qrcode.react package is installed
 const QRCode = ({ value, size }: { value: string, size: number, level?: string, renderAs?: string }) => (
@@ -49,6 +50,9 @@ export function UnifiedPresenterView({
   const [mode, setMode] = useState<PresenterMode>(initialMode)
   const [questions, setQuestions] = useState<QnaQuestion[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  
+  // Get speakers data from API
+  const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers()
   
   // Enter fullscreen mode
   const enterFullscreen = useCallback(() => {
@@ -263,50 +267,71 @@ export function UnifiedPresenterView({
       )}
 
       <div className="container mx-auto px-4 py-6 flex flex-col h-screen">
-        {/* Session Title and Info */}
-        <div className="flex-grow flex flex-col items-center justify-center text-center mb-8">
-          <h1 className="text-5xl font-bold mb-6">{session.title}</h1>
-          
-          {session.stage && session.stage !== 'NA' && (
-            <div className="text-2xl text-red-500 mb-4">
-              {session.stage}
-            </div>
-          )}
-          
-          {/* Time */}
-          <div className="text-xl text-gray-300 mb-8">
-            {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
-            {new Date(session.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+        {/* Main content area with 3 sections */}
+        <div className="flex flex-col h-full">
+          {/* Top section - Session Title */}
+          <div className="flex-grow-0 pt-8 pb-4">
+            <h1 className="text-6xl font-bold text-center">{session.title}</h1>
           </div>
           
-          {/* Speakers */}
-          <div className="flex justify-center space-x-8 mb-12">
-            {session.speakers && session.speakers.map((speaker, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <Avatar className="mb-4 h-24 w-24">
-                  <AvatarImage src={speaker.image} alt={speaker.name} />
-                  <AvatarFallback className="text-2xl">{speaker.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <span className="text-xl font-medium">{speaker.name}</span>
-                {speaker.title && <span className="text-lg text-gray-400">{speaker.title}</span>}
+          {/* Middle section - QR Code (centered) */}
+          <div className="flex-grow flex items-center justify-center">
+            <div className="text-center">
+              <div className="bg-white p-6 rounded-lg inline-block mb-4">
+                <QRCode
+                  value={qrCodeUrl}
+                  size={240}
+                  level="H"
+                  renderAs="svg"
+                />
               </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* QR Code */}
-        <div className="flex-shrink-0 flex justify-center mb-12">
-          <div className="text-center">
-            <div className="bg-white p-6 rounded-lg inline-block mb-4">
-              <QRCode
-                value={qrCodeUrl}
-                size={200}
-                level="H"
-                renderAs="svg"
-              />
+              <div className="text-2xl mb-2">Scan to ask questions</div>
+              <div className="text-lg text-gray-400">{qrCodeUrl}</div>
             </div>
-            <div className="text-xl mb-2">Scan to ask questions</div>
-            <div className="text-lg text-gray-400">{qrCodeUrl}</div>
+          </div>
+          
+          {/* Bottom section - Logos and Speakers */}
+          <div className="flex-grow-0 flex justify-between items-end pb-8">
+            {/* Logos - Bottom Left */}
+            <div className="flex items-center gap-6">
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-white">ETHCluj</div>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="text-xl font-bold text-white">Akasha</div>
+              </div>
+            </div>
+            
+            {/* Speakers - Bottom Right */}
+            <div className="flex flex-row-reverse gap-6">
+              {session.speakers && session.speakers.map((speaker, index) => (
+                !speaker.isMultiple && (
+                  <div key={index} className="flex flex-col items-center">
+                    <Avatar className="mb-3 h-24 w-24 border-2 border-red-500">
+                      {/* Try to find the speaker in our API data */}
+                      {(() => {
+                        const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
+                        const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image.replace("40&width=40", "200&width=200");
+                        return <AvatarImage src={speakerImage} alt={speaker.name} />;
+                      })()}
+                      <AvatarFallback className="text-2xl">{speaker.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xl font-medium text-white">{speaker.name}</span>
+                    {speaker.title && <span className="text-sm text-gray-400 text-center">{speaker.title}</span>}
+                  </div>
+                )
+              ))}
+              {session.speakers && session.speakers.some((speaker) => speaker.isMultiple) && (
+                <div className="flex flex-col items-center">
+                  <Avatar className="mb-3 h-24 w-24 border-2 border-red-500">
+                    <AvatarImage src="/placeholder.svg?height=200&width=200" alt="Multiple Speakers" />
+                    <AvatarFallback className="text-2xl">MS</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xl font-medium text-white">Multiple Speakers</span>
+                  <span className="text-sm text-gray-400 text-center">Various Organizations</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
