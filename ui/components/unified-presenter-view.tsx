@@ -368,20 +368,21 @@ export function UnifiedPresenterView({
             </div>
           </div>
           
-          {/* Bottom section - Logos and Speakers */}
-          <div className="flex-grow-0 flex justify-between items-end pb-8">
-            {/* Logos - Bottom Left */}
-            <div className="flex items-center gap-6">
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-white">ETHCluj</div>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <div className="text-xl font-bold text-white">Akasha</div>
+          {/* Bottom section - Logo and Speakers */}
+          <div className="flex-grow-0 flex justify-between pb-8">
+            {/* Akasha Logo - Bottom Left */}
+            <div className="flex items-start">
+              <div className="h-28 w-28 flex items-center justify-center">
+                <img 
+                  src="/Akasha_Logo_Text_White.png" 
+                  alt="Akasha Logo" 
+                  className="w-full object-contain" 
+                />
               </div>
             </div>
             
             {/* Speakers - Bottom Right */}
-            <div className="flex flex-row-reverse gap-6">
+            <div className="flex flex-row-reverse gap-6 items-start">
               {session.speakers && session.speakers.map((speaker, index) => (
                 !speaker.isMultiple && (
                   <div key={index} className="flex flex-col items-center">
