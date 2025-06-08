@@ -99,7 +99,12 @@ export const mockLeaderboard: LeaderboardEntry[] = [
   { userId: "user-3", displayName: "ProofOfStaker777", score: 64, questionsAsked: 3, upvotesReceived: 18 },
   { userId: "user-2", displayName: "SmartContractor99", score: 53, questionsAsked: 4, upvotesReceived: 13 },
   { userId: "user-4", displayName: "ValidatorVictor123", score: 31, questionsAsked: 2, upvotesReceived: 9 },
-  { userId: "user-5", displayName: "BytecodeBaron555", score: 24, questionsAsked: 3, upvotesReceived: 6 }
+  { userId: "user-5", displayName: "BytecodeBaron555", score: 24, questionsAsked: 3, upvotesReceived: 6 },
+  { userId: "user-6", displayName: "EtherBunny404", score: 21, questionsAsked: 2, upvotesReceived: 5 },
+  { userId: "user-7", displayName: "TokenWhisperer007", score: 18, questionsAsked: 2, upvotesReceived: 4 },
+  { userId: "user-8", displayName: "NodeRunner42", score: 15, questionsAsked: 1, upvotesReceived: 6 },
+  { userId: "user-9", displayName: "GweiGuru123", score: 12, questionsAsked: 2, upvotesReceived: 2 },
+  { userId: "user-10", displayName: "MerkleTreeHugger", score: 9, questionsAsked: 1, upvotesReceived: 3 }
 ]
 
 // Get questions for a specific session

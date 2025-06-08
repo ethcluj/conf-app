@@ -39,6 +39,9 @@ export default function QnaLeaderboard() {
       <div className="container mx-auto max-w-md px-4">
         <div className="pb-16">
           <div className="bg-[#161b22] rounded-lg p-6 mb-6">
+            <div className="flex justify-center mb-3">
+              <Trophy className="h-8 w-8 text-yellow-500" />
+            </div>
             <p className="text-center text-gray-400 text-sm mb-4">
               Recognizing attendees who ask the most engaging questions
             </p>
@@ -52,20 +55,20 @@ export default function QnaLeaderboard() {
                 {leaderboard.map((entry, index) => (
                   <div 
                     key={entry.userId}
-                    className="flex items-center p-4 rounded-lg bg-[#21262d]"
+                    className="flex items-center py-2 px-3 rounded-lg bg-[#21262d] mb-2"
                   >
                     <div 
-                      className={`flex items-center justify-center h-8 w-8 rounded-full mr-4 text-white font-bold ${getLeaderPosition(index)}`}
+                      className={`flex items-center justify-center h-6 w-6 rounded-full mr-2 text-white font-bold text-xs ${getLeaderPosition(index)}`}
                     >
                       {index + 1}
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{entry.displayName}</div>
+                    <div className="flex-1 overflow-hidden">
+                      <div className="font-medium text-sm truncate">{entry.displayName}</div>
                       <div className="text-xs text-gray-400">
-                        {entry.questionsAsked} questions · {entry.upvotesReceived} upvotes received
+                        {entry.questionsAsked} Q · {entry.upvotesReceived} upvotes
                       </div>
                     </div>
-                    <div className="text-xl font-bold text-red-500">{entry.score}</div>
+                    <div className="text-base font-bold text-red-500">{entry.score}</div>
                   </div>
                 ))}
               </div>

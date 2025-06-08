@@ -179,11 +179,11 @@ export function UnifiedPresenterView({
               <div className="w-full max-w-4xl">
                 <div className="bg-[#161b22] rounded-lg overflow-hidden">
                   {/* Header row */}
-                  <div className="grid grid-cols-12 gap-4 p-4 bg-[#21262d] text-lg font-bold">
+                  <div className="grid grid-cols-12 gap-2 p-2 bg-[#21262d] text-sm font-bold">
                     <div className="col-span-1 text-center">#</div>
                     <div className="col-span-4">Participant</div>
-                    <div className="col-span-3 text-center">Questions Asked</div>
-                    <div className="col-span-3 text-center">Upvotes Received</div>
+                    <div className="col-span-3 text-center">Questions</div>
+                    <div className="col-span-3 text-center">Upvotes</div>
                     <div className="col-span-1 text-center">Score</div>
                   </div>
                   
@@ -191,19 +191,19 @@ export function UnifiedPresenterView({
                   {mockLeaderboard.map((entry, index) => (
                     <div 
                       key={entry.userId}
-                      className={`grid grid-cols-12 gap-4 p-4 ${index % 2 === 0 ? 'bg-[#161b22]' : 'bg-[#1c2129]'} ${index < 3 ? 'border-l-4' : ''} ${
+                      className={`grid grid-cols-12 gap-2 py-2 px-2 ${index % 2 === 0 ? 'bg-[#161b22]' : 'bg-[#1c2129]'} ${index < 3 ? 'border-l-4' : ''} ${
                         index === 0 ? 'border-yellow-500' : 
                         index === 1 ? 'border-gray-400' : 
                         index === 2 ? 'border-amber-700' : ''
                       }`}
                     >
-                      <div className="col-span-1 text-center text-2xl font-bold">
+                      <div className="col-span-1 text-center font-bold flex items-center justify-center">
                         {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                       </div>
-                      <div className="col-span-4 font-medium text-xl">{entry.displayName}</div>
-                      <div className="col-span-3 text-center text-lg">{entry.questionsAsked}</div>
-                      <div className="col-span-3 text-center text-lg">{entry.upvotesReceived}</div>
-                      <div className="col-span-1 text-center font-bold text-xl text-yellow-500">{entry.score}</div>
+                      <div className="col-span-4 font-medium text-base truncate">{entry.displayName}</div>
+                      <div className="col-span-3 text-center">{entry.questionsAsked}</div>
+                      <div className="col-span-3 text-center">{entry.upvotesReceived}</div>
+                      <div className="col-span-1 text-center font-bold text-yellow-500">{entry.score}</div>
                     </div>
                   ))}
                 </div>
