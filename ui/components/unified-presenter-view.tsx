@@ -241,16 +241,23 @@ export function UnifiedPresenterView({
     <div ref={containerRef} className="fixed inset-0 z-50 bg-[#0d1117] text-white">
       {!isFullscreen && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50">
-          <div className="text-center p-8 bg-[#161b22] rounded-lg shadow-xl max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Presenter View</h2>
-            <p className="mb-6 text-gray-300">Click the button below to enter fullscreen presenter mode</p>
-            <Button 
-              onClick={enterFullscreen}
-              className="bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-md text-lg flex items-center gap-2"
-            >
-              <Maximize className="h-5 w-5" />
-              Enter Fullscreen
-            </Button>
+          <div className="text-center p-8 bg-[#161b22] rounded-lg shadow-xl max-w-md border border-gray-700">
+            <h2 className="text-2xl font-bold mb-6">Presenter View</h2>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={enterFullscreen}
+                className="bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-md text-lg flex items-center justify-center gap-2 w-full sm:w-auto"
+              >
+                <Maximize className="h-5 w-5" />
+                Enter Fullscreen
+              </Button>
+              <Button 
+                onClick={onClose}
+                className="bg-transparent hover:bg-gray-700 text-gray-300 border border-gray-600 py-3 px-6 rounded-md text-lg w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         </div>
       )}
