@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { X } from "lucide-react"
+import { Maximize, Minimize } from "lucide-react"
 import { getQuestionsBySession, type QnaQuestion } from "@/lib/qna-data"
 import { getSessionById, type Session, formatSessionTime } from "@/lib/data"
 
@@ -35,23 +35,47 @@ export default function QnaPresenterView() {
   const [questions, setQuestions] = useState<QnaQuestion[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   
-  // Handle escape key to exit fullscreen or close presenter view
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      if (isFullscreen) {
-        setIsFullscreen(false)
-      } else {
-        router.back()
+  // Toggle fullscreen mode
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      if (containerRef.current?.requestFullscreen) {
+        containerRef.current.requestFullscreen()
+          .then(() => setIsFullscreen(true))
+          .catch(err => console.error(`Error attempting to enable fullscreen: ${err.message}`))
       }
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+          .then(() => setIsFullscreen(false))
+          .catch(err => console.error(`Error attempting to exit fullscreen: ${err.message}`))
+      }
+    }
+  }, [])
+  
+  // Handle escape key to exit presenter view when not in fullscreen
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Escape' && !isFullscreen) {
+      router.back()
     }
   }, [isFullscreen, router])
   
   useEffect(() => {
     // Add event listener for escape key
     document.addEventListener('keydown', handleKeyDown)
+    
+    // Add event listener for fullscreen change
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
     }
   }, [handleKeyDown])
   
@@ -109,13 +133,15 @@ export default function QnaPresenterView() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0d1117] text-white">
+    <div ref={containerRef} className="fixed inset-0 z-50 bg-[#0d1117] text-white">
       <div className="absolute top-4 right-4 z-10">
         <button 
-          onClick={() => router.back()} 
+          onClick={toggleFullscreen} 
           className="bg-[#21262d] hover:bg-[#30363d] p-2 rounded-md text-gray-300 hover:text-white"
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
         >
-          <X className="h-5 w-5" />
+          {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
         </button>
       </div>
       
