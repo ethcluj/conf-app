@@ -8,26 +8,10 @@ import { Button } from "@/components/ui/button"
 import { type Session } from "@/lib/data"
 import { getQuestionsBySession, type QnaQuestion, mockLeaderboard, type LeaderboardEntry } from "@/lib/qna-data"
 import { useSpeakers } from "@/hooks/use-speakers"
+import { QRCodeSVG } from "qrcode.react"
 
-// Mock QR code component until qrcode.react package is installed
-const QRCode = ({ value, size }: { value: string, size: number, level?: string, renderAs?: string }) => (
-  <div 
-    style={{ 
-      width: size, 
-      height: size, 
-      backgroundColor: '#FFFFFF',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '10px',
-      padding: '10px',
-      textAlign: 'center',
-      color: '#000000'
-    }}
-  >
-    Mock QR Code for: {value}
-  </div>
-);
+// QR code configuration
+const QR_CODE_LEVEL = "H"; // High error correction level
 
 export type PresenterMode = 'session' | 'qna' | 'video' | 'leaderboard';
 
@@ -226,18 +210,10 @@ export function UnifiedPresenterView({
               </div>
             </div>
             
-            {/* Bottom section with QR code */}
+            {/* Bottom section with note */}
             <div className="flex-grow-0 flex justify-center items-center py-8">
               <div className="text-center">
-                <div className="text-xl mb-4">Scan to participate and ask questions</div>
-                <div className="bg-white p-4 rounded-lg inline-block">
-                  <QRCode
-                    value={qrCodeUrl}
-                    size={180}
-                    level="H"
-                    renderAs="svg"
-                  />
-                </div>
+                <div className="text-xl text-gray-300">Join the conversation and ask questions to participate in the leaderboard</div>
               </div>
             </div>
           </div>
@@ -306,13 +282,13 @@ export function UnifiedPresenterView({
             </div>
             
             {/* QR Code */}
-            <div className="mt-4">
-              <div className="bg-white p-6 rounded-lg inline-block">
-                <QRCode
+            <div className="mt-4 w-full">
+              <div className="bg-white p-6 rounded-lg inline-block w-4/5">
+                <QRCodeSVG
                   value={qrCodeUrl}
                   size={220}
-                  level="H"
-                  renderAs="svg"
+                  level={QR_CODE_LEVEL}
+                  className="w-full h-auto"
                 />
               </div>
               <div className="mt-4">
@@ -364,11 +340,10 @@ export function UnifiedPresenterView({
           <div className="flex-grow flex items-center justify-center">
             <div className="text-center">
               <div className="bg-white p-6 rounded-lg inline-block mb-4">
-                <QRCode
+                <QRCodeSVG
                   value={qrCodeUrl}
                   size={240}
-                  level="H"
-                  renderAs="svg"
+                  level={QR_CODE_LEVEL}
                 />
               </div>
               <div className="text-2xl mb-2">Scan to ask questions</div>
