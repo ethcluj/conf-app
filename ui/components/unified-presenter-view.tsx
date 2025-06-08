@@ -58,28 +58,46 @@ export function UnifiedPresenterView({
   
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    // V key for video
-    if (event.key === 'v' || event.key === 'V') {
-      setMode('video')
+    // When not in fullscreen mode and dialog is showing
+    if (!isFullscreen) {
+      // Enter key to enter fullscreen
+      if (event.key === 'Enter') {
+        enterFullscreen()
+        return
+      }
+      
+      // Escape key to cancel
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
     }
     
-    // Q key for Q&A presenter view
-    if (event.key === 'q' || event.key === 'Q') {
-      setMode('qna')
+    // Only process these shortcuts when in fullscreen mode
+    if (isFullscreen) {
+      // V key for video
+      if (event.key === 'v' || event.key === 'V') {
+        setMode('video')
+      }
+      
+      // Q key for Q&A presenter view
+      if (event.key === 'q' || event.key === 'Q') {
+        setMode('qna')
+      }
+      
+      // S key to return to session view
+      if (event.key === 's' || event.key === 'S') {
+        setMode('session')
+      }
+      
+      // L key for leaderboard view
+      if (event.key === 'l' || event.key === 'L') {
+        setMode('leaderboard')
+      }
+      
+      // Escape key handling is done by the browser for fullscreen
     }
-    
-    // S key to return to session view
-    if (event.key === 's' || event.key === 'S') {
-      setMode('session')
-    }
-    
-    // L key for leaderboard view
-    if (event.key === 'l' || event.key === 'L') {
-      setMode('leaderboard')
-    }
-    
-    // Escape key handling is done by the browser for fullscreen
-  }, [])
+  }, [isFullscreen, enterFullscreen, onClose])
   
   // Fetch questions for Q&A mode
   useEffect(() => {
@@ -136,15 +154,14 @@ export function UnifiedPresenterView({
   if (mode === 'video') {
     return (
       <div ref={containerRef} className="fixed inset-0 z-50 bg-black text-white">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="text-4xl font-bold mb-4">ETHCluj Intro Video</div>
-            <div className="w-[800px] h-[450px] bg-gray-800 flex items-center justify-center">
-              <p className="text-xl">Video would play here</p>
-              <p className="text-sm text-gray-400 mt-2">(Mock implementation)</p>
-            </div>
-          </div>
-        </div>
+        <video
+          className="w-full h-full object-cover"
+          src="/intro01.mp4"
+          autoPlay
+          muted={false}
+          controls={false}
+          onEnded={() => setMode('session')}
+        />
       </div>
     )
   }
