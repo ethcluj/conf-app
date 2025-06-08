@@ -162,20 +162,14 @@ export default function QnaPage() {
                 ))}
               </div>
             ) : (
-              <div className="bg-[#161b22] rounded-lg p-8 text-center">
+              <div className="flex flex-col items-center justify-center h-[50vh]">
                 <div className="flex justify-center mb-4">
-                  <MessageCircle className="h-12 w-12 text-gray-600" />
+                  <MessageCircle className="h-16 w-16 text-gray-600 opacity-50" />
                 </div>
                 <h3 className="text-lg font-medium mb-2">No questions yet</h3>
-                <p className="text-gray-400 text-sm mb-6">
-                  Be the first to ask a question for this session!
+                <p className="text-gray-400 text-sm text-center max-w-xs">
+                  Be the first to ask a question using the input field below
                 </p>
-                <button
-                  onClick={handleAuthRequest}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Ask a Question
-                </button>
               </div>
             )}
           </div>
