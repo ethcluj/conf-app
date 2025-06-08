@@ -2,11 +2,11 @@
 
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Video, MessageCircle, ArrowLeft, ArrowRight, Maximize } from "lucide-react"
+import { Video, MessageCircle, ArrowLeft, ArrowRight, Maximize, Trophy } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { type Session } from "@/lib/data"
-import { getQuestionsBySession, type QnaQuestion } from "@/lib/qna-data"
+import { getQuestionsBySession, type QnaQuestion, mockLeaderboard, type LeaderboardEntry } from "@/lib/qna-data"
 import { useSpeakers } from "@/hooks/use-speakers"
 
 // Mock QR code component until qrcode.react package is installed
@@ -29,7 +29,7 @@ const QRCode = ({ value, size }: { value: string, size: number, level?: string, 
   </div>
 );
 
-export type PresenterMode = 'session' | 'qna' | 'video';
+export type PresenterMode = 'session' | 'qna' | 'video' | 'leaderboard';
 
 interface UnifiedPresenterViewProps {
   session: Session
@@ -87,6 +87,11 @@ export function UnifiedPresenterView({
     // S key to return to session view
     if (event.key === 's' || event.key === 'S') {
       setMode('session')
+    }
+    
+    // L key for leaderboard view
+    if (event.key === 'l' || event.key === 'L') {
+      setMode('leaderboard')
     }
     
     // Escape key handling is done by the browser for fullscreen
@@ -153,6 +158,87 @@ export function UnifiedPresenterView({
             <div className="w-[800px] h-[450px] bg-gray-800 flex items-center justify-center">
               <p className="text-xl">Video would play here</p>
               <p className="text-sm text-gray-400 mt-2">(Mock implementation)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
+  // If showing leaderboard mode
+  if (mode === 'leaderboard') {
+    return (
+      <div ref={containerRef} className="fixed inset-0 z-50 bg-[#0d1117] text-white">
+        <div className="absolute top-4 right-4 z-10">
+          <Button 
+            onClick={() => setMode('session')}
+            className="bg-[#21262d] hover:bg-[#30363d] p-2 rounded-md text-gray-300 hover:text-white"
+            size="icon"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        <div className="container mx-auto px-4 py-6 flex flex-col h-screen">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex-grow-0 pt-8 pb-4 text-center">
+              <div className="flex items-center justify-center mb-4">
+                <Trophy className="h-12 w-12 text-yellow-500 mr-4" />
+                <h1 className="text-5xl font-bold">Q&A Leaderboard</h1>
+              </div>
+              <p className="text-xl text-gray-300 mb-8">Top contributors from the audience</p>
+            </div>
+            
+            {/* Leaderboard content */}
+            <div className="flex-grow flex items-center justify-center">
+              <div className="w-full max-w-4xl">
+                <div className="bg-[#161b22] rounded-lg overflow-hidden">
+                  {/* Header row */}
+                  <div className="grid grid-cols-12 gap-4 p-4 bg-[#21262d] text-lg font-bold">
+                    <div className="col-span-1 text-center">#</div>
+                    <div className="col-span-4">Participant</div>
+                    <div className="col-span-3 text-center">Questions Asked</div>
+                    <div className="col-span-3 text-center">Upvotes Received</div>
+                    <div className="col-span-1 text-center">Score</div>
+                  </div>
+                  
+                  {/* Leaderboard entries */}
+                  {mockLeaderboard.map((entry, index) => (
+                    <div 
+                      key={entry.userId}
+                      className={`grid grid-cols-12 gap-4 p-4 ${index % 2 === 0 ? 'bg-[#161b22]' : 'bg-[#1c2129]'} ${index < 3 ? 'border-l-4' : ''} ${
+                        index === 0 ? 'border-yellow-500' : 
+                        index === 1 ? 'border-gray-400' : 
+                        index === 2 ? 'border-amber-700' : ''
+                      }`}
+                    >
+                      <div className="col-span-1 text-center text-2xl font-bold">
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                      </div>
+                      <div className="col-span-4 font-medium text-xl">{entry.displayName}</div>
+                      <div className="col-span-3 text-center text-lg">{entry.questionsAsked}</div>
+                      <div className="col-span-3 text-center text-lg">{entry.upvotesReceived}</div>
+                      <div className="col-span-1 text-center font-bold text-xl text-yellow-500">{entry.score}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Bottom section with QR code */}
+            <div className="flex-grow-0 flex justify-center items-center py-8">
+              <div className="text-center">
+                <div className="text-xl mb-4">Scan to participate and ask questions</div>
+                <div className="bg-white p-4 rounded-lg inline-block">
+                  <QRCode
+                    value={qrCodeUrl}
+                    size={180}
+                    level="H"
+                    renderAs="svg"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

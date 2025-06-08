@@ -20,9 +20,8 @@ Attendees can access the Q&A system through two entry points:
 3. Upvote questions (requires minimal authentication)
 4. Withdraw votes from previously upvoted questions
 5. Vote for multiple questions within the same session
-6. Navigate between session Q&As
-7. See real-time updates of questions and votes
-8. Participate in the leaderboard for best questions
+6. See real-time updates of questions and votes
+7. Participate in the leaderboard for best questions
 
 ### For Presenters/MCs
 1. Special landscape view showing top questions and vote counts
@@ -45,7 +44,6 @@ Attendees can access the Q&A system through two entry points:
 1. **Header Section**:
    - Current session information (title, speaker, time)
    - Stage indicator
-   - Session navigation controls (previous/next)
 
 2. **Question List**:
    - Sorted by vote count (descending)
@@ -82,15 +80,11 @@ Attendees can access the Q&A system through two entry points:
    - Use browser fingerprinting as preliminary Sybil protection
    - Only trigger email verification when necessary
 
-2. **Handling Time Context**:
-   - Show historical questions for past sessions with clear indication
-   - Provide option to navigate to current active session
-
-3. **Mobile Optimization**:
+2. **Mobile Optimization**:
    - Compact design with focus on most voted questions
    - Efficient use of limited screen space
 
-4. **Cross-Device Experience**:
+3. **Cross-Device Experience**:
    - Email verification as identity anchor across devices
 
 ## Technical Requirements
