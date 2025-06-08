@@ -43,7 +43,7 @@ export default function QnaPage() {
         }
         
         // Get questions for this session
-        const sessionQuestions = getQuestionsBySession(sessionId)
+        const sessionQuestions = await getQuestionsBySession(sessionId)
         setQuestions(sessionQuestions)
         
         setIsLoading(false)
@@ -56,26 +56,38 @@ export default function QnaPage() {
     fetchSessionData()
   }, [sessionId])
 
-  const handleVote = (questionId: string) => {
-    const updatedQuestions = toggleVote(questionId, user.id)
-    setQuestions([...updatedQuestions])
+  const handleVote = async (questionId: string) => {
+    try {
+      const updatedQuestions = await toggleVote(questionId, user.id)
+      setQuestions([...updatedQuestions])
+    } catch (error) {
+      console.error("Error toggling vote:", error)
+    }
   }
   
-  const handleDeleteQuestion = (questionId: string) => {
-    const updatedQuestions = deleteQuestion(questionId, user.id)
-    setQuestions([...updatedQuestions])
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      const updatedQuestions = await deleteQuestion(questionId, user.id)
+      setQuestions([...updatedQuestions])
+    } catch (error) {
+      console.error("Error deleting question:", error)
+    }
   }
 
-  const handleQuestionSubmit = (questionContent: string) => {
+  const handleQuestionSubmit = async (questionContent: string) => {
     if (!user.isAuthenticated || !session) return
     
-    const newQuestion = addQuestion(questionContent, sessionId, user)
-    
-    // Add the new question to the list and resort
-    const updatedQuestions = [...questions, newQuestion]
-      .sort((a, b) => b.votes - a.votes)
-    
-    setQuestions(updatedQuestions)
+    try {
+      const newQuestion = await addQuestion(questionContent, sessionId, user)
+      
+      // Add the new question to the list and resort
+      const updatedQuestions = [...questions, newQuestion]
+        .sort((a, b) => b.votes - a.votes)
+      
+      setQuestions(updatedQuestions)
+    } catch (error) {
+      console.error("Error submitting question:", error)
+    }
   }
 
   const handleAuthenticate = (email: string) => {

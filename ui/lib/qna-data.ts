@@ -1,4 +1,5 @@
 import { type Session } from "./data"
+import * as QnaApi from "./qna-api"
 
 export interface QnaUser {
   id: string
@@ -107,70 +108,142 @@ export const mockLeaderboard: LeaderboardEntry[] = [
   { userId: "user-10", displayName: "MerkleTreeHugger", score: 9, questionsAsked: 1, upvotesReceived: 3 }
 ]
 
+// Flag to control whether to use mock data or real API
+// Set this to false to use the real API
+const USE_MOCK_DATA = false;
+
 // Get questions for a specific session
-export function getQuestionsBySession(sessionId: string): QnaQuestion[] {
-  return mockQuestions
-    .filter(q => q.sessionId === sessionId)
-    .sort((a, b) => b.votes - a.votes) // Sort by votes in descending order
+export async function getQuestionsBySession(sessionId: string): Promise<QnaQuestion[]> {
+  if (USE_MOCK_DATA) {
+    // Use mock data
+    return mockQuestions
+      .filter(q => q.sessionId === sessionId)
+      .sort((a, b) => b.votes - a.votes); // Sort by votes in descending order
+  } else {
+    // Use real API
+    try {
+      return await QnaApi.getQuestionsBySession(sessionId);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      // Fallback to mock data if API fails
+      return mockQuestions
+        .filter(q => q.sessionId === sessionId)
+        .sort((a, b) => b.votes - a.votes);
+    }
+  }
 }
 
-// Vote handling (mock implementation)
-export function toggleVote(questionId: string, userId: string): QnaQuestion[] {
-  const questionIndex = mockQuestions.findIndex(q => q.id === questionId)
-  
-  if (questionIndex !== -1) {
-    const question = mockQuestions[questionIndex]
+// Vote handling
+export async function toggleVote(questionId: string, userId: string): Promise<QnaQuestion[]> {
+  if (USE_MOCK_DATA) {
+    // Mock implementation
+    const questionIndex = mockQuestions.findIndex(q => q.id === questionId)
     
-    // Toggle the vote
-    if (question.hasUserVoted) {
-      question.votes = Math.max(0, question.votes - 1)
-      question.hasUserVoted = false
-    } else {
-      question.votes += 1
-      question.hasUserVoted = true
+    if (questionIndex !== -1) {
+      const question = mockQuestions[questionIndex]
+      
+      // Toggle the vote
+      if (question.hasUserVoted) {
+        question.votes = Math.max(0, question.votes - 1)
+        question.hasUserVoted = false
+      } else {
+        question.votes += 1
+        question.hasUserVoted = true
+      }
+      
+      // Sort questions by votes
+      return [...mockQuestions].sort((a, b) => b.votes - a.votes)
     }
     
-    // Sort questions by votes
-    return [...mockQuestions].sort((a, b) => b.votes - a.votes)
+    return mockQuestions
+  } else {
+    // Real API implementation
+    try {
+      await QnaApi.toggleVote(questionId);
+      // After toggling the vote, fetch the updated questions
+      const sessionId = mockQuestions.find(q => q.id === questionId)?.sessionId || '';
+      return await QnaApi.getQuestionsBySession(sessionId);
+    } catch (error) {
+      console.error('Error toggling vote:', error);
+      // Fallback to mock implementation
+      return toggleVote(questionId, userId);
+    }
   }
-  
-  return mockQuestions
 }
 
 // Delete a question (only if the user is the author)
-export function deleteQuestion(questionId: string, userId: string): QnaQuestion[] {
-  // Find the question index
-  const questionIndex = mockQuestions.findIndex(q => q.id === questionId)
-  
-  if (questionIndex !== -1) {
-    const question = mockQuestions[questionIndex]
+export async function deleteQuestion(questionId: string, userId: string): Promise<QnaQuestion[]> {
+  if (USE_MOCK_DATA) {
+    // Mock implementation
+    // Find the question index
+    const questionIndex = mockQuestions.findIndex(q => q.id === questionId)
     
-    // Only allow deletion if the user is the author
-    if (question.authorId === userId) {
-      // Remove the question from the array
-      mockQuestions.splice(questionIndex, 1)
+    if (questionIndex !== -1) {
+      const question = mockQuestions[questionIndex]
+      
+      // Only allow deletion if the user is the author
+      if (question.authorId === userId) {
+        // Remove the question from the array
+        mockQuestions.splice(questionIndex, 1)
+      }
+    }
+    
+    // Return the updated questions list
+    return [...mockQuestions]
+  } else {
+    // Real API implementation
+    try {
+      const sessionId = mockQuestions.find(q => q.id === questionId)?.sessionId || '';
+      await QnaApi.deleteQuestion(questionId);
+      // After deleting, fetch the updated questions
+      return await QnaApi.getQuestionsBySession(sessionId);
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      // Fallback to mock implementation
+      return deleteQuestion(questionId, userId);
     }
   }
-  
-  // Return the updated questions list
-  return [...mockQuestions]
 }
 
-// Add a new question (mock implementation)
-export function addQuestion(content: string, sessionId: string, user: QnaUser): QnaQuestion {
-  const newQuestion: QnaQuestion = {
-    id: `q${mockQuestions.length + 1}`,
-    sessionId,
-    content,
-    authorName: user.displayName,
-    authorId: user.id,
-    votes: 0,
-    timestamp: new Date(),
-    hasUserVoted: false
+// Add a new question
+export async function addQuestion(content: string, sessionId: string, user: QnaUser): Promise<QnaQuestion> {
+  if (USE_MOCK_DATA) {
+    // Mock implementation
+    const newQuestion: QnaQuestion = {
+      id: `q${mockQuestions.length + 1}`,
+      sessionId,
+      content,
+      authorName: user.displayName,
+      authorId: user.id,
+      votes: 0,
+      timestamp: new Date(),
+      hasUserVoted: false
+    }
+    
+    mockQuestions.push(newQuestion)
+    return newQuestion
+  } else {
+    // Real API implementation
+    try {
+      return await QnaApi.addQuestion(content, sessionId);
+    } catch (error) {
+      console.error('Error adding question:', error);
+      // Fallback to mock implementation
+      const newQuestion: QnaQuestion = {
+        id: `q${mockQuestions.length + 1}`,
+        sessionId,
+        content,
+        authorName: user.displayName,
+        authorId: user.id,
+        votes: 0,
+        timestamp: new Date(),
+        hasUserVoted: false
+      }
+      
+      mockQuestions.push(newQuestion)
+      return newQuestion
+    }
   }
-  
-  mockQuestions.push(newQuestion)
-  return newQuestion
 }
 
 // Format timestamp relative to now

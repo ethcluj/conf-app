@@ -3,19 +3,42 @@
 import { useState, useEffect } from "react"
 import { Trophy } from "lucide-react"
 import { mockLeaderboard } from "@/lib/qna-data"
+import * as QnaApi from "@/lib/qna-api"
+
+// Flag to control whether to use mock data or real API
+// Set this to false to use the real API
+const USE_MOCK_DATA = true;
 
 export default function QnaLeaderboard() {
   const [leaderboard, setLeaderboard] = useState(mockLeaderboard)
   const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
-    // Simulate loading leaderboard data
-    const timer = setTimeout(() => {
-      setLeaderboard(mockLeaderboard)
-      setIsLoading(false)
-    }, 500)
+    const fetchLeaderboard = async () => {
+      try {
+        setIsLoading(true)
+        
+        if (USE_MOCK_DATA) {
+          // Use mock data with a small delay to simulate loading
+          setTimeout(() => {
+            setLeaderboard(mockLeaderboard)
+            setIsLoading(false)
+          }, 500)
+        } else {
+          // Use real API
+          const leaderboardData = await QnaApi.getLeaderboard()
+          setLeaderboard(leaderboardData)
+          setIsLoading(false)
+        }
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error)
+        // Fallback to mock data if API fails
+        setLeaderboard(mockLeaderboard)
+        setIsLoading(false)
+      }
+    }
     
-    return () => clearTimeout(timer)
+    fetchLeaderboard()
   }, [])
 
   const getLeaderPosition = (index: number) => {
