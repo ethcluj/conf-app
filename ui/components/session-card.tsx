@@ -11,9 +11,10 @@ interface SessionCardProps {
   session: Session
   onClick: () => void
   onToggleFavorite: (id: string) => void
+  isActive?: boolean
 }
 
-export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardProps) {
+export function SessionCard({ session, onClick, onToggleFavorite, isActive: propIsActive }: SessionCardProps) {
   const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers();
   
   // TESTING: Force different levels based on session ID
@@ -53,12 +54,16 @@ export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardP
     }
   }
 
-  const isActive = isSessionActive(session)
+  // Use the prop if provided, otherwise calculate it
+  const isActive = propIsActive !== undefined ? propIsActive : isSessionActive(session)
 
   return (
     <div
       className={cn(
-        "rounded-lg bg-[#161b22] p-4 cursor-pointer transition-opacity hover:opacity-90 relative",
+        "rounded-lg p-4 cursor-pointer transition-all hover:opacity-90 relative border",
+        isActive 
+          ? "bg-[#1e2937] border-red-600" 
+          : "bg-[#161b22] border-transparent",
         isSessionPast(session) && "opacity-70",
       )}
       onClick={onClick}
@@ -73,16 +78,20 @@ export function SessionCard({ session, onClick, onToggleFavorite }: SessionCardP
         <Star className={`h-5 w-5 ${session.isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
       </button>
 
-      <div className="flex justify-between mb-1">
-        <div className="text-sm font-medium text-red-500 flex items-center">
-          {getFullStageName(session.stage, session.title)}
-          {isActive && <span className="ml-2 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
-        </div>
+      {/* Time and Status */}
+      <div className="flex justify-between mb-2">
+        <div className="text-sm font-medium text-gray-400">{formatSessionTime(session)}</div>
         <SessionStatus session={session} />
       </div>
-
-      <div className="mb-2 text-sm text-gray-400">{formatSessionTime(session)}</div>
-      <h3 className="mb-3 text-lg font-medium">{session.title}</h3>
+      
+      {/* Title */}
+      <h3 className="mb-3 text-lg font-medium leading-tight">{session.title}</h3>
+      
+      {/* Stage/Location with active indicator */}
+      <div className="mb-3 text-sm font-medium text-red-500 flex items-center">
+        {getFullStageName(session.stage, session.title)}
+        {isActive && <span className="ml-2 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
+      </div>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center">

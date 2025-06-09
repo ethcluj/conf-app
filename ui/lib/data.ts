@@ -44,6 +44,7 @@ export interface Session {
   isFavorite: boolean
   // Additional session details
   track?: SessionTrack
+  type?: string
   difficulty?: SessionDifficulty
   learningPoints?: string[]
 }
@@ -120,8 +121,25 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
       }
     });
     if (!res.ok) throw new Error("Failed to fetch sessions");
-    const data = await res.json();
-    const hydrated = data.map(hydrateSession);
+    const responseJson = await res.json();
+    
+    // Handle different API response structures
+    let sessionsArray;
+    if (Array.isArray(responseJson)) {
+      // Direct array response
+      sessionsArray = responseJson;
+    } else if (responseJson.data && Array.isArray(responseJson.data)) {
+      // Object with data property containing array
+      sessionsArray = responseJson.data;
+    } else if (responseJson.sessions && Array.isArray(responseJson.sessions)) {
+      // Object with sessions property containing array
+      sessionsArray = responseJson.sessions;
+    } else {
+      console.error("Unexpected API response format:", responseJson);
+      return [];
+    }
+    
+    const hydrated = sessionsArray.map(hydrateSession);
     return hydrated;
   } catch (error) {
     console.error("Error fetching sessions:", error);

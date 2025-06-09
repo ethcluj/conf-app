@@ -19,6 +19,9 @@ export default function ConferenceSchedule() {
     const todayConferenceDay = conferenceDays.find((day) => isToday(day))
     return todayConferenceDay || conferenceDays[0]
   })
+  
+  // References for auto-scrolling
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const [activeTab, setActiveTab] = useState("All")
   const [sessions, setSessions] = useState(allSessions)
@@ -34,6 +37,13 @@ export default function ConferenceSchedule() {
         const fetchedSessions = await fetchAllSessions()
         setSessions(fetchedSessions)
         setIsLoading(false)
+        
+        // Auto switch to current date if it's a conference day
+        const today = new Date()
+        const todayConferenceDay = conferenceDays.find((day) => isToday(day))
+        if (todayConferenceDay) {
+          setSelectedDate(todayConferenceDay)
+        }
       } catch (error) {
         console.error('Error loading sessions:', error)
         setIsLoading(false)
@@ -57,6 +67,21 @@ export default function ConferenceSchedule() {
     
     filterSessionsByDay()
   }, [selectedDate, sessions])
+  
+  // Auto-scroll to current session when sessions are loaded or changed
+  useEffect(() => {
+    if (!isLoading && currentSessionRef.current && containerRef.current) {
+      // Use a small delay to ensure the DOM is fully rendered
+      const timer = setTimeout(() => {
+        currentSessionRef.current?.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "center" 
+        })
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [sessionsForSelectedDay, isLoading])
 
   const handleSessionClick = (sessionId: string) => {
     router.push(`/session/${sessionId}`)
@@ -142,7 +167,7 @@ export default function ConferenceSchedule() {
         </div>
       </ScrollHideHeader>
 
-      <div className="container mx-auto max-w-md px-4">
+      <div className="container mx-auto max-w-md px-4" ref={containerRef}>
         {/* Add padding to account for fixed header height - ensure no overlap */}
         <div className="pt-32">
           <TimeIndicator />
@@ -160,12 +185,14 @@ export default function ConferenceSchedule() {
                     <BreakSessionCard
                       session={session}
                       onClick={() => handleSessionClick(session.id)}
+                      isActive={isSessionActive(session)}
                     />
                   ) : (
                     <SessionCard
                       session={session}
                       onClick={() => handleSessionClick(session.id)}
                       onToggleFavorite={handleToggleFavorite}
+                      isActive={isSessionActive(session)}
                     />
                   )}
                 </div>
