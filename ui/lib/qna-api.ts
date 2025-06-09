@@ -83,9 +83,61 @@ const handleResponse = async (response: Response) => {
 };
 
 /**
- * Authenticate or create a user
+ * Send verification code to email
+ */
+export const sendVerificationCode = async (email: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/qna/auth/send-code`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      email
+    })
+  });
+  
+  await handleResponse(response);
+};
+
+/**
+ * Verify email code and authenticate user
+ */
+export const verifyEmailCode = async (email: string, code: string): Promise<QnaUser> => {
+  const response = await fetch(`${API_BASE_URL}/qna/auth/verify`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      email,
+      code,
+      fingerprint: getFingerprint()
+    })
+  });
+  
+  const userData = await handleResponse(response);
+  
+  // Store auth token
+  if (userData.authToken) {
+    setAuthToken(userData.authToken);
+  }
+  
+  return {
+    id: userData.id.toString(),
+    displayName: userData.displayName,
+    email: userData.email,
+    isAuthenticated: true,
+    authToken: userData.authToken
+  };
+};
+
+/**
+ * Authenticate with existing token/fingerprint
+ * @param email If provided, will create a new user if one doesn't exist. If not provided, will only authenticate existing users.
  */
 export const authenticateUser = async (email?: string): Promise<QnaUser> => {
+  // If no email is provided and no auth token exists, don't try to authenticate
+  // This prevents creating users without explicit authentication
+  if (!email && !getAuthToken()) {
+    throw new Error('Authentication required');
+  }
+  
   const response = await fetch(`${API_BASE_URL}/qna/auth`, {
     method: 'POST',
     headers: getHeaders(),

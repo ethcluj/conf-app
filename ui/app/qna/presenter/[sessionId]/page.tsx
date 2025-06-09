@@ -5,26 +5,9 @@ import { useParams, useRouter } from "next/navigation"
 import { Maximize, Minimize } from "lucide-react"
 import { getQuestionsBySession, type QnaQuestion } from "@/lib/qna-data"
 import { getSessionById, type Session, formatSessionTime } from "@/lib/data"
+import { QRCodeSVG } from "qrcode.react"
 
-// Mock QR code component until qrcode.react package is installed
-const QRCode = ({ value, size }: { value: string, size: number, level?: string, renderAs?: string }) => (
-  <div 
-    style={{ 
-      width: size, 
-      height: size, 
-      backgroundColor: '#FFFFFF',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '10px',
-      padding: '10px',
-      textAlign: 'center',
-      color: '#000000'
-    }}
-  >
-    Mock QR Code for: {value}
-  </div>
-);
+// Use QRCodeSVG from qrcode.react
 
 export default function QnaPresenterView() {
   const params = useParams()
@@ -90,7 +73,7 @@ export default function QnaPresenterView() {
         }
         
         // Get questions for this session
-        const sessionQuestions = getQuestionsBySession(sessionId)
+        const sessionQuestions = await getQuestionsBySession(sessionId)
         setQuestions(sessionQuestions)
         
         setIsLoading(false)
@@ -112,6 +95,7 @@ export default function QnaPresenterView() {
   const qrCodeUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/qna/${sessionId}`
     : `/qna/${sessionId}`
+  
   
   if (isLoading) {
     return (
@@ -196,11 +180,10 @@ export default function QnaPresenterView() {
           {/* QR Code - Moved higher up */}
           <div className="mt-4">
             <div className="bg-white p-6 rounded-lg inline-block">
-              <QRCode
+              <QRCodeSVG
                 value={qrCodeUrl}
                 size={220}
                 level="H"
-                renderAs="svg"
               />
             </div>
             <div className="mt-4">

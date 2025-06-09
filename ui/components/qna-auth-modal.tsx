@@ -5,6 +5,9 @@ import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import * as QnaApi from "@/lib/qna-api"
+import { VerificationCodeInput } from "@/components/verification-code-input"
 
 interface AuthModalProps {
   isOpen: boolean
@@ -18,31 +21,46 @@ export function QnaAuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps
   const [verificationCode, setVerificationCode] = useState("")
   const [hasSentCode, setHasSentCode] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   if (!isOpen) return null
   
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     if (!email || !email.includes('@')) return
     
     setIsSubmitting(true)
-    // Mock API call
-    setTimeout(() => {
-      setIsSubmitting(false)
+    setErrorMessage(null)
+    
+    try {
+      // Send verification code via email
+      await QnaApi.sendVerificationCode(email)
+      
       setIsVerifying(true)
       setHasSentCode(true)
-    }, 700)
+    } catch (error) {
+      console.error('Error sending verification code:', error)
+      setErrorMessage('Failed to send verification code. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
   
-  const handleVerify = () => {
-    if (!verificationCode) return
+  const handleVerify = async () => {
+    if (!verificationCode || verificationCode.length !== 4) return
     
     setIsSubmitting(true)
-    // Mock API call
-    setTimeout(() => {
-      onAuthenticate(email)
-      setIsSubmitting(false)
+    setErrorMessage(null)
+    
+    try {
+      // Verify the code and authenticate the user
+      const user = await QnaApi.verifyEmailCode(email, verificationCode)
+      await onAuthenticate(email)
       onClose()
-    }, 700)
+    } catch (error) {
+      console.error('Error verifying code:', error)
+      setErrorMessage('Invalid verification code. Please try again.')
+      setIsSubmitting(false)
+    }
   }
   
   return (
@@ -60,6 +78,11 @@ export function QnaAuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps
             <p className="mb-4 text-sm text-gray-300">
               Enter your email to participate in Q&A. You'll receive a verification code to sign in.
             </p>
+            {errorMessage && (
+              <Alert className="mb-4 bg-red-900/20 border-red-900 text-red-300">
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-4">
               <div>
                 <Input
@@ -74,7 +97,7 @@ export function QnaAuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps
               </div>
               <Button
                 onClick={handleSendCode}
-                className="w-full bg-red-600 hover:bg-red-700"
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
                 disabled={!email || !email.includes('@') || isSubmitting}
               >
                 {isSubmitting ? "Sending..." : "Send Verification Code"}
@@ -86,16 +109,17 @@ export function QnaAuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps
             <p className="mb-4 text-sm text-gray-300">
               Enter the verification code sent to <span className="font-semibold">{email}</span>
             </p>
+            {errorMessage && (
+              <Alert className="mb-4 bg-red-900/20 border-red-900 text-red-300">
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="code" className="text-sm text-gray-300">Verification Code</Label>
-                <Input
-                  id="code"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="123456"
-                  className="bg-[#0d1117] border-[#30363d] text-white text-center tracking-widest"
-                  maxLength={6}
+                <VerificationCodeInput
+                  length={4}
+                  onChange={setVerificationCode}
                   disabled={isSubmitting}
                 />
               </div>
@@ -110,7 +134,7 @@ export function QnaAuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps
                 </Button>
                 <Button
                   onClick={handleVerify}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                   disabled={verificationCode.length < 4 || isSubmitting}
                 >
                   {isSubmitting ? "Verifying..." : "Verify"}

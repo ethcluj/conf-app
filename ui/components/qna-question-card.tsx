@@ -4,6 +4,7 @@ import { ChevronUp, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { type QnaQuestion, formatRelativeTime } from "@/lib/qna-data"
+import * as QnaApi from "@/lib/qna-api"
 
 interface QuestionCardProps {
   question: QnaQuestion
@@ -20,27 +21,36 @@ export function QnaQuestionCard({ question, onVote, isAuthenticated, onAuthReque
   
   const isOwnQuestion = currentUserId && question.authorId === currentUserId
   
-  const handleVoteClick = () => {
+  const handleVoteClick = async () => {
     if (!isAuthenticated) {
       onAuthRequest?.()
       return
     }
     
     setIsVoting(true)
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      onVote(question.id)
+    try {
+      // Call the vote handler provided by the parent component
+      await onVote(question.id)
+    } catch (error) {
+      console.error('Error voting on question:', error)
+      // Error handling is done at the parent component level
+    } finally {
       setIsVoting(false)
-    }, 300) // Simulating API delay
+    }
   }
 
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true)
   }
   
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (onDelete) {
-      onDelete(question.id)
+      try {
+        await onDelete(question.id)
+      } catch (error) {
+        console.error('Error deleting question:', error)
+        // Error handling is done at the parent component level
+      }
     }
     setShowDeleteConfirm(false)
   }

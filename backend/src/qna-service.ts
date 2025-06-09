@@ -13,6 +13,22 @@ export class QnaService {
   }
 
   /**
+   * Get a user by fingerprint only (no creation)
+   */
+  async getUserByFingerprint(fingerprint: string): Promise<QnaUser> {
+    const result = await this.pool.query(
+      'SELECT * FROM qna_users WHERE fingerprint = $1',
+      [fingerprint]
+    );
+    
+    if (result.rows.length === 0) {
+      throw new Error('User not found');
+    }
+    
+    return this.mapDbUserToQnaUser(result.rows[0]);
+  }
+
+  /**
    * Get or create a user based on email or fingerprint
    */
   async getOrCreateUser(email?: string, fingerprint?: string): Promise<QnaUser> {

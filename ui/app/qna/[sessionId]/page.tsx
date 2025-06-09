@@ -6,13 +6,13 @@ import { ArrowLeft, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { 
   getQuestionsBySession, 
-  mockCurrentUser, 
   type QnaQuestion, 
   type QnaUser, 
   addQuestion,
   toggleVote,
   deleteQuestion 
 } from "@/lib/qna-data"
+import * as QnaApi from "@/lib/qna-api"
 import { getSessionById, type Session } from "@/lib/data"
 import { ScrollHideHeader } from "@/components/scroll-hide-header"
 import { QnaQuestionCard } from "@/components/qna-question-card"
@@ -24,13 +24,17 @@ export default function QnaPage() {
   const params = useParams()
   const sessionId = params.sessionId as string
   
-  const [user, setUser] = useState<QnaUser>(mockCurrentUser)
+  const [user, setUser] = useState<QnaUser>({ 
+    id: '', 
+    displayName: '', 
+    isAuthenticated: false 
+  })
   const [session, setSession] = useState<Session | null>(null)
   const [questions, setQuestions] = useState<QnaQuestion[]>([])
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load session data
+  // Load session data and check authentication status
   useEffect(() => {
     const fetchSessionData = async () => {
       try {
@@ -46,6 +50,20 @@ export default function QnaPage() {
         const sessionQuestions = await getQuestionsBySession(sessionId)
         setQuestions(sessionQuestions)
         
+        // Check if user is already authenticated with a valid auth token
+        const authToken = localStorage.getItem('qna_auth_token')
+        if (authToken) {
+          try {
+            // Only try to authenticate if there's an auth token
+            const userData = await QnaApi.authenticateUser()
+            setUser(userData)
+          } catch (authError) {
+            console.log('Auth token invalid or expired')
+            // Clear invalid token
+            localStorage.removeItem('qna_auth_token')
+          }
+        }
+        
         setIsLoading(false)
       } catch (error) {
         console.error("Error loading session data:", error)
@@ -57,20 +75,40 @@ export default function QnaPage() {
   }, [sessionId])
 
   const handleVote = async (questionId: string) => {
+    if (!user.isAuthenticated) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
     try {
-      const updatedQuestions = await toggleVote(questionId, user.id)
-      setQuestions([...updatedQuestions])
+      // Toggle the vote using the real API
+      await toggleVote(questionId, sessionId)
+      
+      // Refresh the questions list to ensure consistency
+      const updatedQuestions = await getQuestionsBySession(sessionId)
+      setQuestions(updatedQuestions)
     } catch (error) {
       console.error("Error toggling vote:", error)
+      // Don't show an alert for vote errors to avoid disrupting the user experience
     }
   }
   
   const handleDeleteQuestion = async (questionId: string) => {
+    if (!user.isAuthenticated) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
     try {
-      const updatedQuestions = await deleteQuestion(questionId, user.id)
-      setQuestions([...updatedQuestions])
+      // Delete the question using the real API
+      await deleteQuestion(questionId, sessionId)
+      
+      // Refresh the questions list to ensure consistency
+      const updatedQuestions = await getQuestionsBySession(sessionId)
+      setQuestions(updatedQuestions)
     } catch (error) {
       console.error("Error deleting question:", error)
+      alert("Failed to delete question. You may only delete your own questions.")
     }
   }
 
@@ -78,37 +116,44 @@ export default function QnaPage() {
     if (!user.isAuthenticated || !session) return
     
     try {
-      const newQuestion = await addQuestion(questionContent, sessionId, user)
+      // Use the real API to add a question
+      const newQuestion = await addQuestion(questionContent, sessionId)
       
-      // Add the new question to the list and resort
-      const updatedQuestions = [...questions, newQuestion]
-        .sort((a, b) => b.votes - a.votes)
-      
+      // After adding the question, refresh the questions list to ensure consistency
+      const updatedQuestions = await getQuestionsBySession(sessionId)
       setQuestions(updatedQuestions)
     } catch (error) {
       console.error("Error submitting question:", error)
+      alert("Failed to submit your question. Please try again.")
     }
   }
 
-  const handleAuthenticate = (email: string) => {
-    // In a real app, we would store the auth token and handle user session
-    setUser({
-      ...user,
-      email,
-      isAuthenticated: true,
-      authToken: `mock-token-${Date.now()}`
-    })
+  const handleAuthenticate = async (email: string) => {
+    try {
+      // Use the real API to authenticate
+      const userData = await QnaApi.authenticateUser(email)
+      setUser(userData)
+    } catch (error) {
+      console.error("Authentication error:", error)
+      // Show error message to user
+      alert("Authentication failed. Please try again.")
+    }
   }
 
   const handleAuthRequest = () => {
     setIsAuthModalOpen(true)
   }
   
-  const handleUpdateDisplayName = (newName: string) => {
-    setUser(prevUser => ({
-      ...prevUser,
-      displayName: newName
-    }))
+  const handleUpdateDisplayName = async (newName: string) => {
+    try {
+      // Use the real API to update display name
+      const updatedUser = await QnaApi.updateUserDisplayName(newName)
+      setUser(updatedUser)
+    } catch (error) {
+      console.error("Error updating display name:", error)
+      // Show error message to user
+      alert("Failed to update display name. Please try again.")
+    }
   }
 
   if (isLoading) {

@@ -4,6 +4,7 @@ import { Send, Pencil } from "lucide-react"
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { type QnaUser } from "@/lib/qna-data"
+import * as QnaApi from "@/lib/qna-api"
 
 // List of funny and encouraging placeholder messages
 const placeholderMessages = [
@@ -57,7 +58,7 @@ export function QnaQuestionInput({
     return placeholderMessages[randomIndex]
   }, [])
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!question.trim()) return
     
     if (!isAuthenticated) {
@@ -66,12 +67,16 @@ export function QnaQuestionInput({
     }
     
     setIsSubmitting(true)
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      onSubmit(question)
+    try {
+      // Submit the question using the provided callback
+      await onSubmit(question)
       setQuestion("")
+    } catch (error) {
+      console.error('Error submitting question:', error)
+      // Error handling is done at the parent component level
+    } finally {
       setIsSubmitting(false)
-    }, 500) // Simulating API delay
+    }
   }
   
   const remainingChars = maxLength - question.length

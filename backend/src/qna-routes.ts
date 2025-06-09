@@ -1,6 +1,25 @@
 import express, { Request, Response, Router } from 'express';
 import { QnaService } from './qna-service';
 import { Pool } from 'pg';
+import { emailService } from './email-service';
+
+// Helper functions for API responses
+function createSuccessResponse(data: any) {
+  return {
+    success: true,
+    data
+  };
+}
+
+function createErrorResponse(message: string, details?: any) {
+  return {
+    success: false,
+    error: {
+      message,
+      ...details
+    }
+  };
+}
 
 /**
  * Create QnA routes
@@ -142,19 +161,77 @@ export function createQnaRoutes(pool: Pool): Router {
     }
   });
 
-  // Authenticate or create user
-  router.post('/auth', async (req, res) => {
+  // Send verification code
+  router.post('/auth/send-code', async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json(createErrorResponse('Email is required'));
+      }
+      
+      // Send verification code via email
+      await emailService.sendVerificationCode(email);
+      
+      res.json(createSuccessResponse({ success: true, message: 'Verification code sent' }));
+    } catch (error) {
+      console.error('Error sending verification code:', error);
+      res.status(500).json(createErrorResponse('Failed to send verification code', { message: (error as Error).message }));
+    }
+  });
+  
+  // Verify code and authenticate user
+  router.post('/auth/verify', async (req: Request, res: Response) => {
+    try {
+      const { email, code, fingerprint } = req.body;
+      
+      if (!email || !code) {
+        return res.status(400).json(createErrorResponse('Email and verification code are required'));
+      }
+      
+      // Verify the code
+      const isValid = emailService.verifyCode(email, code);
+      
+      if (!isValid) {
+        return res.status(401).json(createErrorResponse('Invalid or expired verification code'));
+      }
+      
+      // Create or get user after successful verification
+      const user = await qnaService.getOrCreateUser(email, fingerprint);
+      
+      res.json(createSuccessResponse(user));
+    } catch (error) {
+      console.error('Verification error:', error);
+      res.status(500).json(createErrorResponse('Verification failed', { message: (error as Error).message }));
+    }
+  });
+  
+  // Authentication route - get user by fingerprint only (no creation)
+  router.post('/auth', async (req: Request, res: Response) => {
     try {
       const { email, fingerprint } = req.body;
       
       if (!email && !fingerprint) {
-        return res.status(400).json(createErrorResponse('Email or fingerprint is required'));
+        return res.status(400).json(createErrorResponse('Email or fingerprint required'));
       }
       
-      const user = await qnaService.getOrCreateUser(email, fingerprint);
+      // Only return existing users
+      let user;
+      if (fingerprint) {
+        try {
+          user = await qnaService.getUserByFingerprint(fingerprint);
+        } catch (err) {
+          return res.status(401).json(createErrorResponse('Authentication required. Please verify your email.'));
+        }
+      }
+      
+      if (!user) {
+        return res.status(401).json(createErrorResponse('Authentication required'));
+      }
+      
       res.json(createSuccessResponse(user));
     } catch (error) {
-      console.error('Error authenticating user:', error);
+      console.error('Auth error:', error);
       res.status(500).json(createErrorResponse('Authentication failed', { message: (error as Error).message }));
     }
   });
