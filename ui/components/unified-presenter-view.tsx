@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Video, MessageCircle, ArrowLeft, ArrowRight, Maximize, Trophy } from "lucide-react"
+import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated } from "@/lib/sse-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { type Session } from "@/lib/data"
@@ -106,7 +107,7 @@ export function UnifiedPresenterView({
         try {
           setIsLoading(true)
           // Get questions for this session
-          const sessionQuestions = getQuestionsBySession(session.id)
+          const sessionQuestions = await getQuestionsBySession(session.id)
           setQuestions(sessionQuestions)
           setIsLoading(false)
         } catch (error) {
@@ -116,13 +117,67 @@ export function UnifiedPresenterView({
       }
       
       fetchQuestions()
-      
-      // Set up polling for real-time updates
-      const intervalId = setInterval(fetchQuestions, 5000)
-      
-      return () => clearInterval(intervalId)
     }
   }, [mode, session.id])
+  
+  // Handle real-time question updates
+  const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
+    setQuestions(prevQuestions => {
+      // Check if question already exists to prevent duplicates
+      if (prevQuestions.some(q => q.id === newQuestion.id)) {
+        return prevQuestions
+      }
+      // Ensure timestamp is a Date object
+      const questionWithDate = {
+        ...newQuestion,
+        timestamp: newQuestion.timestamp instanceof Date ? 
+          newQuestion.timestamp : 
+          new Date(newQuestion.timestamp || newQuestion.createdAt || Date.now())
+      };
+      // Add new question and sort by votes and creation time
+      return [...prevQuestions, questionWithDate]
+        .sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
+    })
+  }, [])
+
+  // Handle real-time question deletion
+  const handleQuestionDeleted = useCallback(({ questionId }: { questionId: string }) => {
+    setQuestions(prevQuestions => prevQuestions.filter(q => q.id !== questionId))
+  }, [])
+
+  // Handle real-time vote updates
+  const handleVoteUpdated = useCallback(({ questionId, voteCount }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
+    setQuestions(prevQuestions => {
+      return prevQuestions.map(q => {
+        if (q.id === questionId) {
+          // Update vote count
+          return {
+            ...q,
+            votes: voteCount
+          }
+        }
+        return q
+      }).sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
+    })
+  }, [])
+  
+  // Set up SSE connection for real-time updates
+  useEffect(() => {
+    if (mode === 'qna' && session.id) {
+      // Connect to SSE for this session
+      connectToSSE(session.id)
+      
+      // Register event handlers
+      onQuestionAdded(handleQuestionAdded)
+      onQuestionDeleted(handleQuestionDeleted)
+      onVoteUpdated(handleVoteUpdated)
+      
+      // Clean up on unmount or mode change
+      return () => {
+        disconnectFromSSE()
+      }
+    }
+  }, [mode, session.id, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated])
   
   useEffect(() => {
     // Add event listener for keyboard shortcuts

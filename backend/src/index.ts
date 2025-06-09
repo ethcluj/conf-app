@@ -6,6 +6,7 @@ import { allSessions, refreshSessions } from './sessions';
 import { allSpeakers, refreshSpeakers } from './speakers';
 import { initQnaSchema } from './qna-schema';
 import { createQnaRoutes } from './qna-routes';
+import sseRoutes from './routes/sse-routes';
 
 // Load environment variables
 dotenv.config();
@@ -143,6 +144,9 @@ app.get('/health', (req, res) => {
 
 // QnA routes
 app.use('/qna', createQnaRoutes(pool));
+
+// SSE routes for real-time updates
+app.use('/sse', sseRoutes);
 
 /**
  * Initialize and start the server

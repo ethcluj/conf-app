@@ -17,6 +17,7 @@ export interface QnaQuestion {
   authorId: string
   votes: number
   timestamp: Date
+  createdAt?: string | Date  // Added for backend compatibility
   hasUserVoted?: boolean
 }
 

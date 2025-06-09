@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { QnaUser, QnaQuestion, LeaderboardEntry, generateRandomEthName } from './qna-types';
 import crypto from 'crypto';
+import { sseController } from './sse-controller';
 
 /**
  * QnA Service - Handles all QnA database operations
@@ -172,7 +173,7 @@ export class QnaService {
 
       await client.query('COMMIT');
 
-      return {
+      const newQuestion = {
         id: questionResult.rows[0].id,
         sessionId: questionResult.rows[0].session_id,
         content: questionResult.rows[0].content,
@@ -182,6 +183,11 @@ export class QnaService {
         hasUserVoted: false,
         createdAt: questionResult.rows[0].created_at
       };
+      
+      // Broadcast the new question to all clients subscribed to this session
+      sseController.sendEvent(sessionId, 'question_added', newQuestion);
+      
+      return newQuestion;
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Error in addQuestion:', error);
@@ -204,7 +210,18 @@ export class QnaService {
         'SELECT * FROM qna_votes WHERE question_id = $1 AND user_id = $2',
         [questionId, userId]
       );
-
+      
+      // Get the question to find its session ID for broadcasting
+      const questionResult = await client.query(
+        'SELECT session_id FROM qna_questions WHERE id = $1',
+        [questionId]
+      );
+      
+      if (questionResult.rows.length === 0) {
+        throw new Error(`Question with ID ${questionId} not found`);
+      }
+      
+      const sessionId = questionResult.rows[0].session_id;
       let voteAdded = false;
 
       if (voteResult.rows.length > 0) {
@@ -221,8 +238,24 @@ export class QnaService {
         );
         voteAdded = true;
       }
+      
+      // Get updated vote count
+      const votesResult = await client.query(
+        'SELECT COUNT(*) as vote_count FROM qna_votes WHERE question_id = $1',
+        [questionId]
+      );
+      
+      const voteCount = parseInt(votesResult.rows[0].vote_count);
 
       await client.query('COMMIT');
+      
+      // Broadcast vote update to all clients subscribed to this session
+      sseController.sendEvent(sessionId, 'vote_updated', {
+        questionId,
+        voteCount,
+        voteAdded
+      });
+      
       return voteAdded;
     } catch (error) {
       await client.query('ROLLBACK');
@@ -252,6 +285,9 @@ export class QnaService {
         await client.query('COMMIT');
         return false;
       }
+      
+      // Get the session ID for broadcasting
+      const sessionId = questionResult.rows[0].session_id;
 
       // Delete the question
       await client.query(
@@ -260,6 +296,12 @@ export class QnaService {
       );
 
       await client.query('COMMIT');
+      
+      // Broadcast question deletion to all clients subscribed to this session
+      sseController.sendEvent(sessionId, 'question_deleted', {
+        questionId
+      });
+      
       return true;
     } catch (error) {
       await client.query('ROLLBACK');

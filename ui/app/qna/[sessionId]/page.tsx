@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, MessageCircle } from "lucide-react"
 import Link from "next/link"
+import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated } from "@/lib/sse-client"
 import { 
   getQuestionsBySession, 
   type QnaQuestion, 
@@ -33,6 +34,44 @@ export default function QnaPage() {
   const [questions, setQuestions] = useState<QnaQuestion[]>([])
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Handle real-time question updates
+  const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
+    setQuestions(prevQuestions => {
+      // Check if question already exists to prevent duplicates
+      if (prevQuestions.some(q => q.id === newQuestion.id)) {
+        return prevQuestions
+      }
+      // Add new question and sort by votes and creation time
+      return [...prevQuestions, newQuestion]
+        .sort((a, b) => b.votes - a.votes || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    })
+  }, [])
+
+  // Handle real-time question deletion
+  const handleQuestionDeleted = useCallback(({ questionId }: { questionId: string }) => {
+    setQuestions(prevQuestions => prevQuestions.filter(q => q.id !== questionId))
+  }, [])
+
+  // Handle real-time vote updates
+  const handleVoteUpdated = useCallback(({ questionId, voteCount, voteAdded }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
+    setQuestions(prevQuestions => {
+      return prevQuestions.map(q => {
+        if (q.id === questionId) {
+          // Update vote count and user vote status if this is the current user
+          return {
+            ...q,
+            votes: voteCount,
+            // Only update hasUserVoted if we know this is the current user's vote
+            hasUserVoted: q.hasUserVoted !== undefined ? 
+              (user.id && voteAdded !== undefined ? voteAdded : q.hasUserVoted) : 
+              q.hasUserVoted
+          }
+        }
+        return q
+      }).sort((a, b) => b.votes - a.votes || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    })
+  }, [user.id])
 
   // Load session data and check authentication status
   useEffect(() => {
@@ -73,6 +112,24 @@ export default function QnaPage() {
     
     fetchSessionData()
   }, [sessionId])
+  
+  // Set up SSE connection for real-time updates
+  useEffect(() => {
+    if (!sessionId) return
+    
+    // Connect to SSE for this session
+    connectToSSE(sessionId)
+    
+    // Register event handlers
+    onQuestionAdded(handleQuestionAdded)
+    onQuestionDeleted(handleQuestionDeleted)
+    onVoteUpdated(handleVoteUpdated)
+    
+    // Clean up on unmount
+    return () => {
+      disconnectFromSSE()
+    }
+  }, [sessionId, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated])
 
   const handleVote = async (questionId: string) => {
     if (!user.isAuthenticated) {
