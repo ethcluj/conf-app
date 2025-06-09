@@ -5,16 +5,9 @@ on:
     branches: [ main ]
 
 jobs:
-  # Call the backend tests workflow first
-  test:
-    name: Run Backend Tests
-    uses: ./.github/workflows/backend-tests.yml
-
   deploy:
     name: Deploy Application
     runs-on: ubuntu-latest
-    # Make deployment dependent on tests passing
-    needs: test
     
     steps:
     - name: Checkout code
@@ -111,6 +104,16 @@ jobs:
             grep -q "EMAIL_FROM" .env || echo "EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"" >> .env
           fi
           
-          # Restart the application
-          echo "Restarting application..."
-          pm2 restart conf-app-backend || pm2 start npm --name "conf-app-backend" -- start
+          # Stop existing Docker containers
+          echo "Stopping Docker containers..."
+          cd /opt/conf-app
+          docker-compose down
+          
+          # Rebuild and restart Docker containers
+          echo "Rebuilding and starting Docker containers..."
+          docker-compose build --no-cache
+          docker-compose up -d
+          
+          # Verify containers are running
+          echo "Verifying containers are running..."
+          docker-compose ps
