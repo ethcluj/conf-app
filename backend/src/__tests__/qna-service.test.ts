@@ -236,6 +236,12 @@ describe('QnaService', () => {
         if (query.includes('SELECT * FROM qna_votes')) {
           return { rows: [] }; // No existing vote
         }
+        if (query.includes('SELECT session_id FROM qna_questions')) {
+          return { rows: [{ session_id: 'session1' }] }; // Mock question exists
+        }
+        if (query.includes('SELECT COUNT(*) as vote_count')) {
+          return { rows: [{ vote_count: '1' }] }; // Mock vote count
+        }
         return { rows: [] };
       });
 
@@ -259,6 +265,12 @@ describe('QnaService', () => {
       mockClient.query.mockImplementation((query: string, params: any[]) => {
         if (query.includes('SELECT * FROM qna_votes')) {
           return { rows: [{ id: 1, question_id: 1, user_id: 1 }] }; // Existing vote
+        }
+        if (query.includes('SELECT session_id FROM qna_questions')) {
+          return { rows: [{ session_id: 'session1' }] }; // Mock question exists
+        }
+        if (query.includes('SELECT COUNT(*) as vote_count')) {
+          return { rows: [{ vote_count: '0' }] }; // Mock vote count after removal
         }
         return { rows: [] };
       });
