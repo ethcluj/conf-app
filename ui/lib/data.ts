@@ -1,4 +1,4 @@
-import { format, addDays, isBefore, isAfter, isSameDay } from "date-fns"
+import { format, isBefore, isAfter, isSameDay } from "date-fns"
 import { Speaker as ApiSpeaker } from "@/hooks/use-speakers"
 
 // Create conference dates (3 days)
@@ -190,11 +190,7 @@ export const getPastSessions = async (): Promise<Session[]> => {
     .sort((a, b) => b.startTime.getTime() - a.startTime.getTime()); // Most recent first
 }
 
-// These functions don't need to be async as they operate on a single session
-export const isSessionActive = (session: Session): boolean => {
-  const now = new Date();
-  return isAfter(now, session.startTime) && isBefore(now, session.endTime);
-}
+// These functions have been moved to time-utils.ts
 
 export const isSessionUpcoming = (session: Session): boolean => {
   const now = new Date();
@@ -224,9 +220,7 @@ export const formatDayDate = (date: Date): string => {
   return format(date, "EEE, MMM d");
 }
 
-export const isToday = (date: Date): boolean => {
-  return isSameDay(date, new Date());
-}
+// This function has been moved to time-utils.ts
 
 export const getSessionById = async (id: string): Promise<Session | undefined> => {
   const sessions = await fetchAllSessions();

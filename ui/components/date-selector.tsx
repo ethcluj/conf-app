@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { isToday, conferenceDays } from "@/lib/data"
+import { conferenceDays } from "@/lib/data"
+import { isToday } from "@/lib/time-utils"
 
 interface DateSelectorProps {
   selectedDate: Date
@@ -33,6 +34,19 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
       return () => currentRef.removeEventListener("scroll", checkScroll)
     }
   }, [])
+
+  // State to track current day (for client-side rendering)
+  const [currentDays, setCurrentDays] = useState<number[]>([])
+  
+  // Update current day after component mounts (client-side only)
+  useEffect(() => {
+    // Check which days are "today" based on client-side time
+    const todayIndices = conferenceDays
+      .map((day, index) => isToday(day) ? index : -1)
+      .filter(index => index !== -1)
+    
+    setCurrentDays(todayIndices)
+  }, []) // Empty dependency array ensures this runs once after mount
 
   // Scroll to selected date
   useEffect(() => {
@@ -93,7 +107,7 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
         {conferenceDays.map((day, index) => {
           // Hardcoded date labels
           const dateLabel = index === 0 ? "Jun 26" : index === 1 ? "Jun 27" : "Jun 28"
-          const isJun26 = index === 0 // First day is Jun 26 (today)
+          const isCurrentDay = currentDays.includes(index) // Use client-side state instead of direct function call
           const isSelected = day.toDateString() === selectedDate.toDateString()
 
           return (
@@ -107,14 +121,16 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
               )}
             >
               <span className="whitespace-nowrap">{dateLabel}</span>
-              {isJun26 && (
+              {/* Only show the current day indicator on the client side after hydration */}
+              {isCurrentDay && (
                 <span
-                  className={cn("ml-1.5 inline-block h-2 w-2 rounded-full", isSelected ? "bg-white" : "bg-red-600")}
+                  className={cn("ml-1.5 inline-block h-2 w-2 rounded-full animate-pulse", isSelected ? "bg-white" : "bg-red-600")}
                 ></span>
               )}
             </button>
           )
         })}
+
       </div>
 
       {showRightScroll && (

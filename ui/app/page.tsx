@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { allSessions, conferenceDays, getSessionsByDay, isSessionActive, isToday, fetchAllSessions, getStageDisplayName } from "@/lib/data"
+import { allSessions, conferenceDays, getSessionsByDay, fetchAllSessions, getStageDisplayName } from "@/lib/data"
+import { isSessionActive, isToday, getCurrentTime, getCurrentConferenceDay } from "@/lib/time-utils"
 import { DateSelector } from "@/components/date-selector"
 import { TimeIndicator } from "@/components/time-indicator"
 import { SessionCard } from "@/components/session-card"
@@ -96,8 +97,16 @@ export default function ConferenceSchedule() {
   }
 
   const handleJumpToNow = () => {
+    // If there's a current active session, scroll to it
     if (currentSessionRef.current) {
-      currentSessionRef.current.scrollIntoView({ behavior: "smooth" })
+      currentSessionRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+    } else {
+      // If no current session, check if we're on a conference day
+      const currentDay = getCurrentConferenceDay();
+      if (currentDay) {
+        // If we're on a conference day but no active session, set the date to today
+        setSelectedDate(currentDay);
+      }
     }
   }
 

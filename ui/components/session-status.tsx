@@ -1,4 +1,5 @@
-import { type Session, isSessionActive, isSessionPast, isSessionUpcoming } from "@/lib/data"
+import { type Session } from "@/lib/data"
+import { isSessionActive, isSessionPast, isSessionFuture } from "@/lib/time-utils"
 
 interface SessionStatusProps {
   session: Session
@@ -13,7 +14,7 @@ export function SessionStatus({ session }: SessionStatusProps) {
     return null // Removed the "Ended" status indicator
   }
 
-  if (isSessionUpcoming(session)) {
+  if (isSessionFuture(session)) {
     return null // Removed the "Upcoming" status indicator
   }
 

@@ -3,9 +3,10 @@
 import { Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { type Session, formatSessionTime, isSessionPast, isSessionActive, mapApiSpeakerToUiSpeaker, getFullStageName } from "@/lib/data"
-import { SessionStatus } from "@/components/session-status"
+import { type Session, formatSessionTime, getFullStageName } from "@/lib/data"
+import { isSessionPast, isSessionActive } from "@/lib/time-utils"
 import { useSpeakers } from "@/hooks/use-speakers"
+import { SessionStatus } from "@/components/session-status"
 
 interface SessionCardProps {
   session: Session
@@ -78,6 +79,12 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
         <Star className={`h-5 w-5 ${session.isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
       </button>
 
+      {/* Stage/Location with active indicator */}
+      <div className="mb-2 text-sm font-medium text-red-500 flex items-center">
+        {getFullStageName(session.stage, session.title)}
+        {isActive && <span className="ml-2 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
+      </div>
+      
       {/* Time and Status */}
       <div className="flex justify-between mb-2">
         <div className="text-sm font-medium text-gray-400">{formatSessionTime(session)}</div>
@@ -86,12 +93,6 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
       
       {/* Title */}
       <h3 className="mb-3 text-lg font-medium leading-tight">{session.title}</h3>
-      
-      {/* Stage/Location with active indicator */}
-      <div className="mb-3 text-sm font-medium text-red-500 flex items-center">
-        {getFullStageName(session.stage, session.title)}
-        {isActive && <span className="ml-2 h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
-      </div>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center">
