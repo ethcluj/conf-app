@@ -1,4 +1,4 @@
-import { format, addDays, isBefore, isAfter, isSameDay } from "date-fns"
+import { format, isBefore, isAfter, isSameDay } from "date-fns"
 import { Speaker as ApiSpeaker } from "@/hooks/use-speakers"
 
 // Create conference dates (3 days)
@@ -44,6 +44,7 @@ export interface Session {
   isFavorite: boolean
   // Additional session details
   track?: SessionTrack
+  type?: string
   difficulty?: SessionDifficulty
   learningPoints?: string[]
 }
@@ -120,29 +121,26 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
       }
     });
     if (!res.ok) throw new Error("Failed to fetch sessions");
-    const response = await res.json();
+    const responseJson = await res.json();
     
-    // Check if the response has the expected structure
-    if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
-      // This is the standard API response format with {success: true, data: [...]} structure
-      const { data } = response;
-      
-      // Ensure data is an array before mapping
-      if (!Array.isArray(data)) {
-        console.error("API returned data but it's not an array:", data);
-        return [];
-      }
-      
-      const hydrated = data.map(hydrateSession);
-      return hydrated;
-    } else if (Array.isArray(response)) {
-      // Direct array response (fallback for backward compatibility)
-      const hydrated = response.map(hydrateSession);
-      return hydrated;
+    // Handle different API response structures
+    let sessionsArray;
+    if (Array.isArray(responseJson)) {
+      // Direct array response
+      sessionsArray = responseJson;
+    } else if (responseJson.data && Array.isArray(responseJson.data)) {
+      // Object with data property containing array
+      sessionsArray = responseJson.data;
+    } else if (responseJson.sessions && Array.isArray(responseJson.sessions)) {
+      // Object with sessions property containing array
+      sessionsArray = responseJson.sessions;
     } else {
-      console.error("Unexpected API response format for sessions:", response);
+      console.error("Unexpected API response format:", responseJson);
       return [];
     }
+    
+    const hydrated = sessionsArray.map(hydrateSession);
+    return hydrated;
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return [];
@@ -192,11 +190,7 @@ export const getPastSessions = async (): Promise<Session[]> => {
     .sort((a, b) => b.startTime.getTime() - a.startTime.getTime()); // Most recent first
 }
 
-// These functions don't need to be async as they operate on a single session
-export const isSessionActive = (session: Session): boolean => {
-  const now = new Date();
-  return isAfter(now, session.startTime) && isBefore(now, session.endTime);
-}
+// These functions have been moved to time-utils.ts
 
 export const isSessionUpcoming = (session: Session): boolean => {
   const now = new Date();
@@ -226,9 +220,7 @@ export const formatDayDate = (date: Date): string => {
   return format(date, "EEE, MMM d");
 }
 
-export const isToday = (date: Date): boolean => {
-  return isSameDay(date, new Date());
-}
+// This function has been moved to time-utils.ts
 
 export const getSessionById = async (id: string): Promise<Session | undefined> => {
   const sessions = await fetchAllSessions();
