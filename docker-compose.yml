@@ -27,15 +27,20 @@ services:
       - ./backend:/app
       - /app/node_modules
     environment:
-      - DB_USER=postgres
-      - DB_HOST=db
-      - DB_NAME=value_db
-      - DB_PASSWORD=postgres
-      - DB_PORT=5432
+      # Database configuration - use environment variables with defaults
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_HOST=${POSTGRES_HOST:-db}
+      - DB_NAME=${POSTGRES_DB:-ethcluj_conf}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - DB_PORT=${POSTGRES_PORT:-5432}
       # Google Sheets configuration
       - DATA_SOURCE=google-sheet
-      - GOOGLE_SHEET_ID=1r4Y7tWSdyRc-XIW21b9x8felxgBUDKikglFZTB61o5E
-      - GOOGLE_SHEET_NAME=APP
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID:-1r4Y7tWSdyRc-XIW21b9x8felxgBUDKikglFZTB61o5E}
+      - GOOGLE_SHEET_NAME=${GOOGLE_SHEET_NAME:-APP}
+      # Email configuration
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM:-"ETHCluj Conference <noreply@ethcluj.org>"}
     depends_on:
       db:
         condition: service_healthy
@@ -50,11 +55,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=value_db
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-ethcluj_conf}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5

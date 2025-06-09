@@ -97,11 +97,23 @@ jobs:
             echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
             echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
             echo "EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"" >> .env
+            # Add PostgreSQL database credentials
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}" >> .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || secrets.DB_PASSWORD || 'postgres' }}" >> .env
+            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB || 'ethcluj_conf' }}" >> .env
+            echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}" >> .env
+            echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}" >> .env
           else
             # Update existing .env file with email configuration
             grep -q "EMAIL_USER" .env || echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
             grep -q "EMAIL_PASSWORD" .env || echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
             grep -q "EMAIL_FROM" .env || echo "EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"" >> .env
+            # Update PostgreSQL database credentials
+            grep -q "POSTGRES_USER" .env || echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}" >> .env
+            grep -q "POSTGRES_PASSWORD" .env || echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || secrets.DB_PASSWORD || 'postgres' }}" >> .env
+            grep -q "POSTGRES_DB" .env || echo "POSTGRES_DB=${{ secrets.POSTGRES_DB || 'ethcluj_conf' }}" >> .env
+            grep -q "POSTGRES_HOST" .env || echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}" >> .env
+            grep -q "POSTGRES_PORT" .env || echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}" >> .env
           fi
           
           # Stop existing Docker containers
