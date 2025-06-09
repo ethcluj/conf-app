@@ -109,7 +109,10 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
             <div className="flex -space-x-2">
               {session.speakers.map((speaker, i) => {
                 // Try to find the speaker in our API data
-                const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
+                // Make sure apiSpeakers is an array before using find
+                const apiSpeaker = Array.isArray(apiSpeakers) 
+                  ? apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase())
+                  : undefined;
                 const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image;
                 
                 return (

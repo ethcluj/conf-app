@@ -1,8 +1,8 @@
 "use client"
 
-import { ArrowLeft, Calendar, Clock, MapPin, Star } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, MapPin, Star, MessageCircle } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { getSessionTimeStatus } from "@/lib/time-utils"
 import { StaticHeader } from "@/components/static-header"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { BreakSessionDetails } from "@/components/break-session-details"
+import { UnifiedPresenterView } from "@/components/unified-presenter-view"
 
 export default function SessionDetails() {
   // Use the useParams hook to get the id parameter safely
@@ -20,10 +21,28 @@ export default function SessionDetails() {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [showPresenterView, setShowPresenterView] = useState(false)
   
   // Get speakers data from API
   const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers()
 
+  // Handle keyboard shortcuts
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Command+Enter to enter presenter view
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      setShowPresenterView(true)
+    }
+  }, [])
+  
+  useEffect(() => {
+    // Add event listener for keyboard shortcuts
+    document.addEventListener('keydown', handleKeyDown)
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleKeyDown])
+  
   useEffect(() => {
     const fetchSession = async () => {
       try {
@@ -79,6 +98,11 @@ export default function SessionDetails() {
         <p>Session not found</p>
       </div>
     )
+  }
+  
+  // Show presenter view if activated
+  if (showPresenterView && session) {
+    return <UnifiedPresenterView session={session} onClose={() => setShowPresenterView(false)} />
   }
 
   const toggleFavorite = () => {
@@ -300,7 +324,14 @@ export default function SessionDetails() {
             </div>
           </div>
 
-          {/* Q&A button removed */}
+          {/* Q&A Button */}
+          <div className="mb-8">
+            <Link href={`/qna/${sessionId}`}>
+              <Button className="w-full bg-red-600 hover:bg-red-700 py-6 font-medium text-white">
+                Join Q&A
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -100,8 +100,15 @@ jobs:
           if [ ! -f .env ]; then
             echo "Creating .env file"
             cp .env.example .env
-            # You would need to manually set these values on the server
-            # or use GitHub secrets to populate them
+            # Update with email configuration from GitHub secrets
+            echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
+            echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
+            echo "EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"" >> .env
+          else
+            # Update existing .env file with email configuration
+            grep -q "EMAIL_USER" .env || echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
+            grep -q "EMAIL_PASSWORD" .env || echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
+            grep -q "EMAIL_FROM" .env || echo "EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"" >> .env
           fi
           
           # Restart the application
