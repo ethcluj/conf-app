@@ -7,16 +7,21 @@ import { type Session, formatSessionTime, isSessionPast, isSessionActive, getFul
 interface BreakSessionCardProps {
   session: Session
   onClick: () => void
+  isActive?: boolean
 }
 
-export function BreakSessionCard({ session, onClick }: BreakSessionCardProps) {
-  const isActive = isSessionActive(session)
+export function BreakSessionCard({ session, onClick, isActive: propIsActive }: BreakSessionCardProps) {
+  // Use the prop if provided, otherwise calculate it
+  const isActive = propIsActive !== undefined ? propIsActive : isSessionActive(session)
   const isPast = isSessionPast(session)
 
   return (
     <div
       className={cn(
-        "rounded-lg bg-[#1d2430] px-4 pt-2 pb-6 cursor-pointer transition-opacity hover:opacity-90 border border-[#2d3748] relative",
+        "rounded-lg px-4 pt-2 pb-6 cursor-pointer transition-all hover:opacity-90 relative border",
+        isActive 
+          ? "bg-[#232f3e] border-red-600" 
+          : "bg-[#1d2430] border-[#2d3748]",
         isPast && "opacity-70",
       )}
       onClick={onClick}

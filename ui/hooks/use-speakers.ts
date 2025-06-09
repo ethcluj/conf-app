@@ -42,8 +42,25 @@ export function useSpeakers() {
           throw new Error(`Failed to fetch speakers: ${response.status}`);
         }
         
-        const data = await response.json();
-        setSpeakers(data);
+        const responseJson = await response.json();
+        
+        // Handle different API response structures
+        let speakersArray;
+        if (Array.isArray(responseJson)) {
+          // Direct array response
+          speakersArray = responseJson;
+        } else if (responseJson.data && Array.isArray(responseJson.data)) {
+          // Object with data property containing array
+          speakersArray = responseJson.data;
+        } else if (responseJson.speakers && Array.isArray(responseJson.speakers)) {
+          // Object with speakers property containing array
+          speakersArray = responseJson.speakers;
+        } else {
+          console.error("Unexpected API response format:", responseJson);
+          speakersArray = [];
+        }
+        
+        setSpeakers(speakersArray);
       } catch (err) {
         console.error('Error fetching speakers:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch speakers');

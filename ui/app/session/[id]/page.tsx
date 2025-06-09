@@ -1,13 +1,14 @@
 "use client"
 
-import { ArrowLeft, Clock, MapPin, Star } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, MapPin, Star } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { getSessionById, formatSessionDateTime, type Session, getFullStageName } from "@/lib/data"
-import { ScrollHideHeader } from "@/components/scroll-hide-header"
+import { getSessionTimeStatus } from "@/lib/time-utils"
+import { StaticHeader } from "@/components/static-header"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { BreakSessionDetails } from "@/components/break-session-details"
 
@@ -109,27 +110,50 @@ export default function SessionDetails() {
   if (isBreakSession) {
     return (
       <div className="min-h-screen bg-[#0d1117] text-white pb-20">
-        <ScrollHideHeader>
+        <StaticHeader>
           <div className="container mx-auto max-w-md px-4 py-4">
-            <div className="flex items-center">
-              <Link href="/" className="mr-4">
-                <ArrowLeft className="h-6 w-6" />
-              </Link>
-              <h1 className="text-xl font-bold">{session.title}</h1>
+            <div className="flex flex-col">
+              <div className="flex items-center">
+                <Link href="/" className="mr-4">
+                  <ArrowLeft className="h-6 w-6" />
+                </Link>
+                <div>
+                  <h1 className="text-lg font-bold">Break Info</h1>
+                  {(() => {
+                    const status = getSessionTimeStatus(session);
+                    return (
+                      <div className="flex items-center">
+                        <p className={`text-sm ${status.isActive ? 'text-red-500' : 'text-gray-400'}`}>
+                          {status.text}
+                        </p>
+                        {status.isActive && (
+                          <span className="ml-2 h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
           </div>
-        </ScrollHideHeader>
+        </StaticHeader>
 
         <div className="container mx-auto max-w-md px-4 pb-6">
           {/* Content with padding to account for fixed header */}
-          <div className="pt-24">
+          <div className="pt-20">
             {/* Date and Time */}
-            <div className="mb-8">
-              <div className="flex items-center mb-4 text-gray-400">
+            <div className="mb-4">
+              <div className="flex items-center mb-2 text-gray-400">
                 <Clock className="mr-2 h-4 w-4" />
                 <span>{formatSessionDateTime(session)}</span>
-              </div>  
-              {/* Break Session Details */}
+              </div>
+            </div>
+            
+            {/* Break Title */}
+            <h2 className="text-2xl font-bold mb-6">{session.title}</h2>
+            
+            {/* Break Session Details */}
+            <div className="mb-8">
               <BreakSessionDetails session={session} />
             </div>
           </div>
@@ -140,30 +164,59 @@ export default function SessionDetails() {
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white pb-20">
-      <ScrollHideHeader>
+      <StaticHeader>
         <div className="container mx-auto max-w-md px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Link href="/" className="mr-4">
-                <ArrowLeft className="h-6 w-6" />
-              </Link>
-              <div>
-                <h1 className="text-lg font-bold">{session.title}</h1>
-                <p className="text-xs text-gray-400">{session.track || "General"}</p>
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Link href="/" className="mr-4">
+                  <ArrowLeft className="h-6 w-6" />
+                </Link>
+                <div>
+                  <h1 className="text-lg font-bold">Session Info</h1>
+                  {(() => {
+                    const status = getSessionTimeStatus(session);
+                    return (
+                      <div className="flex items-center">
+                        <p className={`text-sm ${status.isActive ? 'text-red-500' : 'text-gray-400'}`}>
+                          {status.text}
+                        </p>
+                        {status.isActive && (
+                          <span className="ml-2 h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
+              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={toggleFavorite}>
+                <Star className={`h-6 w-6 ${isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFavorite}>
-              <Star className={`h-5 w-5 ${isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
-            </Button>
           </div>
         </div>
-      </ScrollHideHeader>
+      </StaticHeader>
 
       <div className="container mx-auto max-w-md px-4 pb-6">
         {/* Content with padding to account for fixed header */}
-        <div className="pt-24">
+        <div className="pt-20">
+          {/* Session Title */}
+          <h2 className="text-2xl font-bold leading-tight mb-2">{session.title}</h2>
+          
+          {/* Track Information */}
+          <p className="text-sm text-gray-400 mb-4">{session.track || "General Track"}</p>
+
+          {/* Difficulty Level */}
+          <div className="mb-4">
+            <span
+              className={`rounded-full ${session.levelColor === "blue" ? "bg-blue-600" : session.levelColor === "green" ? "bg-green-600" : session.levelColor === "orange" ? "bg-orange-500" : "bg-red-600"} px-4 py-1 text-sm font-medium`}
+            >
+              {session.level}
+            </span>
+          </div>
+          
           {/* Date, Time and Location */}
-          <div className="mb-6 space-y-2">
+          <div className="mb-8 space-y-2">
             <div className="flex items-center text-gray-400">
               <Clock className="mr-2 h-4 w-4" />
               <span className="text-sm">{formatSessionDateTime(session)}</span>
@@ -174,26 +227,14 @@ export default function SessionDetails() {
             </div>
           </div>
 
-          {/* Session Title */}
-          <h2 className="mb-4 text-2xl font-bold leading-tight">{session.title}</h2>
-
-          {/* Difficulty Level */}
-          <div className="mb-8">
-            <span
-              className={`rounded-full ${session.levelColor === "blue" ? "bg-blue-600" : session.levelColor === "green" ? "bg-green-600" : session.levelColor === "orange" ? "bg-orange-500" : "bg-red-600"} px-4 py-1 text-sm font-medium`}
-            >
-              {session.level}
-            </span>
-          </div>
-
           {/* Speakers */}
           <div className="mb-8">
             <h3 className="mb-4 text-xl font-semibold">Speakers</h3>
-            <div className="flex space-x-8">
+            <div className="flex flex-wrap gap-6">
               {session.speakers.map(
                 (speaker, index) =>
                   !speaker.isMultiple && (
-                    <div key={index} className="flex flex-col items-center">
+                    <div key={index} className="flex flex-col items-center mb-2" style={{ minWidth: '80px', maxWidth: '120px' }}>
                       <Avatar className="mb-2 h-16 w-16">
                         {/* Try to find the speaker in our API data */}
                         {(() => {
@@ -203,19 +244,19 @@ export default function SessionDetails() {
                         })()}
                         <AvatarFallback>{speaker.name.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">{speaker.name}</span>
-                      {speaker.title && <span className="text-xs text-gray-400">{speaker.title}</span>}
+                      <span className="text-sm font-medium text-center">{speaker.name}</span>
+                      {speaker.title && <span className="text-xs text-gray-400 text-center">{speaker.title}</span>}
                     </div>
                   )
               )}
               {session.speakers.some((speaker) => speaker.isMultiple) && (
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center mb-2" style={{ minWidth: '80px', maxWidth: '120px' }}>
                   <Avatar className="mb-2 h-16 w-16">
                     <AvatarImage src="/placeholder.svg?height=64&width=64" alt="Multiple Speakers" speakerName="Multiple Speakers" />
                     <AvatarFallback>MS</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium">Multiple Speakers</span>
-                  <span className="text-xs text-gray-400">Various Organizations</span>
+                  <span className="text-sm font-medium text-center">Multiple Speakers</span>
+                  <span className="text-xs text-gray-400 text-center">Various Organizations</span>
                 </div>
               )}
             </div>
@@ -244,23 +285,13 @@ export default function SessionDetails() {
             </div>
           )}
 
-          {/* Session Details */}
+          {/* Details */}
           <div className="mb-8">
-            <h3 className="mb-3 text-xl font-semibold">Session Details</h3>
+            <h3 className="mb-3 text-xl font-semibold">Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-lg bg-[#161b22] p-4">
-                <h4 className="mb-2 text-sm text-gray-400">Difficulty</h4>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex space-x-1">
-                    {[...Array(maxDots)].map((_, dot) => (
-                      <div
-                        key={dot}
-                        className={`h-3 w-3 rounded-full ${dot < difficultyDots ? "bg-red-600" : "bg-gray-700"}`}
-                      ></div>
-                    ))}
-                  </div>
-                  <span className="text-sm">{difficultyLabel}</span>
-                </div>
+                <h4 className="mb-2 text-sm text-gray-400">Type</h4>
+                <p className="text-sm">{session.type || "General"}</p>
               </div>
               <div className="rounded-lg bg-[#161b22] p-4">
                 <h4 className="mb-2 text-sm text-gray-400">Track</h4>
