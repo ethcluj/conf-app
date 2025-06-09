@@ -35,4 +35,4 @@ RUN ls -la dist || echo "dist directory not found"
 EXPOSE 3001
 
 # Start the application in production mode
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/src/index.js"]
