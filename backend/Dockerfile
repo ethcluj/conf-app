@@ -14,19 +14,25 @@ RUN npm install
 # Copy source files
 COPY . .
 
+# Debug: Show directory contents
+RUN ls -la
+
+# Debug: Show tsconfig.json content
+RUN cat tsconfig.json
+
 # Build TypeScript
 RUN npm run build
 
-# Verify the build output exists
-RUN ls -la dist/
+# Debug: Show output directory
+RUN ls -la
 
-# Verify dist directory exists before removing source files
-RUN ls -la dist/ && echo "Dist directory verified"
+# Debug: Show dist directory if it exists
+RUN ls -la dist || echo "dist directory not found"
 
-# Remove source files and keep only compiled files for production
-RUN rm -rf src tsconfig.json
+# For production, we'll keep the source files for now to debug
+# RUN rm -rf src tsconfig.json
 
 EXPOSE 3001
 
 # Start the application in production mode
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
