@@ -1,10 +1,11 @@
 "use client"
 
-import { Send, Pencil } from "lucide-react"
+import { Send, Pencil, LogOut } from "lucide-react"
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { type QnaUser } from "@/lib/qna-data"
 import * as QnaApi from "@/lib/qna-api"
+import { QnaLogoutModal } from "@/components/qna-logout-modal"
 
 // List of funny and encouraging placeholder messages
 const placeholderMessages = [
@@ -37,6 +38,7 @@ interface QuestionInputProps {
   user: QnaUser
   maxLength?: number
   onUpdateDisplayName?: (newName: string) => void
+  onLogout?: () => void
 }
 
 export function QnaQuestionInput({ 
@@ -45,12 +47,14 @@ export function QnaQuestionInput({
   onAuthRequest, 
   user,
   maxLength = 280,
-  onUpdateDisplayName
+  onUpdateDisplayName,
+  onLogout
 }: QuestionInputProps) {
   const [question, setQuestion] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [newDisplayName, setNewDisplayName] = useState(user.displayName)
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   
   // Randomly select a placeholder message when component mounts
   const randomPlaceholder = useMemo(() => {
@@ -84,6 +88,15 @@ export function QnaQuestionInput({
   
   return (
     <div className="p-4">
+      <QnaLogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          QnaApi.logout();
+          if (onLogout) onLogout();
+          setIsLogoutModalOpen(false);
+        }}
+      />
       <div className="container mx-auto max-w-md">
         {isAuthenticated && (
           <div className="flex items-center gap-2 mb-2">
@@ -129,6 +142,15 @@ export function QnaQuestionInput({
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
+                  {onLogout && (
+                    <button
+                      onClick={() => setIsLogoutModalOpen(true)}
+                      className="text-gray-400 hover:text-red-500 p-1 ml-2"
+                      aria-label="Logout"
+                    >
+                      <LogOut className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               </div>
             )}

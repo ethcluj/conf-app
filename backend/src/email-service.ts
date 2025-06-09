@@ -13,24 +13,25 @@ export class EmailService {
   private emailEnabled: boolean;
 
   constructor() {
-    // Check if email is configured
-    this.emailEnabled = !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+    this.emailEnabled = false;
     
-    if (this.emailEnabled) {
-      console.log('Email service initialized with user:', process.env.EMAIL_USER);
-      
-      // Create a transporter using Google Workspace
+    // Load environment variables
+    const emailUser = process.env.EMAIL_USER;
+    const emailPassword = process.env.EMAIL_PASSWORD;
+    const emailFrom = process.env.EMAIL_FROM || "ETHCluj Conference <noreply@ethcluj.org>";
+    
+    if (emailUser && emailPassword) {
+      this.emailEnabled = true;
       this.transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true, // use SSL
+        service: 'gmail',
         auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD
+          user: emailUser,
+          pass: emailPassword
         }
       });
+      console.log(`Email service initialized with user: ${emailUser} (sending as ${emailFrom})`);
     } else {
-      console.warn('Email service is not fully configured. Running in development mode with console logs.');
+      console.log('Email service running in development mode (emails will be logged to console)');
     }
   }
 
@@ -46,48 +47,42 @@ export class EmailService {
    * Send a verification code to the user's email
    */
   async sendVerificationCode(email: string): Promise<string> {
-    // Generate a new verification code
     const code = this.generateVerificationCode();
     
-    // Store the code with expiration (15 minutes)
+    // Store the code with expiration
     const expires = new Date();
-    expires.setMinutes(expires.getMinutes() + 15);
+    expires.setMinutes(expires.getMinutes() + 15); // Code expires in 15 minutes
     this.verificationCodes.set(email, { code, expires });
     
-    // If email is not configured, log the code to console (for development)
-    if (!this.emailEnabled) {
+    if (this.emailEnabled) {
+      try {
+        // Send email with verification code
+        await this.transporter.sendMail({
+          from: process.env.EMAIL_FROM || '"ETHCluj Conference" <noreply@ethcluj.org>',
+          to: email,
+          subject: 'Your ETHCluj Conference Verification Code',
+          text: `Your verification code is: ${code}\n\nThis code will expire in 15 minutes.\n\nETHCluj Conference Team`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #e53e3e;">ETHCluj Conference</h2>
+              <p style="font-size: 16px;">Your verification code is:</p>
+              <p style="font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; padding: 10px; background-color: #f7fafc; border-radius: 4px; text-align: center;">${code}</p>
+              <p style="font-size: 14px; color: #718096;">This code will expire in 15 minutes.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+              <p style="font-size: 14px; color: #718096;">ETHCluj Conference Team</p>
+            </div>
+          `
+        });
+        console.log(`Verification code sent to ${email}`);
+      } catch (error) {
+        console.error('Error sending verification email:', error);
+      }
+    } else {
+      // In development mode, just log the code
       console.log(`=== DEVELOPMENT MODE: Verification code for ${email} is ${code} ===`);
-      return code;
     }
     
-    // Email content
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || '"ETHCluj Conference" <noreply@ethcluj.org>',
-      to: email,
-      subject: 'Your ETHCluj Conference Verification Code',
-      text: `Your verification code is: ${code}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this code, please ignore this email.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #e53e3e;">ETHCluj Conference</h2>
-          <p>Your verification code is:</p>
-          <div style="background-color: #f7fafc; padding: 20px; text-align: center; font-size: 24px; letter-spacing: 5px; font-weight: bold;">
-            ${code}
-          </div>
-          <p>This code will expire in 15 minutes.</p>
-          <p style="color: #718096; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
-        </div>
-      `
-    };
-    
-    // Send the email
-    try {
-      await this.transporter.sendMail(mailOptions);
-      console.log(`Verification email sent to ${email}`);
-      return code;
-    } catch (error) {
-      console.error('Error sending verification email:', error);
-      throw new Error('Failed to send verification email');
-    }
+    return code;
   }
 
   /**

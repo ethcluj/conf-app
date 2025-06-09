@@ -155,6 +155,15 @@ export default function QnaPage() {
       alert("Failed to update display name. Please try again.")
     }
   }
+  
+  const handleLogout = () => {
+    // Reset user state
+    setUser({ 
+      id: '', 
+      displayName: '', 
+      isAuthenticated: false 
+    })
+  }
 
   if (isLoading) {
     return (
@@ -240,6 +249,7 @@ export default function QnaPage() {
             onAuthRequest={handleAuthRequest}
             user={user}
             onUpdateDisplayName={handleUpdateDisplayName}
+            onLogout={handleLogout}
           />
         </div>
       </div>

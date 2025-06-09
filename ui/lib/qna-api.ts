@@ -56,6 +56,12 @@ const setAuthToken = (token: string): void => {
   localStorage.setItem('qna_auth_token', token);
 };
 
+// Clear auth token (logout)
+const clearAuthToken = (): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('qna_auth_token');
+};
+
 // Standard headers for API requests
 const getHeaders = (): HeadersInit => {
   const headers: HeadersInit = {
@@ -273,4 +279,11 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     questionsAsked: entry.questionsAsked,
     upvotesReceived: entry.upvotesReceived
   }));
+};
+
+/**
+ * Logout the current user
+ */
+export const logout = (): void => {
+  clearAuthToken();
 };
