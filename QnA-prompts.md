@@ -16,8 +16,8 @@ Attendees can access the Q&A system through two entry points:
 
 ### For Attendees
 1. View questions anonymously without authentication
-2. Ask questions (requires minimal authentication)
-3. Upvote questions (requires minimal authentication)
+2. Ask questions (requires minimal authentication). Can delete and edit own questions.
+3. Upvote questions (requires minimal authentication). Cannot upvote own questions.
 4. Withdraw votes from previously upvoted questions
 5. Vote for multiple questions within the same session
 6. See real-time updates of questions and votes
