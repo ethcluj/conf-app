@@ -1,23 +1,37 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 /**
  * Email Service for sending verification codes
  */
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter!: nodemailer.Transporter; // Using definite assignment assertion
   private verificationCodes: Map<string, { code: string, expires: Date }> = new Map();
+  private emailEnabled: boolean;
 
   constructor() {
-    // Create a transporter using Google Workspace
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // use SSL
-      auth: {
-        user: process.env.EMAIL_USER || 'noreply@ethcluj.org',
-        pass: process.env.EMAIL_PASSWORD || '' // App password should be set in environment variables
-      }
-    });
+    // Check if email is configured
+    this.emailEnabled = !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+    
+    if (this.emailEnabled) {
+      console.log('Email service initialized with user:', process.env.EMAIL_USER);
+      
+      // Create a transporter using Google Workspace
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true, // use SSL
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      });
+    } else {
+      console.warn('Email service is not fully configured. Running in development mode with console logs.');
+    }
   }
 
   /**
@@ -40,9 +54,15 @@ export class EmailService {
     expires.setMinutes(expires.getMinutes() + 15);
     this.verificationCodes.set(email, { code, expires });
     
+    // If email is not configured, log the code to console (for development)
+    if (!this.emailEnabled) {
+      console.log(`=== DEVELOPMENT MODE: Verification code for ${email} is ${code} ===`);
+      return code;
+    }
+    
     // Email content
     const mailOptions = {
-      from: '"ETHCluj Conference" <noreply@ethcluj.org>',
+      from: process.env.EMAIL_FROM || '"ETHCluj Conference" <noreply@ethcluj.org>',
       to: email,
       subject: 'Your ETHCluj Conference Verification Code',
       text: `Your verification code is: ${code}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this code, please ignore this email.`,
@@ -62,6 +82,7 @@ export class EmailService {
     // Send the email
     try {
       await this.transporter.sendMail(mailOptions);
+      console.log(`Verification email sent to ${email}`);
       return code;
     } catch (error) {
       console.error('Error sending verification email:', error);
