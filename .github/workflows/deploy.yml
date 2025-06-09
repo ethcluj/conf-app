@@ -116,16 +116,16 @@ jobs:
             grep -q "POSTGRES_PORT" .env || echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}" >> .env
           fi
           
-          # Stop existing Docker containers
-          echo "Stopping Docker containers..."
-          cd /opt/conf-app
-          docker-compose down
-          
-          # Rebuild and restart Docker containers
-          echo "Rebuilding and starting Docker containers..."
-          docker-compose build --no-cache
-          docker-compose up -d
-          
-          # Verify containers are running
+          # Stop existing containers, rebuild with no cache, and restart
+          echo "Stopping existing containers..."
+          docker-compose -f docker-compose.prod.yml down
+          echo "Rebuilding containers with no cache..."
+          docker-compose -f docker-compose.prod.yml build --no-cache
+          echo "Starting containers in detached mode..."
+          docker-compose -f docker-compose.prod.yml up -d
           echo "Verifying containers are running..."
-          docker-compose ps
+          docker-compose -f docker-compose.prod.yml ps
+          
+          # Show logs to help with debugging
+          echo "Showing recent logs from containers..."
+          docker-compose -f docker-compose.prod.yml logs --tail=50

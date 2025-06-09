@@ -17,9 +17,16 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
-# Remove source files and keep only compiled files
+# Verify the build output exists
+RUN ls -la dist/
+
+# Verify dist directory exists before removing source files
+RUN ls -la dist/ && echo "Dist directory verified"
+
+# Remove source files and keep only compiled files for production
 RUN rm -rf src tsconfig.json
 
 EXPOSE 3001
 
-CMD ["npm", "start"] 
+# Start the application in production mode
+CMD ["npm", "start"]
