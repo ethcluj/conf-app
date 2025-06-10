@@ -96,7 +96,7 @@ jobs:
           sed -i "s/^EMAIL_PASSWORD=.*/EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}/g" .env
           sed -i "s/^EMAIL_FROM=.*/EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"/g" .env
           sed -i "s/^POSTGRES_USER=.*/POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}/g" .env
-          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || secrets.DB_PASSWORD || 'postgres' }}/g" .env
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'postgres' }}/g" .env
           sed -i "s/^POSTGRES_DB=.*/POSTGRES_DB=${{ secrets.POSTGRES_DB || 'value_db' }}/g" .env
           sed -i "s/^POSTGRES_HOST=.*/POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}/g" .env
           sed -i "s/^POSTGRES_PORT=.*/POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}/g" .env

@@ -28,11 +28,11 @@ services:
       - /app/node_modules
     environment:
       # Database configuration - use environment variables with defaults
-      - DB_USER=${POSTGRES_USER:-postgres}
-      - DB_HOST=${POSTGRES_HOST:-db}
-      - DB_NAME=${POSTGRES_DB:-ethcluj_conf}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - DB_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=${POSTGRES_HOST:-db}
+      - POSTGRES_DB=${POSTGRES_DB:-ethcluj_conf}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       # Google Sheets configuration
       - DATA_SOURCE=google-sheet
       - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID:-1r4Y7tWSdyRc-XIW21b9x8felxgBUDKikglFZTB61o5E}

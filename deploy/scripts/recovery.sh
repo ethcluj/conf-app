@@ -46,8 +46,8 @@ fi
 section "Creating database backup"
 if docker-compose -f "${COMPOSE_FILE}" ps | grep -q db; then
     echo "Creating database backup..."
-    docker-compose -f "${COMPOSE_FILE}" exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/db_backup_${TIMESTAMP}.sql"
-    echo "Database backup created at: ${BACKUP_DIR}/db_backup_${TIMESTAMP}.sql"
+    docker-compose -f "${COMPOSE_FILE}" exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
+    echo "Database backup created at: ${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
 else
     warning "Database container not running, skipping backup"
 fi
@@ -231,4 +231,4 @@ fi
 section "Recovery complete!"
 echo "The ETHCluj Conference QnA application has been reset and redeployed."
 echo "If you need to restore data from backup, use the following command:"
-echo "cat ${BACKUP_DIR}/db_backup_${TIMESTAMP}.sql | docker-compose -f ${COMPOSE_FILE} exec -T db psql -U postgres value_db"
+echo "cat ${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql | docker-compose -f ${COMPOSE_FILE} exec -T db psql -U postgres value_db"

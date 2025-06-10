@@ -97,7 +97,7 @@ To manually renew the certificates:
 
 Database backups are created automatically during deployment and recovery operations.
 
-Backups are stored in the `/opt/conf-app/backups` directory with timestamps in the filename format `db_backup_YYYYMMDD_HHMMSS.sql`.
+Backups are stored in the `/opt/conf-app/backups` directory with timestamps in the filename format `postgres_backup_YYYYMMDD_HHMMSS.sql`.
 
 **Important**: Database backups are not automatically deleted and should be managed manually to prevent disk space issues. Consider implementing a rotation policy or periodically removing old backups that are no longer needed.
 
@@ -108,7 +108,7 @@ To manually delete old backups:
 ls -lt /opt/conf-app/backups
 
 # Delete backups older than 30 days
-find /opt/conf-app/backups -name "db_backup_*.sql" -type f -mtime +30 -delete
+find /opt/conf-app/backups -name "postgres_backup_*.sql" -type f -mtime +30 -delete
 ```
 
 ## Troubleshooting

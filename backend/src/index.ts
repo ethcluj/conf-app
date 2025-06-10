@@ -21,11 +21,11 @@ app.use(express.json());
 
 // Database connection
 const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'db',
-  database: process.env.DB_NAME || 'value_db',
-  password: process.env.DB_PASSWORD || 'postgres',
-  port: parseInt(process.env.DB_PORT || '5432'),
+  user: process.env.POSTGRES_USER || 'postgres',
+  host: process.env.POSTGRES_HOST || 'db',
+  database: process.env.POSTGRES_DB || 'value_db',
+  password: process.env.POSTGRES_PASSWORD || 'postgres',
+  port: parseInt(process.env.POSTGRES_PORT || '5432'),
 });
 
 /**

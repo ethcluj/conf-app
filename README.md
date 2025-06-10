@@ -21,7 +21,7 @@ The official ETHCluj conference application with backend and UI components. This
 ### Environment Setup
 1. Create a `.env` file in the root directory with the following variables:
 ```
-DB_PASSWORD=your_database_password
+POSTGRES_PASSWORD=your_database_password
 GOOGLE_SHEET_ID=your_sheet_id
 GOOGLE_SHEET_NAME=APP
 GOOGLE_SPEAKERS_SHEET_NAME=Speakers
@@ -76,11 +76,11 @@ REFRESH_INTERVAL=60000
 
 3. Create `.env` file with required environment variables:
    ```
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_HOST=localhost
-   DB_NAME=value_db
-   DB_PORT=5432
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_HOST=localhost
+   POSTGRES_DB=value_db
+   POSTGRES_PORT=5432
    DATA_SOURCE=google-sheet
    GOOGLE_SHEET_ID=your_sheet_id
    GOOGLE_SHEET_NAME=APP

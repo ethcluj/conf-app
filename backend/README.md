@@ -166,11 +166,11 @@ All API endpoints follow a standardized response format:
 |----------|-------------|---------|----------|
 | PORT | Server port | 3001 | No |
 | REFRESH_INTERVAL | Data refresh interval in milliseconds | 300000 (5 minutes) | No |
-| DB_USER | Database user | postgres | No |
-| DB_HOST | Database host | db | No |
-| DB_NAME | Database name | value_db | No |
-| DB_PASSWORD | Database password | postgres | No |
-| DB_PORT | Database port | 5432 | No |
+| POSTGRES_USER | Database user | postgres | No |
+| POSTGRES_HOST | Database host | db | No |
+| POSTGRES_DB | Database name | value_db | No |
+| POSTGRES_PASSWORD | Database password | postgres | No |
+| POSTGRES_PORT | Database port | 5432 | No |
 | GOOGLE_SHEET_ID | ID of the Google Sheet (found in the sheet URL) | - | Yes |
 | GOOGLE_SHEET_NAME | Name of the schedule sheet tab | Agenda  - APP - Visible | No |
 | GOOGLE_SPEAKERS_SHEET_NAME | Name of the speakers sheet tab | Speakers | No |
