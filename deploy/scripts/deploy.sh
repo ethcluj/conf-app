@@ -90,21 +90,45 @@ if [ -d "${APP_DIR}/deploy/nginx/nginx.prod.conf" ]; then
   rm -rf "${APP_DIR}/deploy/nginx/nginx.prod.conf"
 fi
 
+# Create Nginx SSL directory if it doesn't exist
+mkdir -p "${APP_DIR}/deploy/nginx/ssl"
+
+# Check if valid SSL certificates exist
+SSL_AVAILABLE=false
+if [ -d "/etc/letsencrypt/live/app.ethcluj.org" ] && 
+   [ -f "/etc/letsencrypt/live/app.ethcluj.org/fullchain.pem" ] && 
+   [ -f "/etc/letsencrypt/live/app.ethcluj.org/privkey.pem" ]; then
+  echo "Copying SSL certificates..."
+  cp /etc/letsencrypt/live/app.ethcluj.org/fullchain.pem "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
+  cp /etc/letsencrypt/live/app.ethcluj.org/privkey.pem "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+  chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+  SSL_AVAILABLE=true
+else
+  warning "Valid SSL certificates not found at /etc/letsencrypt/live/app.ethcluj.org"
+  warning "Falling back to HTTP-only mode"
+  SSL_AVAILABLE=false
+fi
+
 # Ensure default.conf is a file, not a directory
 if [ -d "${APP_DIR}/deploy/nginx/default.conf" ]; then
   echo "Removing default.conf directory..."
   rm -rf "${APP_DIR}/deploy/nginx/default.conf"
-  echo "Creating proper default.conf file..."
+fi
+
+# Create the appropriate Nginx configuration based on SSL availability
+echo "Creating proper default.conf file..."
+if [ "$SSL_AVAILABLE" = true ]; then
+  echo "Using HTTPS configuration with SSL..."
   cat > "${APP_DIR}/deploy/nginx/default.conf" << 'EOL'
 server {
     listen 80;
-    server_name qna.ethcluj.org;
+    server_name app.ethcluj.org;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name qna.ethcluj.org;
+    server_name app.ethcluj.org;
 
     ssl_certificate /etc/nginx/ssl/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/privkey.pem;
@@ -134,22 +158,38 @@ server {
     }
 }
 EOL
-fi
-
-# Create Nginx SSL directory if it doesn't exist
-section "Setting up Nginx SSL"
-mkdir -p "${APP_DIR}/deploy/nginx/ssl"
-
-# Copy SSL certificates if they exist
-if [ -d "/etc/letsencrypt/live/qna.ethcluj.org" ]; then
-  echo "Copying SSL certificates..."
-  cp /etc/letsencrypt/live/qna.ethcluj.org/fullchain.pem "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
-  cp /etc/letsencrypt/live/qna.ethcluj.org/privkey.pem "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
-  chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
 else
-  warning "SSL certificates not found at /etc/letsencrypt/live/qna.ethcluj.org"
-  warning "You may need to run the ssl-setup.sh script first"
+  echo "Using HTTP-only configuration (no SSL)..."
+  cat > "${APP_DIR}/deploy/nginx/default.conf" << 'EOL'
+server {
+    listen 80;
+    server_name app.ethcluj.org;
+
+    # UI
+    location / {
+        proxy_pass http://ui:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Backend API
+    location /api {
+        rewrite ^/api(/.*)$ $1 break;
+        proxy_pass http://backend:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOL
 fi
+
+# This section is now handled above in the SSL_AVAILABLE check
 
 # Start containers
 section "Starting containers"
