@@ -3,6 +3,11 @@ name: Deploy to VPS
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy Application
+        required: true
 
 jobs:
   deploy:
@@ -73,59 +78,37 @@ jobs:
           # Pull latest code
           git pull
           
-          # Install global dependencies
-          echo "Installing global dependencies..."
-          npm install -g yarn pm2
+          # Create deploy directory structure if it doesn't exist
+          mkdir -p deploy/nginx
           
-          # Install and build UI
-          echo "Building UI..."
-          cd ui
-          yarn install --frozen-lockfile
-          yarn build
+          # Ensure scripts are executable
+          chmod +x deploy/scripts/*.sh
           
-          # Install and build backend
-          echo "Building backend..."
-          cd ../backend
-          npm ci
-          npm run build
-          
-          # Set up environment variables if not already done
+          # Create or update .env file
           if [ ! -f .env ]; then
             echo "Creating .env file"
             cp .env.example .env
-            # Update with email configuration from GitHub secrets
-            echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
-            echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
-            echo "EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"" >> .env
-            # Add PostgreSQL database credentials
-            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}" >> .env
-            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || secrets.DB_PASSWORD || 'postgres' }}" >> .env
-            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB || 'ethcluj_conf' }}" >> .env
-            echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}" >> .env
-            echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}" >> .env
-          else
-            # Update existing .env file with email configuration
-            grep -q "EMAIL_USER" .env || echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
-            grep -q "EMAIL_PASSWORD" .env || echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
-            grep -q "EMAIL_FROM" .env || echo "EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"" >> .env
-            # Update PostgreSQL database credentials
-            grep -q "POSTGRES_USER" .env || echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}" >> .env
-            grep -q "POSTGRES_PASSWORD" .env || echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || secrets.DB_PASSWORD || 'postgres' }}" >> .env
-            grep -q "POSTGRES_DB" .env || echo "POSTGRES_DB=${{ secrets.POSTGRES_DB || 'ethcluj_conf' }}" >> .env
-            grep -q "POSTGRES_HOST" .env || echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}" >> .env
-            grep -q "POSTGRES_PORT" .env || echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}" >> .env
           fi
           
-          # Stop existing containers, rebuild with no cache, and restart
-          echo "Stopping existing containers..."
-          docker-compose -f docker-compose.prod.yml down
-          echo "Rebuilding containers with no cache..."
-          docker-compose -f docker-compose.prod.yml build --no-cache
-          echo "Starting containers in detached mode..."
-          docker-compose -f docker-compose.prod.yml up -d
-          echo "Verifying containers are running..."
-          docker-compose -f docker-compose.prod.yml ps
+          # Update environment variables
+          echo "Updating environment variables..."
+          sed -i "s/^EMAIL_USER=.*/EMAIL_USER=${{ secrets.EMAIL_USER }}/g" .env
+          sed -i "s/^EMAIL_PASSWORD=.*/EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}/g" .env
+          sed -i "s/^EMAIL_FROM=.*/EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"/g" .env
+          sed -i "s/^POSTGRES_USER=.*/POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}/g" .env
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || secrets.DB_PASSWORD || 'postgres' }}/g" .env
+          sed -i "s/^POSTGRES_DB=.*/POSTGRES_DB=${{ secrets.POSTGRES_DB || 'value_db' }}/g" .env
+          sed -i "s/^POSTGRES_HOST=.*/POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}/g" .env
+          sed -i "s/^POSTGRES_PORT=.*/POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}/g" .env
+          sed -i "s/^GOOGLE_SHEET_ID=.*/GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}/g" .env
+          sed -i "s/^GOOGLE_SHEET_NAME=.*/GOOGLE_SHEET_NAME=${{ secrets.GOOGLE_SHEET_NAME }}/g" .env
+          sed -i "s/^GOOGLE_API_KEY=.*/GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}/g" .env
+          sed -i "s/^GOOGLE_SPEAKERS_SHEET_NAME=.*/GOOGLE_SPEAKERS_SHEET_NAME=${{ secrets.GOOGLE_SPEAKERS_SHEET_NAME }}/g" .env
           
-          # Show logs to help with debugging
-          echo "Showing recent logs from containers..."
-          docker-compose -f docker-compose.prod.yml logs --tail=50
+          # Run the deployment script
+          echo "Running deployment script..."
+          APP_DIR="/opt/conf-app" COMPOSE_FILE="/opt/conf-app/deploy/docker-compose.prod.yml" ./deploy/scripts/deploy.sh
+          
+          # Show status
+          echo "Deployment complete. Showing container status:"
+          docker-compose -f deploy/docker-compose.prod.yml ps
