@@ -101,16 +101,27 @@ mkdir -p "${APP_DIR}/deploy/nginx/ssl"
 
 # Check if valid SSL certificates exist
 SSL_AVAILABLE=false
+
+# First check in /etc/letsencrypt (standard location)
 if [ -d "/etc/letsencrypt/live/app.ethcluj.org" ] && 
    [ -f "/etc/letsencrypt/live/app.ethcluj.org/fullchain.pem" ] && 
    [ -f "/etc/letsencrypt/live/app.ethcluj.org/privkey.pem" ]; then
-  echo "Copying SSL certificates..."
+  echo "Copying SSL certificates from /etc/letsencrypt/..."
   cp /etc/letsencrypt/live/app.ethcluj.org/fullchain.pem "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
   cp /etc/letsencrypt/live/app.ethcluj.org/privkey.pem "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
   chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
   SSL_AVAILABLE=true
+# Then check in ${APP_DIR}/certs (where ssl-setup.sh puts them)
+elif [ -d "${APP_DIR}/certs" ] && 
+     [ -f "${APP_DIR}/certs/fullchain.pem" ] && 
+     [ -f "${APP_DIR}/certs/privkey.pem" ]; then
+  echo "Copying SSL certificates from ${APP_DIR}/certs/..."
+  cp "${APP_DIR}/certs/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
+  cp "${APP_DIR}/certs/privkey.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+  chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+  SSL_AVAILABLE=true
 else
-  warning "Valid SSL certificates not found at /etc/letsencrypt/live/app.ethcluj.org"
+  warning "Valid SSL certificates not found at /etc/letsencrypt/live/app.ethcluj.org or ${APP_DIR}/certs/"
   warning "Falling back to HTTP-only mode"
   SSL_AVAILABLE=false
 fi
