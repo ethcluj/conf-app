@@ -86,6 +86,62 @@ if [ -f "$APP_DIR/.env" ] && [ ! -f "$(dirname "$COMPOSE_FILE")/.env" ]; then
   cp "$APP_DIR/.env" "$(dirname "$COMPOSE_FILE")/.env"
 fi
 
+# Clean up and set up Nginx configuration
+section "Setting up Nginx configuration"
+
+# Remove any conflicting Nginx configuration files or directories
+echo "Cleaning up any conflicting Nginx configuration..."
+if [ -d "${APP_DIR}/deploy/nginx/nginx.prod.conf" ]; then
+  echo "Removing nginx.prod.conf directory..."
+  rm -rf "${APP_DIR}/deploy/nginx/nginx.prod.conf"
+fi
+
+# Ensure default.conf is a file, not a directory
+if [ -d "${APP_DIR}/deploy/nginx/default.conf" ]; then
+  echo "Removing default.conf directory..."
+  rm -rf "${APP_DIR}/deploy/nginx/default.conf"
+  echo "Creating proper default.conf file..."
+  cat > "${APP_DIR}/deploy/nginx/default.conf" << 'EOL'
+server {
+    listen 80;
+    server_name qna.ethcluj.org;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name qna.ethcluj.org;
+
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # UI
+    location / {
+        proxy_pass http://ui:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Backend API
+    location /api {
+        rewrite ^/api(/.*)$ $1 break;
+        proxy_pass http://backend:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOL
+fi
+
 # Create Nginx SSL directory if it doesn't exist
 section "Setting up Nginx SSL"
 mkdir -p "${APP_DIR}/deploy/nginx/ssl"
