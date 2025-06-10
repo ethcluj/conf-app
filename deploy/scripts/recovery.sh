@@ -80,6 +80,12 @@ fi
 section "Rebuilding application from scratch"
 docker-compose -f "${COMPOSE_FILE}" build --no-cache
 
+# Copy .env file to deploy directory if it exists in root but not in deploy
+if [ -f "$APP_DIR/.env" ] && [ ! -f "$(dirname "$COMPOSE_FILE")/.env" ]; then
+  echo "Copying .env file to deploy directory..."
+  cp "$APP_DIR/.env" "$(dirname "$COMPOSE_FILE")/.env"
+fi
+
 # Create Nginx SSL directory if it doesn't exist
 section "Setting up Nginx SSL"
 mkdir -p "${APP_DIR}/deploy/nginx/ssl"
@@ -97,7 +103,7 @@ fi
 
 # Start fresh containers
 section "Starting fresh containers"
-docker-compose -f "${COMPOSE_FILE}" up -d
+docker-compose --env-file "$APP_DIR/.env" -f "${COMPOSE_FILE}" up -d
 
 # Verify deployment
 section "Verifying deployment"
