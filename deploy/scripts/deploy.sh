@@ -66,17 +66,19 @@ section "Updating code"
 echo "Pulling latest code from repository..."
 git pull
 
-# Stop existing containers
-section "Stopping existing containers"
-docker-compose -f "${COMPOSE_FILE}" down
+# Copy .env file to deploy directory if it exists in root but not in deploy
+if [ -f "$APP_DIR/.env" ] && [ ! -f "$(dirname "$COMPOSE_FILE")/.env" ]; then
+  echo "Copying .env file to deploy directory..."
+  cp "$APP_DIR/.env" "$(dirname "$COMPOSE_FILE")/.env"
+fi
 
-# Rebuild containers
-section "Rebuilding containers"
-docker-compose -f "${COMPOSE_FILE}" build --no-cache
-
-# Start containers
-section "Starting containers"
-docker-compose -f "${COMPOSE_FILE}" up -d
+# Stop existing containers, rebuild with no cache, and restart
+echo "Stopping existing containers..."
+docker-compose --env-file "$APP_DIR/.env" -f "$COMPOSE_FILE" down
+echo "Rebuilding containers with no cache..."
+docker-compose --env-file "$APP_DIR/.env" -f "$COMPOSE_FILE" build --no-cache
+echo "Starting containers in detached mode..."
+docker-compose --env-file "$APP_DIR/.env" -f "$COMPOSE_FILE" up -d
 
 # Verify deployment
 section "Verifying deployment"

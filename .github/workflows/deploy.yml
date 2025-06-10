@@ -105,10 +105,14 @@ jobs:
           sed -i "s/^GOOGLE_API_KEY=.*/GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}/g" .env
           sed -i "s/^GOOGLE_SPEAKERS_SHEET_NAME=.*/GOOGLE_SPEAKERS_SHEET_NAME=${{ secrets.GOOGLE_SPEAKERS_SHEET_NAME }}/g" .env
           
-          # Run the deployment script
+          # Create a .env file for Docker Compose
+          echo "Creating .env file for Docker Compose..."
+          cp .env deploy/.env
+          
+          # Run the deployment script with environment variables
           echo "Running deployment script..."
           APP_DIR="/opt/conf-app" COMPOSE_FILE="/opt/conf-app/deploy/docker-compose.prod.yml" ./deploy/scripts/deploy.sh
           
           # Show status
           echo "Deployment complete. Showing container status:"
-          docker-compose -f deploy/docker-compose.prod.yml ps
+          docker-compose --env-file .env -f deploy/docker-compose.prod.yml ps
