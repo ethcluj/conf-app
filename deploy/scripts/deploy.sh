@@ -74,6 +74,21 @@ docker-compose -f "${COMPOSE_FILE}" down
 section "Rebuilding containers"
 docker-compose -f "${COMPOSE_FILE}" build --no-cache
 
+# Create Nginx SSL directory if it doesn't exist
+section "Setting up Nginx SSL"
+mkdir -p "${APP_DIR}/deploy/nginx/ssl"
+
+# Copy SSL certificates if they exist
+if [ -d "/etc/letsencrypt/live/qna.ethcluj.org" ]; then
+  echo "Copying SSL certificates..."
+  cp /etc/letsencrypt/live/qna.ethcluj.org/fullchain.pem "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
+  cp /etc/letsencrypt/live/qna.ethcluj.org/privkey.pem "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+  chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+else
+  warning "SSL certificates not found at /etc/letsencrypt/live/qna.ethcluj.org"
+  warning "You may need to run the ssl-setup.sh script first"
+fi
+
 # Start containers
 section "Starting containers"
 docker-compose -f "${COMPOSE_FILE}" up -d
