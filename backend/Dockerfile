@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -11,28 +11,29 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy source files
+# Copy source code
 COPY . .
 
-# Debug: Show directory contents
-RUN ls -la
-
-# Debug: Show tsconfig.json content
-RUN cat tsconfig.json
-
-# Build TypeScript
+# Build TypeScript code
 RUN npm run build
 
-# Debug: Show output directory
-RUN ls -la
+# Verify the build output
+RUN echo "Verifying build output..." && \
+    ls -la dist || echo "dist directory not found" && \
+    ls -la dist/src || echo "dist/src directory not found" && \
+    ls -la dist/src/index.js || echo "dist/src/index.js not found"
 
-# Debug: Show dist directory if it exists
-RUN ls -la dist || echo "dist directory not found"
+# Remove source files for production
+RUN if [ -f dist/src/index.js ]; then \
+      echo "Build successful, removing source files..." && \
+      rm -rf src __tests__ tsconfig.json; \
+    else \
+      echo "Build failed, dist/src/index.js not found" && \
+      exit 1; \
+    fi
 
-# For production, we'll keep the source files for now to debug
-# RUN rm -rf src tsconfig.json
+# Set environment variables
+ENV NODE_ENV=production
 
-EXPOSE 3001
-
-# Start the application in production mode
+# Start the application
 CMD ["node", "dist/src/index.js"]
