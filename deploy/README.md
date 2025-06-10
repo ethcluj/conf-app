@@ -14,7 +14,8 @@ deploy/
 │   ├── recovery.sh           # Recovery script for disaster recovery
 │   ├── renew-ssl.sh          # SSL certificate renewal script
 │   ├── server-init.sh        # Server initialization script
-│   └── ssl-setup.sh          # SSL certificate setup script
+│   ├── ssl-setup.sh          # SSL certificate setup script
+│   └── uninstall.sh          # Complete application removal script
 └── README.md                 # This file
 ```
 
@@ -96,7 +97,19 @@ To manually renew the certificates:
 
 Database backups are created automatically during deployment and recovery operations.
 
-Backups are stored in the `/opt/conf-app/backups` directory.
+Backups are stored in the `/opt/conf-app/backups` directory with timestamps in the filename format `db_backup_YYYYMMDD_HHMMSS.sql`.
+
+**Important**: Database backups are not automatically deleted and should be managed manually to prevent disk space issues. Consider implementing a rotation policy or periodically removing old backups that are no longer needed.
+
+To manually delete old backups:
+
+```bash
+# List all backups sorted by date
+ls -lt /opt/conf-app/backups
+
+# Delete backups older than 30 days
+find /opt/conf-app/backups -name "db_backup_*.sql" -type f -mtime +30 -delete
+```
 
 ## Troubleshooting
 
@@ -137,3 +150,19 @@ To start the containers:
 cd /opt/conf-app
 docker-compose -f deploy/docker-compose.prod.yml up -d
 ```
+
+## Uninstalling the Application
+
+If you need to completely remove the application from the server, use the uninstall script:
+
+```bash
+cd /opt/conf-app
+bash deploy/scripts/uninstall.sh
+```
+
+**Important Notes:**
+- The uninstall script will prompt for confirmation before proceeding
+- Database backups will be preserved and moved to `/root/ethcluj_backups`
+- All Docker containers, images, and application files will be removed
+- SSL certificates for the domain will be removed
+- Cron jobs related to the application will be removed
