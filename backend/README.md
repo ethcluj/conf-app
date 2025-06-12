@@ -1,6 +1,6 @@
 # ETHCluj Conference App Backend
 
-Backend service for the ETHCluj 2025 conference app, providing API endpoints for sessions, speakers, and a simple key-value store. This service integrates with Google Sheets to provide real-time event data.
+Backend service for the ETHCluj 2025 conference app, providing API endpoints for sessions, speakers, Q&A functionality with real-time updates via Server-Sent Events (SSE), email verification, and a simple key-value store. This service integrates with Google Sheets to provide real-time event data.
 
 ## Setup
 
@@ -15,6 +15,9 @@ Backend service for the ETHCluj 2025 conference app, providing API endpoints for
    GOOGLE_SHEET_NAME=your_sheet_name
    GOOGLE_SPEAKERS_SHEET_NAME=Speakers
    GOOGLE_API_KEY=your_api_key (optional)
+   EMAIL_USER=your_email_address
+   EMAIL_PASSWORD=your_app_password
+   EMAIL_FROM="ETHCluj Conference <noreply@ethcluj.org>"
    ```
 
 3. Build the project:
@@ -160,6 +163,67 @@ All API endpoints follow a standardized response format:
 - `GET /health`: Check if the server is running
   - Returns: `{ "success": true, "data": { "status": "ok", "timestamp": "ISO datetime" } }`
 
+### Q&A System
+
+- `GET /qna/questions/:sessionId`: Get all questions for a specific session
+  - Query parameters: None
+  - Headers:
+    - `x-fingerprint`: Optional browser fingerprint for identifying the user
+  - Success response: List of questions with vote information
+
+- `POST /qna/questions`: Add a new question
+  - Headers:
+    - `Authorization`: Bearer token (optional)
+    - `x-fingerprint`: Browser fingerprint
+  - Body: `{ "sessionId": "string", "content": "string" }`
+  - Success response: Created question object
+
+- `POST /qna/questions/:id/vote`: Toggle vote on a question
+  - Headers:
+    - `Authorization`: Bearer token (optional)
+    - `x-fingerprint`: Browser fingerprint
+  - Success response: `{ "success": true, "data": { "voteAdded": boolean } }`
+
+- `DELETE /qna/questions/:id`: Delete a question (only allowed for question author)
+  - Headers:
+    - `Authorization`: Bearer token (optional)
+    - `x-fingerprint`: Browser fingerprint
+  - Success response: `{ "success": true, "data": { "deleted": true } }`
+
+- `PUT /qna/users/display-name`: Update user display name
+  - Headers:
+    - `Authorization`: Bearer token (optional)
+    - `x-fingerprint`: Browser fingerprint
+  - Body: `{ "displayName": "string" }`
+  - Success response: Updated user object
+
+- `GET /qna/leaderboard`: Get user leaderboard based on question votes
+  - Success response: List of users with scores
+
+### Email Verification
+
+- `POST /qna/auth/send-code`: Send verification code via email
+  - Body: `{ "email": "string" }`
+  - Success response: `{ "success": true, "data": { "success": true, "message": "Verification code sent" } }`
+
+- `POST /qna/auth/verify`: Verify email with code
+  - Body: `{ "email": "string", "code": "string", "fingerprint": "string" }`
+  - Success response: User object with authentication information
+
+- `POST /qna/auth`: Authenticate user with fingerprint
+  - Body: `{ "fingerprint": "string" }`
+  - Success response: User object if authenticated
+
+### Server-Sent Events (SSE)
+
+- `GET /sse/events/:sessionId`: Subscribe to real-time updates for a session
+  - This endpoint establishes a persistent connection that sends events when questions are added, deleted, or voted on
+  - Events are sent in the format: `event: [event_type]\ndata: [JSON data]\n\n`
+  - Event types: `question_added`, `question_deleted`, `vote_changed`
+
+- `GET /sse/stats`: Get statistics about active SSE connections
+  - Success response: `{ "totalConnections": number, "sessionConnections": { "[sessionId]": number } }`
+
 ## Environment Variables
 
 | Variable | Description | Default | Required |
@@ -175,8 +239,12 @@ All API endpoints follow a standardized response format:
 | GOOGLE_SHEET_NAME | Name of the schedule sheet tab | Agenda  - APP - Visible | No |
 | GOOGLE_SPEAKERS_SHEET_NAME | Name of the speakers sheet tab | Speakers | No |
 | GOOGLE_API_KEY | Google API key for Sheets API | - | No* |
+| EMAIL_USER | Gmail account for sending verification emails | - | Yes** |
+| EMAIL_PASSWORD | App password for Gmail account | - | Yes** |
+| EMAIL_FROM | Display name and email for verification emails | "ETHCluj Conference <noreply@ethcluj.org>" | No |
 
 \* Required only if direct CSV fetch fails
+\** Required for email verification functionality
 
 ### How to Find Google Sheet ID
 
