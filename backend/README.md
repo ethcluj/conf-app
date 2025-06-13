@@ -56,6 +56,10 @@ npm run dev
    npm test -- __tests__/sessions.test.ts
    ```
 
+### Real-Time/SSE Testing
+
+- To simulate or observe real-time events, use the SSE test script (see `__tests__/sse-test.js` or the test folder for details). This script can simulate question creation, deletion, and vote changes for development and debugging.
+
 > **Note:** The tests use mocked dependencies and don't make actual API calls to Google Sheets. Environment variables are automatically mocked in the test setup file (`__tests__/setup.ts`), so you don't need to create a `.env.test` file.
 
 ### Test Structure
@@ -246,6 +250,22 @@ All API endpoints follow a standardized response format:
 \* Required only if direct CSV fetch fails
 \** Required for email verification functionality
 
+### Real-Time Updates (SSE)
+
+The backend provides real-time updates for Q&A via Server-Sent Events (SSE):
+- Subscribe to `/sse/qna/:sessionId` for real-time question and vote updates in a session.
+- Event types: `question_added`, `question_deleted`, `vote_changed`.
+- See `SseController` and QnA service in the codebase for implementation details.
+- To test SSE locally, you can use the provided test script in `__tests__/sse-test.js` (or similar location—see codebase for details).
+
+### Email Verification
+
+- Email verification uses a 4-digit code sent to the user's email address.
+- Codes expire after 15 minutes.
+- The verification input in the UI supports digit-by-digit entry and paste.
+- Email is sent from `noreply@ethcluj.org` (configured via `EMAIL_FROM`).
+- Requires a Google Workspace account and app password for SMTP.
+
 ### How to Find Google Sheet ID
 
 The Google Sheet ID is the part of the URL between `/d/` and `/edit`. For example, in the URL:
@@ -296,6 +316,8 @@ The backend follows a modular architecture:
 - `google-sheets.ts`: Google Sheets API integration
 - `direct-sheets-fetch.ts`: Direct CSV fetching from public Google Sheets
 - `sheet-parser.ts`: Utility functions for parsing sheet data
+- `sse-controller.ts`: Manages real-time Server-Sent Events connections for QnA
+- `qna-service.ts`: QnA logic, including event broadcasting
 
 ## Error Handling and Logging
 
@@ -331,3 +353,11 @@ Data validation occurs at multiple levels:
 1. **Input Validation**: API request validation for required fields and data types
 2. **External Data Validation**: Google Sheet data is validated for required columns and data types
 3. **Type Safety**: TypeScript interfaces ensure data consistency throughout the application
+
+## Deployment & Production Notes
+
+- For production, ensure all required environment variables are set (see above).
+- HTTPS is handled via Nginx and SSL certificates; see deployment scripts for details (`fix-ssl.sh`, `deploy.sh`).
+- Docker is used for containerized deployment. Use `docker-compose.prod.yml` for production environments.
+- For database persistence, ensure the correct volume is mounted and that the environment variables match the initial database setup.
+- See deployment documentation for troubleshooting and advanced configuration.
