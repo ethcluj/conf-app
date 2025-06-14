@@ -14,22 +14,11 @@ import { getSessionsFromGoogleSheet } from './schedule-manager';
 export type SessionLevel = "For everyone" | "Beginner" | "Intermediate" | "Advanced"
 
 /**
- * Color coding for session levels
- * Maps each session level to a specific color for UI display
- */
-export type SessionLevelColor = "green" | "blue" | "orange" | "red"
-
-/**
  * Categorizes sessions by track/topic
  * Used for filtering and organizing sessions by subject area
  */
-export type SessionTrack = "Ethereum Roadmap" | "DeFi" | "Security" | "Development" | "Research" | "Community"
+export type SessionTrack = "Ethereum Roadmap" | "DeFi" | "Security" | "Development" | "Research" | "Community" | "Builders Onboarding" | "AI and Ethereum" | "Business on Ethereum" | "Usability and Adoption" | "Privacy" | "NA"
 
-/**
- * Numeric representation of session difficulty
- * 1 = Beginner, 5 = Advanced
- */
-export type SessionDifficulty = 1 | 2 | 3 | 4 | 5
 
 /**
  * Represents a speaker at the conference
@@ -69,18 +58,14 @@ export interface Session {
   title: string
   /** Array of speakers presenting at this session */
   speakers: Speaker[]
+  /** Session type (e.g., 'Keynote', 'Panel', 'Workshop') directly from Google Sheets */
+  type?: string
   /** Difficulty/experience level for the session */
   level: SessionLevel
-  /** Color associated with the session level */
-  levelColor: SessionLevelColor
   /** Optional detailed description of the session */
   description?: string
-  /** Whether the session is marked as a favorite */
-  isFavorite: boolean
   /** Optional track/category for the session */
   track?: SessionTrack
-  /** Optional numeric difficulty rating (1-5) */
-  difficulty?: SessionDifficulty
   /** Optional array of key takeaways from the session */
   learningPoints?: string[]
 }
@@ -131,11 +116,10 @@ export function createSession(
   title: string,
   speakers: Speaker[],
   level: SessionLevel,
-  isFavorite = false,
   description?: string,
   track?: SessionTrack,
-  difficulty?: SessionDifficulty,
   learningPoints?: string[],
+  type?: string,
 ): Session {
   if (!id) {
     throw new Error('Session ID is required');
@@ -168,22 +152,7 @@ export function createSession(
   const endTime = new Date(startTime);
   endTime.setMinutes(endTime.getMinutes() + durationMinutes);
   
-  // Determine level color based on session level
-  let levelColor: SessionLevelColor = "green";
-  switch (level) {
-    case "For everyone":
-      levelColor = "green";
-      break;
-    case "Beginner":
-      levelColor = "blue";
-      break;
-    case "Intermediate":
-      levelColor = "orange";
-      break;
-    case "Advanced":
-      levelColor = "red";
-      break;
-  }
+  // No need to determine level color anymore as it's been removed from the API
   
   // Create and return the session object
   return {
@@ -195,12 +164,10 @@ export function createSession(
     title: title || 'Untitled Session',
     speakers: Array.isArray(speakers) ? speakers : [],
     level,
-    levelColor,
-    isFavorite,
     description,
     track,
-    difficulty,
     learningPoints,
+    type,
   };
 }
 

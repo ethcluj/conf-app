@@ -1,4 +1,4 @@
-import { fetchPublicSheetDataCSV } from './direct-sheets-fetch';
+import { fetchSheetData, validateGoogleSheetsConfig } from './google-sheets';
 
 /**
  * Speaker details interface representing a conference speaker
@@ -77,7 +77,7 @@ function mapAndFilterSheetDataToSpeakerDetails(rows: string[][]): SpeakerDetails
 /**
  * Refreshes speaker data from Google Sheet
  * 
- * Fetches the latest speaker data from the configured Google Sheet,
+ * Fetches the latest speaker data from the configured Google Sheet using the Google Sheets API,
  * processes it, and updates the in-memory cache.
  * 
  * @returns Promise resolving to an array of SpeakerDetails objects
@@ -88,6 +88,7 @@ export async function refreshSpeakers(): Promise<SpeakerDetails[]> {
   // Get configuration from environment variables
   const spreadsheetId = process.env.GOOGLE_SHEET_ID;
   const sheetName = process.env.GOOGLE_SPEAKERS_SHEET_NAME || 'Speakers';
+  const apiKey = process.env.GOOGLE_API_KEY;
   
   // Validate required configuration
   if (!spreadsheetId) {
@@ -95,10 +96,23 @@ export async function refreshSpeakers(): Promise<SpeakerDetails[]> {
     return allSpeakers; // Return existing data instead of empty array
   }
   
+  if (!apiKey) {
+    console.error('Cannot refresh speakers: GOOGLE_API_KEY environment variable is not set');
+    return allSpeakers; // Return existing data instead of empty array
+  }
+  
   try {
-    // Fetch data from Google Sheet
-    console.log(`Fetching speakers from sheet: ${sheetName}`);
-    const rows = await fetchPublicSheetDataCSV(spreadsheetId, sheetName);
+    // Configure Google Sheets API request
+    const config = { spreadsheetId, sheetName, apiKey };
+    
+    // Validate configuration
+    if (!validateGoogleSheetsConfig(config)) {
+      throw new Error('Invalid Google Sheets configuration: spreadsheetId and sheetName are required');
+    }
+    
+    // Fetch data from Google Sheets API
+    console.log(`Fetching speakers from sheet: ${sheetName} using Google Sheets API`);
+    const rows = await fetchSheetData(config, SPEAKERS_SHEET_COLUMN_RANGE);
     
     // Process the data
     const speakers = mapAndFilterSheetDataToSpeakerDetails(rows);

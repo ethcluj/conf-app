@@ -23,12 +23,10 @@ describe('Sessions Module', () => {
         title: 'Doors Open',
         speakers: [],
         level: 'For everyone',
-        levelColor: 'green',
-        isFavorite: false,
         description: 'Registration starts',
         track: undefined,
-        difficulty: 1,
-        learningPoints: undefined
+        learningPoints: undefined,
+        type: 'Info'
       },
       {
         id: '2',
@@ -39,12 +37,10 @@ describe('Sessions Module', () => {
         title: 'Opening Keynote',
         speakers: [{ name: 'John Doe', image: '/placeholder.svg?height=40&width=40' }],
         level: 'For everyone',
-        levelColor: 'green',
-        isFavorite: false,
         description: 'Welcome to ETHCluj',
         track: 'Ethereum Roadmap',
-        difficulty: 1,
-        learningPoints: undefined
+        learningPoints: undefined,
+        type: 'Keynote'
       }
     ];
     
@@ -64,11 +60,10 @@ describe('Sessions Module', () => {
         'Test Session',
         [{ name: 'Test Speaker', image: '/test.jpg' }],
         'Beginner',
-        false,
         'Test description',
         'Development',
-        3,
-        ['Learning point 1', 'Learning point 2']
+        ['Learning point 1', 'Learning point 2'],
+        'Workshop'
       );
       
       // Check basic properties
@@ -92,34 +87,33 @@ describe('Sessions Module', () => {
       expect(session.speakers).toHaveLength(1);
       expect(session.speakers[0].name).toBe('Test Speaker');
       
-      // Check level and color
+      // Check level
       expect(session.level).toBe('Beginner');
-      expect(session.levelColor).toBe('blue');
       
       // Check other properties
       expect(session.track).toBe('Development');
-      expect(session.difficulty).toBe(3);
+      expect(session.type).toBe('Workshop');
       expect(session.learningPoints).toEqual(['Learning point 1', 'Learning point 2']);
     });
 
-    it('should assign correct level colors for each level', () => {
+    it('should create sessions with different levels', () => {
       const day = new Date('2023-06-26');
       
-      // For everyone -> green
+      // For everyone
       const session1 = createSession('1', day, 9, 0, 30, 'Main', 'Session 1', [], 'For everyone');
-      expect(session1.levelColor).toBe('green');
+      expect(session1.level).toBe('For everyone');
       
-      // Beginner -> blue
+      // Beginner
       const session2 = createSession('2', day, 9, 0, 30, 'Main', 'Session 2', [], 'Beginner');
-      expect(session2.levelColor).toBe('blue');
+      expect(session2.level).toBe('Beginner');
       
-      // Intermediate -> orange
+      // Intermediate
       const session3 = createSession('3', day, 9, 0, 30, 'Main', 'Session 3', [], 'Intermediate');
-      expect(session3.levelColor).toBe('orange');
+      expect(session3.level).toBe('Intermediate');
       
-      // Advanced -> red
+      // Advanced
       const session4 = createSession('4', day, 9, 0, 30, 'Main', 'Session 4', [], 'Advanced');
-      expect(session4.levelColor).toBe('red');
+      expect(session4.level).toBe('Advanced');
     });
     
     it('should throw error when session ID is not provided', () => {
@@ -213,7 +207,6 @@ describe('Sessions Module', () => {
     
     it('should handle missing or invalid speakers array', () => {
       const day = new Date('2023-06-26');
-      
       // Use undefined to test invalid speakers array
       const session = createSession(
         '1',
@@ -223,7 +216,7 @@ describe('Sessions Module', () => {
         30,
         'Main',
         'Test Session',
-        undefined as unknown as Speaker[], // Invalid speakers array
+        undefined as any,
         'Beginner'
       );
       

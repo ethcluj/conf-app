@@ -13,6 +13,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     description: 'Registration starts',
     type: 'NA',
     track: 'NA',
+    level: 'For everyone',
     notes: ''
   },
   {
@@ -24,6 +25,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     description: 'Welcome to ETHCluj',
     type: 'Keynote',
     track: 'Ethereum Roadmap',
+    level: 'For everyone',
     notes: ''
   },
   {
@@ -35,6 +37,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     description: 'Technical deep dive',
     type: 'Workshop',
     track: 'Development',
+    level: 'Intermediate',
     notes: ''
   },
   {
@@ -46,6 +49,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     description: 'Lunch break',
     type: 'NA',
     track: 'NA',
+    level: 'For everyone',
     notes: ''
   },
   {
@@ -57,6 +61,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     description: 'Industry leaders discuss DeFi',
     type: 'Panel',
     track: 'DeFi',
+    level: 'Beginner',
     notes: ''
   },
   {
@@ -68,6 +73,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     description: 'This should not appear',
     type: 'Workshop',
     track: 'Development',
+    level: 'Advanced',
     notes: ''
   }
 ];

@@ -1,4 +1,4 @@
-import { Session, Speaker, SessionLevel, SessionTrack, SessionLevelColor } from './sessions';
+import { Session, Speaker, SessionLevel, SessionTrack } from './sessions';
 
 /**
  * Represents a row from the Google Sheet containing schedule data
@@ -23,22 +23,12 @@ export interface RawScheduleRow {
   type: string;
   /** Session track (e.g., 'Builders Onboarding', 'Ethereum Roadmap') */
   track: string;
-  /** Additional notes */
-  notes: string;
+  /** Session level (e.g., 'Beginner', 'Intermediate', 'Advanced', 'For everyone') */
+  level: string;
+  /** Additional notes about the session (used in tests) */
+  notes?: string;
 }
 
-/**
- * Map of session types to session levels
- * 
- * As per our standardization, we use raw values from the Google Sheet
- * without transformation. Valid stage values: 'Main', 'Tech', 'Biz', 'Work', 'NA'
- */
-export const typeToLevelMapping: Record<string, SessionLevel> = {
-  'Keynote': 'For everyone',
-  'Panel': 'Beginner',
-  'Workshop': 'Intermediate',
-  'NA': 'For everyone'
-};
 
 /**
  * Map of tracks from CSV to the application's SessionTrack type
@@ -47,13 +37,14 @@ export const typeToLevelMapping: Record<string, SessionLevel> = {
  * the standardized SessionTrack type used in the application.
  */
 export const trackMapping: Record<string, SessionTrack | undefined> = {
-  'Builders Onboarding': 'Development',
+  'Builders Onboarding': 'Builders Onboarding',
   'Ethereum Roadmap': 'Ethereum Roadmap',
-  'AI and Ethereum': 'Research',
-  'Business on Ethereum': 'Community',
-  'Usability and Adoption': 'Community',
+  'AI and Ethereum': 'AI and Ethereum',
+  'Business on Ethereum': 'Business on Ethereum',
+  'Usability and Adoption': 'Usability and Adoption',
   'DeFi': 'DeFi',
-  'NA': undefined
+  'Privacy': 'Privacy',
+  'NA': 'NA'
 };
 
 /**
@@ -91,51 +82,6 @@ export function processSpeakers(speakersString: string): Speaker[] {
   }
 }
 
-/**
- * Map session type to difficulty level
- * 
- * Converts a session type string to a numeric difficulty level:
- * 1 = Beginner, 2 = Intermediate, 3 = Advanced
- * 
- * @param type Session type from the Google Sheet
- * @returns Numeric difficulty level (1-3)
- */
-export function mapTypeToDifficulty(type: string): number {
-  if (!type || typeof type !== 'string') {
-    return 1; // Default to beginner level
-  }
-  
-  const normalizedType = type.trim();
-  
-  switch (normalizedType) {
-    case 'Keynote': return 1;
-    case 'Panel': return 2;
-    case 'Workshop': return 3;
-    default: return 1; // Default to beginner level
-  }
-}
-
-/**
- * Determine level color based on session level
- * 
- * Maps a SessionLevel to a corresponding color for UI display.
- * 
- * @param level Session level
- * @returns Color string for the session level
- */
-export function getLevelColor(level: SessionLevel): SessionLevelColor {
-  if (!level) {
-    return 'green'; // Default color
-  }
-  
-  switch (level) {
-    case 'For everyone': return 'green';
-    case 'Beginner': return 'blue';
-    case 'Intermediate': return 'orange';
-    case 'Advanced': return 'red';
-    default: return 'green'; // Default color
-  }
-}
 
 /**
  * Ensure a string is a valid SessionTrack or return undefined
