@@ -64,13 +64,21 @@ export async function fetchFromGoogleSheet(config: GoogleSheetsConfig): Promise<
       return []; // Return empty array if only header or no data
     }
 
+    // Log the header row for reference
+    console.log('Sheet header row:', rows[0]);
+    
     // Skip the header row and convert to RawScheduleRow objects, filtering only visible rows
     return rows.slice(1)
-      .map((row: any) => {
+      .map((row: any, index: number) => {
         // Ensure we have enough columns, pad with empty strings if needed
         const paddedRow = [...row];
         while (paddedRow.length < 9) {
           paddedRow.push('');
+        }
+        
+        // Log specific rows for debugging (especially rows that might become session ID 3)
+        if (index >= 2 && index <= 5) { // Check a range of rows that might include session ID 3
+          console.log(`Raw row data for index ${index} (session ID ${index+1}):`, paddedRow);
         }
 
         return {
@@ -82,10 +90,10 @@ export async function fetchFromGoogleSheet(config: GoogleSheetsConfig): Promise<
           description: paddedRow[5] || '',
           type: paddedRow[6] || '',
           track: paddedRow[7] || '',
-          notes: paddedRow[8] || ''
+          level: paddedRow[8] || ''
         };
       })
-      .filter((row: RawScheduleRow) => row.visible);
+      .filter((row: any) => row.visible === true);
   } catch (error: any) {
     console.error('Error processing schedule data:', error.message);
     throw error;

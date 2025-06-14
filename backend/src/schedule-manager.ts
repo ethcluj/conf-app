@@ -1,13 +1,9 @@
 import { 
   RawScheduleRow, 
-  typeToLevelMapping, 
   validateSessionTrack, 
-  processSpeakers, 
-  mapTypeToDifficulty,
-  getLevelColor
+  processSpeakers
 } from './sheet-parser';
 import { fetchFromGoogleSheet, validateGoogleSheetsConfig } from './google-sheets';
-import { fetchPublicGoogleSheet } from './direct-sheets-fetch';
 import { Session, SessionLevel, SessionTrack, createSession } from './sessions';
 
 // The slot duration in minutes
@@ -254,20 +250,23 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
     const durationMinutes = slotCount * SLOT_DURATION;
     
     // Use raw stage value directly from Google Sheet
-    // As per memory 2f71766a-682c-409f-8867-9849084122a2, we use raw stage values
     const stage = row.stage || 'NA';
     
-    // Determine session level based on type
-    const level: SessionLevel = typeToLevelMapping[row.type] || 'For everyone';
+    // Use the level directly from the sheet
+    const level: SessionLevel = (row.level || 'For everyone') as SessionLevel;
     
     // Process speakers
     const speakers = processSpeakers(row.speakers || '');
     
-    // Map track from CSV to application track
-    const track = validateSessionTrack(row.track || '');
+    // Get the track value directly from the sheet
+    const rawTrack = row.track || '';
     
-    // Map type to difficulty
-    const difficulty = mapTypeToDifficulty(row.type || '');
+    // Use the trackMapping to validate and map the track value
+    // Now the trackMapping maps each value to itself, preserving the original values
+    const track = validateSessionTrack(rawTrack);
+    
+    // Get the raw type value from the sheet
+    const sessionType = row.type || '';
     
     // Create the session object
     return createSession(
@@ -280,11 +279,10 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
       row.title || 'Untitled Session',
       speakers,
       level,
-      false, // isFavorite
       row.description || '',
       track,
-      difficulty as any, // Type casting to match expected type
-      undefined // learningPoints
+      undefined, // learningPoints
+      sessionType // Pass the raw type value from Google Sheets
     );
   } catch (error) {
     console.error(`Error creating session from row (ID: ${id}):`, error);
@@ -296,12 +294,11 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
  * Get sessions from a Google Sheet
  * 
  * This function fetches session data from a Google Sheet and processes it into
- * Session objects for the API. It first attempts to use the direct CSV fetch method,
- * and falls back to the Google Sheets API if that fails.
+ * Session objects for the API using the Google Sheets API.
  * 
  * @param spreadsheetId The ID of the Google Sheet (defaults to GOOGLE_SHEET_ID env var)
  * @param sheetName The name of the sheet tab (defaults to GOOGLE_SHEET_NAME env var)
- * @param apiKey Optional Google API key (required only for fallback method)
+ * @param apiKey Optional Google API key for authentication
  * @returns Promise resolving to an array of Session objects
  */
 export async function getSessionsFromGoogleSheet(
@@ -325,36 +322,23 @@ export async function getSessionsFromGoogleSheet(
   console.log(`Fetching from spreadsheet ID: ${spreadsheetId}, sheet: ${sheetName}`);
   
   try {
-    const config = { spreadsheetId, sheetName, apiKey };
+    const config = { spreadsheetId, sheetName, apiKey: apiKey || process.env.GOOGLE_API_KEY };
     
     // Validate configuration
     if (!validateGoogleSheetsConfig(config)) {
       throw new Error('Invalid Google Sheets configuration: spreadsheetId and sheetName are required');
     }
     
-    let rawData: RawScheduleRow[] = [];
-    let fetchMethod = '';
-    
-    try {
-      // First try using the direct fetch method which bypasses caching
-      console.log('Attempting direct CSV fetch method...');
-      rawData = await fetchPublicGoogleSheet(spreadsheetId, sheetName);
-      fetchMethod = 'direct CSV';
-    } catch (directError: any) {
-      // If the direct method fails, try the Google Sheets API
-      console.warn(`Direct CSV fetch failed: ${directError?.message || 'Unknown error'}`);
-      console.log('Falling back to Google Sheets API...');
-      
-      if (!apiKey && !process.env.GOOGLE_API_KEY) {
-        console.error('Google API key is required for fallback method but was not provided');
-        throw new Error('Google API key is required for fallback method');
-      }
-      
-      rawData = await fetchFromGoogleSheet(config);
-      fetchMethod = 'Google Sheets API';
+    if (!config.apiKey) {
+      console.error('Google API key is required but was not provided');
+      throw new Error('Google API key is required');
     }
     
-    console.log(`Successfully fetched ${rawData.length} raw rows using ${fetchMethod} method`);
+    // Fetch data from Google Sheets API
+    console.log('Fetching data using Google Sheets API...');
+    const rawData = await fetchFromGoogleSheet(config);
+    
+    console.log(`Successfully fetched ${rawData.length} raw rows using Google Sheets API`);
     
     // Process the raw data into sessions
     const sessions = processSchedule(rawData);

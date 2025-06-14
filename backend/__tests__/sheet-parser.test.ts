@@ -1,9 +1,6 @@
 import { 
   processSpeakers, 
-  mapTypeToDifficulty, 
-  getLevelColor,
-  validateSessionTrack,
-  typeToLevelMapping
+  validateSessionTrack
 } from '../src/sheet-parser';
 import { SessionLevel } from '../src/sessions';
 
@@ -37,32 +34,6 @@ describe('Sheet Parser Module', () => {
     });
   });
 
-  describe('mapTypeToDifficulty', () => {
-    it('should map known types to correct difficulty levels', () => {
-      expect(mapTypeToDifficulty('Keynote')).toBe(1);
-      expect(mapTypeToDifficulty('Panel')).toBe(2);
-      expect(mapTypeToDifficulty('Workshop')).toBe(3);
-    });
-
-    it('should default to difficulty level 1 for unknown types', () => {
-      expect(mapTypeToDifficulty('Unknown')).toBe(1);
-      expect(mapTypeToDifficulty('')).toBe(1);
-    });
-  });
-
-  describe('getLevelColor', () => {
-    it('should return correct color for each session level', () => {
-      expect(getLevelColor('For everyone')).toBe('green');
-      expect(getLevelColor('Beginner')).toBe('blue');
-      expect(getLevelColor('Intermediate')).toBe('orange');
-      expect(getLevelColor('Advanced')).toBe('red');
-    });
-
-    it('should default to green for unknown levels', () => {
-      expect(getLevelColor('Unknown' as SessionLevel)).toBe('green');
-    });
-  });
-
   describe('validateSessionTrack', () => {
     it('should return correct track for valid inputs', () => {
       expect(validateSessionTrack('Ethereum Roadmap')).toBe('Ethereum Roadmap');
@@ -72,15 +43,6 @@ describe('Sheet Parser Module', () => {
     it('should return undefined for invalid tracks', () => {
       expect(validateSessionTrack('Invalid Track')).toBeUndefined();
       expect(validateSessionTrack('')).toBeUndefined();
-    });
-  });
-
-  describe('typeToLevelMapping', () => {
-    it('should have correct mappings', () => {
-      expect(typeToLevelMapping['Keynote']).toBe('For everyone');
-      expect(typeToLevelMapping['Panel']).toBe('Beginner');
-      expect(typeToLevelMapping['Workshop']).toBe('Intermediate');
-      expect(typeToLevelMapping['NA']).toBe('For everyone');
     });
   });
 });
