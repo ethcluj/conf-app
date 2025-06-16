@@ -23,6 +23,11 @@ import { getSessionsFromGoogleSheet } from '../schedule-manager';
 dotenv.config();
 
 // Define interfaces
+// Extended speaker interface for panels that includes role information
+interface PanelSpeaker extends Speaker {
+  role?: string;
+}
+
 interface SpeakerWithEmail {
   name: string;
   email?: string;
@@ -503,8 +508,20 @@ function generateSpeakerEmailContent(
   emailTemplate: string,
   sessionDetailsTemplate: string
 ): string {
+  // Sort sessions by type: keynotes first, then workshops, then panels
+  const sortedSessions = [...sessions].sort((a, b) => {
+    const typeA = (a.type || '').toLowerCase();
+    const typeB = (b.type || '').toLowerCase();
+    
+    if (typeA.includes('keynote') && !typeB.includes('keynote')) return -1;
+    if (!typeA.includes('keynote') && typeB.includes('keynote')) return 1;
+    if (typeA.includes('workshop') && !typeB.includes('workshop') && !typeB.includes('keynote')) return -1;
+    if (!typeA.includes('workshop') && !typeA.includes('keynote') && typeB.includes('workshop')) return 1;
+    return 0;
+  });
+  
   // Generate the session details HTML blocks
-  const sessionDetailsHtml = sessions.map(session => {
+  const sessionDetailsHtml = sortedSessions.map(session => {
     // Get full stage name
     const stageFull = getFullStageName(session.stage);
     
@@ -513,6 +530,35 @@ function generateSpeakerEmailContent(
     
     // Clean telegram username for the URL (remove @ if present)
     const telegramUsername = (session.stageManager?.telegram || DEFAULT_STAGE_MANAGER.telegram).replace(/^@/, '');
+    
+    // Determine if this is a panel and the speaker's role
+    let roleHtml = '';
+    const sessionType = (session.type || '').toLowerCase();
+    if (sessionType.includes('panel')) {
+      // Check if speaker is a moderator based on their name in the title or description
+      const sessionTitle = (session.title || '').toLowerCase();
+      const sessionDescription = (session.description || '').toLowerCase();
+      const speakerNameLower = speaker.name.toLowerCase();
+      
+      // Look for patterns like "moderated by [name]" or "[name] (moderator)" in title or description
+      const isModerator = 
+        sessionTitle.includes(`moderated by ${speakerNameLower}`) || 
+        sessionTitle.includes(`hosted by ${speakerNameLower}`) ||
+        sessionDescription.includes(`moderated by ${speakerNameLower}`) ||
+        sessionDescription.includes(`hosted by ${speakerNameLower}`) ||
+        // Also check if any speaker has title containing moderator/host
+        session.speakers?.some(s => 
+          s.name === speaker.name && 
+          s.title && 
+          (s.title.toLowerCase().includes('moderator') || 
+           s.title.toLowerCase().includes('host')));
+      
+      if (isModerator) {
+        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> <span style="color: red; font-weight: bold;">Moderator</span></p>';
+      } else {
+        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> Panelist</p>';
+      }
+    }
     
     return replaceTemplatePlaceholders(sessionDetailsTemplate, {
       sessionTitle: session.title,
@@ -529,14 +575,25 @@ function generateSpeakerEmailContent(
       stageManagerEmail: session.stageManager?.email || DEFAULT_STAGE_MANAGER.email,
       appLink: generateAppLink(session),
       calendarStart,
-      calendarEnd
-    });
+      calendarEnd,
+      roleHtml
+    }).replace('<p style="margin: 8px 0; font-size: 15px;"><strong>Type:</strong> {{sessionType}}</p>', 
+              `${roleHtml}<p style="margin: 8px 0; font-size: 15px;"><strong>Type:</strong> {{sessionType}}</p>`);
   }).join('');
+  
+  // Check if any session is a keynote to conditionally include Note 3
+  const hasKeynote = sessions.some(session => 
+    (session.type || '').toLowerCase().includes('keynote'));
+  
+  const keynoteNotice = hasKeynote ? 
+    '<p style="font-size: 16px; line-height: 1.5;">Note 3: If you haven\'t already, please reply with your <strong>Google Slides link</strong>, even if it\'s still in progress. If you already sent them, thanks a lot, it helps us to set up things in advance. You\'ll be able to update your slides to 1 day before the conference. If you\'re using PowerPoint or Keynote, please send the full presentation via email or WeTransfer.</p>' : 
+    '';
   
   // Replace the placeholders in the email template
   return replaceTemplatePlaceholders(emailTemplate, {
     speakerName: speaker.name,
-    sessionDetails: sessionDetailsHtml
+    sessionDetails: sessionDetailsHtml,
+    keynoteNotice
   });
 }
 
