@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ETHCluj Conference Session Information</title>
 </head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9; color: #333;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 30px 0; background-color: #121212; color: #ffffff;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
         <!-- Header -->
-        <div style="background-color: #5C34A3; padding: 24px; text-align: center;">
+        <div style="background-color: #FE304C; padding: 24px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; padding: 0; font-size: 24px; font-weight: 600;">Your Speaking Schedule</h1>
         </div>
         
@@ -16,16 +16,17 @@
         <div style="padding: 24px;">
             <p style="font-size: 16px; line-height: 1.5; margin-top: 0;">Dear {{speakerName}},</p>
             
-            <p style="font-size: 16px; line-height: 1.5;">We’re excited to share your finalized speaking schedule for ETHCluj 2025! Below are your session details along with contacts and preparation notes to help you get set up smoothly:</p>
+            <p style="font-size: 16px; line-height: 1.5;">We're excited to share your finalized speaking schedule for ETHCluj 2025!{{sessionCountMessage}} Below are your session details along with contacts and preparation notes to help you get set up smoothly:</p>
             
             <!-- Session Details (will be repeated for each session) -->
             {{sessionDetails}}
-            
-            <p style="font-size: 16px; line-height: 1.5;">Note 1: We tag our sessions with <strong>difficulty levels</strong> to make it easy for the attendees to choose what is suitable for them. Difficulty levels can be: "For everyone", "Beginner", "Intermediate", "Advanced". Reply if you want us to change it. Also check the app link, to see how attendees will see your sessions.</p>
 
-            <p style="font-size: 16px; line-height: 1.5;">Note 2: You’ll receive our full speaker guidelines and logistics pack a few days before the conference. Until then, the most important guideline is “Be at your stage <strong>at least 1 hour before</strong> your session(s).” Announce your presence to the stage manager or a volunteer (look for staff t-shirts).</p>
+            <p style="font-size: 16px; line-height: 1.5;">Note 1: You’ll receive our full speaker guidelines and logistics pack a few days before the conference. Until then, the most important guideline is “Be at your stage <strong>at least 1 hour before</strong> your session(s).” Announce your presence to the stage manager or a volunteer (look for staff t-shirts). Until then, please add your session(s) to the calendar.</p>
+            
+            <p style="font-size: 16px; line-height: 1.5;">Note 2: We tag our sessions with <strong>difficulty levels</strong> to make it easy for the attendees to choose what is suitable for them. Difficulty levels can be: "For everyone", "Beginner", "Intermediate" or "Advanced". Reply if you want us to change the level for your keynote or workshop. Also check the app link, to see how attendees will see your sessions.</p>
             
             {{keynoteNotice}}
+            {{moderatorNotice}}
             
             <p style="font-size: 16px; line-height: 1.5; margin-bottom: 24px;">Looking forward to seeing you in Cluj. Let us know if you need anything in the meantime!</p>
             
@@ -34,12 +35,12 @@
         </div>
         
         <!-- Footer -->
-        <div style="background-color: #f5f5f5; padding: 16px; text-align: center; border-top: 1px solid #eeeeee;">
-            <p style="font-size: 14px; color: #666; margin: 0;">ETHCluj Conference 2025</p>
-            <p style="font-size: 14px; color: #666; margin: 8px 0 0 0;">
-                <a href="https://ethcluj.org" style="color: #5C34A3; text-decoration: none; font-weight: 500;">ethcluj.org</a> |
-                <a href="https://twitter.com/ethcluj" style="color: #5C34A3; text-decoration: none; font-weight: 500;">Twitter</a> |
-                <a href="https://t.me/ethcluj" style="color: #5C34A3; text-decoration: none; font-weight: 500;">Telegram</a>
+        <div style="background-color: #1a1a1a; padding: 16px; text-align: center; border-top: 1px solid #333333;">
+            <p style="font-size: 14px; color: #ffffff; margin: 0;">ETHCluj Conference 2025</p>
+            <p style="font-size: 14px; color: #ffffff; margin: 8px 0 0 0;">
+                <a href="https://ethcluj.org" style="color: #FE304C; text-decoration: none; font-weight: 500;">ethcluj.org</a> |
+                <a href="https://twitter.com/ethcluj" style="color: #FE304C; text-decoration: none; font-weight: 500;">Twitter</a> |
+                <a href="https://t.me/ethcluj" style="color: #FE304C; text-decoration: none; font-weight: 500;">Telegram</a>
             </p>
         </div>
     </div>

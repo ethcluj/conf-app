@@ -425,6 +425,23 @@ function getFullStageName(stageShortName: string): string {
   return stageMap[stageShortName] || stageShortName;
 }
 
+// Get ordinal suffix for a number (1st, 2nd, 3rd, etc.)
+function getOrdinalSuffix(num: number): string {
+  const j = num % 10;
+  const k = num % 100;
+  
+  if (j === 1 && k !== 11) {
+    return num + 'st';
+  }
+  if (j === 2 && k !== 12) {
+    return num + 'nd';
+  }
+  if (j === 3 && k !== 13) {
+    return num + 'rd';
+  }
+  return num + 'th';
+}
+
 // Format date for Google Calendar
 function formatCalendarDate(dateTimeStr: string, sessionType: string): { start: string, end: string } {
   try {
@@ -521,7 +538,13 @@ function generateSpeakerEmailContent(
   });
   
   // Generate the session details HTML blocks
-  const sessionDetailsHtml = sortedSessions.map(session => {
+  const sessionDetailsHtml = sortedSessions.map((session, index) => {
+    // Add session numbering if there are multiple sessions
+    let sessionNumbering = '';
+    if (sortedSessions.length > 1) {
+      const ordinal = getOrdinalSuffix(index + 1);
+      sessionNumbering = `<h3 style="font-size: 18px; margin-top: 20px; margin-bottom: 10px; color: #505CD9;">Your ${ordinal} session:</h3>`;
+    }
     // Get full stage name
     const stageFull = getFullStageName(session.stage);
     
@@ -535,32 +558,23 @@ function generateSpeakerEmailContent(
     let roleHtml = '';
     const sessionType = (session.type || '').toLowerCase();
     if (sessionType.includes('panel')) {
-      // Check if speaker is a moderator based on their name in the title or description
-      const sessionTitle = (session.title || '').toLowerCase();
-      const sessionDescription = (session.description || '').toLowerCase();
-      const speakerNameLower = speaker.name.toLowerCase();
-      
-      // Look for patterns like "moderated by [name]" or "[name] (moderator)" in title or description
-      const isModerator = 
-        sessionTitle.includes(`moderated by ${speakerNameLower}`) || 
-        sessionTitle.includes(`hosted by ${speakerNameLower}`) ||
-        sessionDescription.includes(`moderated by ${speakerNameLower}`) ||
-        sessionDescription.includes(`hosted by ${speakerNameLower}`) ||
-        // Also check if any speaker has title containing moderator/host
-        session.speakers?.some(s => 
-          s.name === speaker.name && 
-          s.title && 
-          (s.title.toLowerCase().includes('moderator') || 
-           s.title.toLowerCase().includes('host')));
+      // Check if speaker is the first one listed in the panel
+      const isModerator = session.speakers && session.speakers.length > 0 && 
+                         session.speakers[0].name === speaker.name;
       
       if (isModerator) {
-        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> <span style="color: red; font-weight: bold;">Moderator</span></p>';
+        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> <span style="color: #FE304C; font-weight: bold;">Moderator</span></p>';
       } else {
-        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> Panelist</p>';
+        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> <span style="color: white;">Panelist</span></p>';
       }
     }
     
-    return replaceTemplatePlaceholders(sessionDetailsTemplate, {
+    // Add the session numbering before the session details template
+    const sessionTemplateWithNumbering = sortedSessions.length > 1 ? 
+      sessionNumbering + sessionDetailsTemplate : 
+      sessionDetailsTemplate;
+      
+    return replaceTemplatePlaceholders(sessionTemplateWithNumbering, {
       sessionTitle: session.title,
       sessionType: session.type || 'Session',
       sessionDateTime: session.formattedDateTime || '',
@@ -577,8 +591,7 @@ function generateSpeakerEmailContent(
       calendarStart,
       calendarEnd,
       roleHtml
-    }).replace('<p style="margin: 8px 0; font-size: 15px;"><strong>Type:</strong> {{sessionType}}</p>', 
-              `${roleHtml}<p style="margin: 8px 0; font-size: 15px;"><strong>Type:</strong> {{sessionType}}</p>`);
+    });
   }).join('');
   
   // Check if any session is a keynote to conditionally include Note 3
@@ -588,12 +601,34 @@ function generateSpeakerEmailContent(
   const keynoteNotice = hasKeynote ? 
     '<p style="font-size: 16px; line-height: 1.5;">Note 3: If you haven\'t already, please reply with your <strong>Google Slides link</strong>, even if it\'s still in progress. If you already sent them, thanks a lot, it helps us to set up things in advance. You\'ll be able to update your slides to 1 day before the conference. If you\'re using PowerPoint or Keynote, please send the full presentation via email or WeTransfer.</p>' : 
     '';
+    
+  // Check if the speaker is a moderator for any panel to conditionally include Note 4
+  const isModerator = sessions.some(session => {
+    const sessionType = (session.type || '').toLowerCase();
+    if (sessionType.includes('panel')) {
+      return session.speakers && session.speakers.length > 0 && 
+             session.speakers[0].name === speaker.name;
+    }
+    return false;
+  });
+  
+  const moderatorNotice = isModerator ? 
+    '<p style="font-size: 16px; line-height: 1.5;">Note 4: Thank you for being open to moderating the panel! We\'d love for you to take on the role. We\'ll send you the questions for every panel where you are marked as "Moderator" - a few days before the event to review and confirm.</p>' : 
+    '';
+  
+  // Add a conditional message about the number of sessions (only if more than 1)
+  let sessionCountMessage = '';
+  if (sortedSessions.length > 1) {
+    sessionCountMessage = ` You have opted in and were selected to speak in <strong> ${sortedSessions.length} sessions</strong>.`;
+  }
   
   // Replace the placeholders in the email template
   return replaceTemplatePlaceholders(emailTemplate, {
     speakerName: speaker.name,
     sessionDetails: sessionDetailsHtml,
-    keynoteNotice
+    keynoteNotice,
+    moderatorNotice,
+    sessionCountMessage
   });
 }
 
@@ -616,10 +651,12 @@ function createEmailTransporter() {
     }
   });
 }
+
 async function sendSpeakerEmails(
   speakerSessions: Map<string, { speaker: SpeakerWithEmail, sessions: SessionWithDetails[] }>,
   testEmailAddress?: string,
-  interactiveMode = false
+  interactiveMode = false,
+  debugMode = false
 ): Promise<void> {
   // Load email templates
   const emailTemplate = getEmailTemplate();
@@ -638,8 +675,14 @@ async function sendSpeakerEmails(
   }
   
   // Create transporter
-  const transporter = createEmailTransporter();
+  let transporter = createEmailTransporter();
   const isTestMode = Boolean(testEmailAddress);
+  
+  // Force transporter to be null when in debug mode to ensure debug files are created
+  if (debugMode) {
+    console.log('Debug mode enabled, forcing transporter to null to create debug files');
+    transporter = null;
+  }
   
   console.log(`Preparing to send emails in ${isTestMode ? 'TEST' : 'LIVE'} mode...`);
   
@@ -724,9 +767,53 @@ async function sendSpeakerEmails(
         console.log(`Sessions included: ${sessions.map(s => s.title).join(', ')}`);
         
         // Save the email to a file for inspection in test mode
-        const testFilePath = path.join(__dirname, `test-email-${speaker.name.replace(/\s+/g, '-')}.html`);
-        fs.writeFileSync(testFilePath, emailContent);
-        console.log(`Test email saved to: ${testFilePath}`);
+        let outputDir = __dirname;
+        
+        // If debug mode is enabled, create a more structured output
+        console.log('Debug mode status:', debugMode);
+        if (debugMode) {
+          console.log('Creating debug directory...');
+          outputDir = path.join(__dirname, 'debug');
+          console.log('Debug directory path:', outputDir);
+          if (!fs.existsSync(outputDir)) {
+            console.log('Debug directory does not exist, creating it...');
+            try {
+              fs.mkdirSync(outputDir, { recursive: true });
+              console.log('Debug directory created successfully');
+            } catch (error) {
+              console.error('Error creating debug directory:', error);
+            }
+          } else {
+            console.log('Debug directory already exists');
+          }
+          
+          // Save the email content to a file
+          const debugFilePath = path.join(outputDir, `${speaker.name.replace(/\s+/g, '-')}_email.html`);
+          fs.writeFileSync(debugFilePath, emailContent);
+          
+          // Also save a JSON file with metadata about the email
+          const metadata = {
+            speaker: speaker.name,
+            email: speaker.email,
+            sessionCount: sessions.length,
+            sessionTitles: sessions.map(s => s.title),
+            sessionTypes: sessions.map(s => s.type),
+            hasPanel: sessions.some(s => (s.type || '').toLowerCase().includes('panel')),
+            hasKeynote: sessions.some(s => (s.type || '').toLowerCase().includes('keynote')),
+            timestamp: new Date().toISOString()
+          };
+          
+          const metadataFilePath = path.join(outputDir, `${speaker.name.replace(/\s+/g, '-')}_metadata.json`);
+          fs.writeFileSync(metadataFilePath, JSON.stringify(metadata, null, 2));
+          
+          console.log(`Debug email content saved to ${debugFilePath}`);
+          console.log(`Debug metadata saved to ${metadataFilePath}`);
+        } else {
+          // Regular test mode behavior
+          const testFilePath = path.join(outputDir, `test-email-${speaker.name.replace(/\s+/g, '-')}.html`);
+          fs.writeFileSync(testFilePath, emailContent);
+          console.log(`Test email saved to: ${testFilePath}`);
+        }
       }
       
       // If we're just testing for one speaker, exit after the first email
@@ -774,6 +861,14 @@ async function main() {
     const limit = limitArg ? parseInt(limitArg.split('=')[1], 10) : 0;
     const forceAllRemaining = args.includes('--force-all-remaining');
     const interactiveMode = args.includes('--all-remaining-with-prompt');
+    const debugMode = args.includes('--debug');
+    
+    // Debug logging for command line arguments
+    console.log('Command line arguments:');
+    console.log('  testMode:', testMode);
+    console.log('  testAddress:', testAddress);
+    console.log('  testSpeaker:', testSpeaker);
+    console.log('  debugMode:', debugMode);
     
     console.log('ETHCluj Conference - Speaker Session Notification System');
     console.log('======================================================');
@@ -892,7 +987,7 @@ async function main() {
     
     // 9. Send emails
     console.log(`Preparing emails for ${speakerSessions.size} speakers...`);
-    await sendSpeakerEmails(speakerSessions, testAddress, interactiveMode);
+    await sendSpeakerEmails(speakerSessions, testAddress, interactiveMode, debugMode);
     
     console.log('Operation completed successfully.');
   } catch (error) {
