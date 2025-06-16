@@ -17,7 +17,7 @@ export type SessionLevel = "For everyone" | "Beginner" | "Intermediate" | "Advan
  * Categorizes sessions by track/topic
  * Used for filtering and organizing sessions by subject area
  */
-export type SessionTrack = "Ethereum Roadmap" | "DeFi" | "Security" | "Development" | "Research" | "Community" | "Builders Onboarding" | "AI and Ethereum" | "Business on Ethereum" | "Usability and Adoption" | "Privacy" | "NA"
+export type SessionTrack = "Ethereum Roadmap" | "DeFi" | "Security" | "Development" | "Research" | "Community" | "Builders Onboarding" | "AI and Ethereum" | "Business on Ethereum" | "Usability and Adoption" | "Privacy" | "Philosophy & Community" | "NA"
 
 
 /**

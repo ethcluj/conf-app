@@ -42,8 +42,9 @@ export const trackMapping: Record<string, SessionTrack | undefined> = {
   'AI and Ethereum': 'AI and Ethereum',
   'Business on Ethereum': 'Business on Ethereum',
   'Usability and Adoption': 'Usability and Adoption',
-  'DeFi': 'DeFi',
   'Privacy': 'Privacy',
+  'DeFi': 'DeFi',
+  'Philosophy & Community': 'Philosophy & Community',
   'NA': 'NA'
 };
 
