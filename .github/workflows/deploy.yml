@@ -94,7 +94,7 @@ jobs:
           echo "Updating environment variables..."
           sed -i "s/^EMAIL_USER=.*/EMAIL_USER=${{ secrets.EMAIL_USER }}/g" .env
           sed -i "s/^EMAIL_PASSWORD=.*/EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}/g" .env
-          sed -i "s/^EMAIL_FROM=.*/EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"/g" .env
+          sed -i "s/^EMAIL_FROM=.*/EMAIL_FROM=\"Alex from ETHCluj <alex@ethcluj.org>\"/g" .env
           sed -i "s/^POSTGRES_USER=.*/POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}/g" .env
           sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'postgres' }}/g" .env
           sed -i "s/^POSTGRES_DB=.*/POSTGRES_DB=${{ secrets.POSTGRES_DB || 'value_db' }}/g" .env
@@ -104,6 +104,7 @@ jobs:
           sed -i "s/^GOOGLE_SHEET_NAME=.*/GOOGLE_SHEET_NAME=${{ secrets.GOOGLE_SHEET_NAME }}/g" .env
           sed -i "s/^GOOGLE_API_KEY=.*/GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}/g" .env
           sed -i "s/^GOOGLE_SPEAKERS_SHEET_NAME=.*/GOOGLE_SPEAKERS_SHEET_NAME=${{ secrets.GOOGLE_SPEAKERS_SHEET_NAME }}/g" .env
+          sed -i "s/^GOOGLE_STAGE_MANAGERS_SHEET_NAME=.*/GOOGLE_STAGE_MANAGERS_SHEET_NAME=${{ secrets.GOOGLE_STAGE_MANAGERS_SHEET_NAME }}/g" .env
           
           # Copy .env file to deploy directory
           echo "Copying .env file to deploy directory..."
