@@ -23,3 +23,7 @@ Thumbs.db
 # Test coverage
 coverage/
 .nyc_output/
+
+# Debug files and directories
+backend/src/scripts/debug/
+SESSIONS-template.txt

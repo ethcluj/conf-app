@@ -102,6 +102,9 @@ const hydrateSession = (session: any): Session => {
   };
 }
 
+// Import favorites functionality
+import { applyFavoritesToSessions } from './favorites';
+
 // Fetch all sessions from backend API - no caching
 export const fetchAllSessions = async (): Promise<Session[]> => {
   try {
@@ -140,7 +143,9 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
     }
     
     const hydrated = sessionsArray.map(hydrateSession);
-    return hydrated;
+    
+    // Apply favorite status from local storage
+    return applyFavoritesToSessions(hydrated);
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return [];

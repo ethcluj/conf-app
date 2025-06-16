@@ -1,16 +1,20 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { allSessions, conferenceDays, getSessionsByDay, fetchAllSessions, getStageDisplayName } from "@/lib/data"
-import { isSessionActive, isToday, getCurrentTime, getCurrentConferenceDay } from "@/lib/time-utils"
-import { DateSelector } from "@/components/date-selector"
-import { TimeIndicator } from "@/components/time-indicator"
+import { ChevronLeft, ChevronRight, ArrowDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SessionCard } from "@/components/session-card"
 import { BreakSessionCard } from "@/components/break-session-card"
-import { JumpToNow } from "@/components/jump-to-now"
 import { ScrollHideHeader } from "@/components/scroll-hide-header"
+import { TimeIndicator } from "@/components/time-indicator"
+import { DateSelector } from "@/components/date-selector"
+import { JumpToNow } from "@/components/jump-to-now"
+import { allSessions, refreshSessions, getSessionsByDay, conferenceDays, getStageDisplayName, fetchAllSessions } from "@/lib/data"
+import { isSessionActive, isToday, getCurrentConferenceDay } from "@/lib/time-utils"
+import { toggleFavorite } from "@/lib/favorites"
+import { cn } from "@/lib/utils"
 
 export default function ConferenceSchedule() {
   const router = useRouter()
@@ -89,9 +93,13 @@ export default function ConferenceSchedule() {
   }
 
   const handleToggleFavorite = (sessionId: string) => {
+    // Use the toggleFavorite function from favorites.ts
+    const newFavoriteStatus = toggleFavorite(sessionId);
+    
+    // Update local state to reflect the change
     setSessions((prevSessions) =>
       prevSessions.map((session) =>
-        session.id === sessionId ? { ...session, isFavorite: !session.isFavorite } : session,
+        session.id === sessionId ? { ...session, isFavorite: newFavoriteStatus } : session,
       ),
     )
   }
