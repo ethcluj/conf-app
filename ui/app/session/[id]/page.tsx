@@ -237,8 +237,10 @@ export default function SessionDetails() {
           {/* Session Title */}
           <h2 className="text-2xl font-bold leading-tight mb-2">{session.title}</h2>
           
-          {/* Track Information */}
-          <p className="text-sm text-gray-400 mb-4">{session.track || "General Track"}</p>
+          {/* Track Information - only show if it exists */}
+          {session.track && (
+            <p className="text-sm text-gray-400 mb-4">{session.track}</p>
+          )}
 
           {/* Difficulty Level */}
           <div className="mb-4">
@@ -331,10 +333,12 @@ export default function SessionDetails() {
                 <h4 className="mb-2 text-sm text-gray-400">Type</h4>
                 <p className="text-sm">{session.type || "General"}</p>
               </div>
-              <div className="rounded-lg bg-[#161b22] p-4">
-                <h4 className="mb-2 text-sm text-gray-400">Track</h4>
-                <p className="text-sm">{session.track || "General"}</p>
-              </div>
+              {session.track && (
+                <div className="rounded-lg bg-[#161b22] p-4">
+                  <h4 className="mb-2 text-sm text-gray-400">Track</h4>
+                  <p className="text-sm">{session.track}</p>
+                </div>
+              )}
             </div>
           </div>
 
