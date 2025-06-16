@@ -7,7 +7,8 @@ import { useParams } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { getSessionById, formatSessionDateTime, type Session, getFullStageName } from "@/lib/data"
-import { getSessionTimeStatus } from "@/lib/time-utils"
+import { getSessionTimeStatus, isQnAAvailable } from "@/lib/time-utils"
+import { toggleFavorite, isFavorite as checkIsFavorite } from "@/lib/favorites"
 import { StaticHeader } from "@/components/static-header"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { BreakSessionDetails } from "@/components/break-session-details"
@@ -71,8 +72,14 @@ export default function SessionDetails() {
             }
           }
           
+          // Check if this session is a favorite using our favorites system
+          const sessionIsFavorite = checkIsFavorite(foundSession.id)
+          
+          // Update the session object with the correct favorite status
+          foundSession.isFavorite = sessionIsFavorite
+          
           setSession(foundSession)
-          setIsFavorite(foundSession.isFavorite)
+          setIsFavorite(sessionIsFavorite)
         }
         setIsLoading(false)
       } catch (error) {
@@ -105,9 +112,12 @@ export default function SessionDetails() {
     return <UnifiedPresenterView session={session} onClose={() => setShowPresenterView(false)} />
   }
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite)
-    // In a real app, you would update this in a global state or backend
+  const handleToggleFavorite = () => {
+    if (session) {
+      // Use the toggleFavorite function from favorites.ts
+      const newFavoriteStatus = toggleFavorite(session.id)
+      setIsFavorite(newFavoriteStatus)
+    }
   }
 
   // Calculate difficulty dots and get difficulty label
@@ -213,7 +223,7 @@ export default function SessionDetails() {
                   })()}
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={toggleFavorite}>
+              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleToggleFavorite}>
                 <Star className={`h-6 w-6 ${isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
               </Button>
             </div>
@@ -290,7 +300,11 @@ export default function SessionDetails() {
           {session.description && (
             <div className="mb-8">
               <h3 className="mb-2 text-xl font-semibold">Description</h3>
-              <p className="text-sm leading-relaxed text-gray-300">{session.description}</p>
+              <div className="text-sm leading-relaxed text-gray-300">
+                {session.description.split('\n').map((paragraph, index) => (
+                  <p key={index} className="mb-2">{paragraph}</p>
+                ))}
+              </div>
             </div>
           )}
 
@@ -326,11 +340,20 @@ export default function SessionDetails() {
 
           {/* Q&A Button */}
           <div className="mb-8">
-            <Link href={`/qna/${sessionId}`}>
-              <Button className="w-full bg-red-600 hover:bg-red-700 py-6 font-medium text-white">
-                Join Q&A
+            {isQnAAvailable(session) ? (
+              <Link href={`/qna/${sessionId}`}>
+                <Button className="w-full bg-red-600 hover:bg-red-700 py-6 font-medium text-white">
+                  Join Q&A
+                </Button>
+              </Link>
+            ) : (
+              <Button 
+                className="w-full bg-gray-600 py-6 font-medium text-white cursor-not-allowed opacity-60" 
+                disabled
+              >
+                Q&A Available 5 Min Before Session
               </Button>
-            </Link>
+            )}
           </div>
         </div>
       </div>
