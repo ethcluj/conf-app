@@ -109,9 +109,25 @@ jobs:
           echo "Copying .env file to deploy directory..."
           cp .env deploy/.env
           
-          # Run the deployment script with environment variables
-          echo "Running deployment script..."
-          APP_DIR="/opt/conf-app" COMPOSE_FILE="/opt/conf-app/deploy/docker-compose.prod.yml" ./deploy/scripts/deploy.sh
+          # Create a database backup before deployment (just for safety)
+          echo "Creating database backup..."
+          if docker-compose --env-file .env -f deploy/docker-compose.prod.yml ps | grep -q db; then
+            BACKUP_DIR="/opt/conf-app/backups"
+            mkdir -p "$BACKUP_DIR"
+            TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+            docker-compose --env-file .env -f deploy/docker-compose.prod.yml exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
+            echo "Database backup created at ${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
+          else
+            echo "Database container not running, skipping backup"
+          fi
+          
+          # Simple rebuild and restart of all containers
+          echo "Rebuilding and restarting all containers..."
+          docker-compose --env-file .env -f deploy/docker-compose.prod.yml up -d --build
+          
+          # Run the SSL fix script to ensure HTTPS is working
+          echo "Running SSL fix script..."
+          sudo ./deploy/scripts/fix-ssl.sh
           
           # Show status
           echo "Deployment complete. Showing container status:"
