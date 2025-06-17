@@ -701,6 +701,7 @@ async function sendSpeakerEmails(
       const recipient = isTestMode ? testEmailAddress! : speaker.email;
       
       // In interactive mode, prompt before sending each email
+      let sendActualResponse: string = '';
       if (interactiveMode && rl) {
         console.log('\n==================================================');
         console.log(`Speaker: ${speaker.name}`);
@@ -737,7 +738,7 @@ async function sendSpeakerEmails(
         }
         
         // Ask if user wants to send the actual email
-        const sendActualResponse = await askQuestion(rl, `Send the actual email to ${speaker.name} <${speaker.email}>? (y/n): `);
+        sendActualResponse = await askQuestion(rl, `Send the actual email to ${speaker.name} <${speaker.email}>? (y/n): `);
         
         if (sendActualResponse.toLowerCase() !== 'y') {
           console.log(`Skipping email to ${speaker.name}`);
@@ -747,17 +748,20 @@ async function sendSpeakerEmails(
       
       // Send email or log it in test mode
       if (transporter) {
+        // In interactive mode with confirmed actual email, use speaker's email regardless of test mode
+        const actualRecipient = interactiveMode && sendActualResponse.toLowerCase() === 'y' ? speaker.email : recipient;
+        
         await transporter.sendMail({
           from: process.env.EMAIL_FROM || '"ETHCluj Conference" <noreply@ethcluj.org>',
-          to: recipient,
+          to: actualRecipient,
           subject: 'Your ETHCluj Conference Sessions Information',
           html: emailContent
         });
         
-        console.log(`Email sent to ${isTestMode && !interactiveMode ? `test address (${recipient})` : speaker.name} with ${sessions.length} sessions`);
+        console.log(`Email sent to ${actualRecipient === speaker.email ? speaker.name : `test address (${actualRecipient})`} with ${sessions.length} sessions`);
         
-        // In live mode or interactive mode, record that email was sent
-        if (!isTestMode || (interactiveMode && recipient === speaker.email)) {
+        // Record that email was sent if it was sent to the actual speaker
+        if (actualRecipient === speaker.email) {
           recordSentEmail(speaker, sessions);
         }
       } else {
