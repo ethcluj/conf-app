@@ -1,15 +1,19 @@
-<div style="margin-bottom: 24px; border-left: 4px solid #505CD9; padding-left: 16px;">
-    <h3 style="font-size: 16px; margin-top: 0; color: #FE304C;">{{sessionTitle}}</h3>
+<div style="margin-bottom: 24px; border-left: 4px solid #505CD9; padding-left: 16px; max-width: 100%; overflow-wrap: break-word;">
+    <h3 style="font-size: 16px; margin-top: 0; color: #FE304C; line-height: 1.4; word-wrap: break-word;">{{sessionTitle}}</h3>
     {{roleHtml}}
     <p style="margin: 8px 0; font-size: 14px;"><strong>Type:</strong> {{sessionType}}</p>
     <p style="margin: 8px 0; font-size: 14px;">
         <strong>Date & Time:</strong> {{sessionDateTime}} (EEST)
-        <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{sessionTitle}}&details={{sessionType}} at ETHCluj 2025%0A%0AStage: {{sessionStageFull}}%0AStage Manager: {{stageManager}} ({{stageManagerEmail}})%0A%0AView in app: {{appLink}}&location={{sessionStageFull}}&dates={{calendarStart}}%2F{{calendarEnd}}&ctz=Europe/Bucharest&trp=true&sf=true&output=xml" target="_blank" style="display: inline-block; margin-left: 10px; background-color: #FE304C; color: white; padding: 3px 8px; border-radius: 4px; text-decoration: none; font-size: 12px;">Add to Google Calendar</a>
+        <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{sessionTitle}}&details={{sessionType}} at ETHCluj 2025%0A%0AStage: {{sessionStageFull}}%0AStage Manager: {{stageManager}} (+{{stageManagerEmail}})%0A%0AView in app: %3Ca href=%22{{appLink}}%22%3E{{appLink}}%3C/a%3E&location={{sessionStageFull}}&dates={{calendarStart}}%2F{{calendarEnd}}&ctz=Europe/Bucharest&trp=true&sf=true&output=xml" target="_blank" style="display: block; margin-top: 8px; background-color: #FE304C; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; text-align: center; width: fit-content;">Add to Google Calendar</a>
     </p>
     <p style="margin: 8px 0; font-size: 14px;"><strong>Stage:</strong> {{sessionStageFull}}</p>
     <p style="margin: 8px 0; font-size: 14px;"><strong>Duration:</strong> {{sessionDuration}}</p>
     <p style="margin: 8px 0; font-size: 14px;"><strong>Track:</strong> {{sessionTrack}}</p>
     <p style="margin: 8px 0; font-size: 14px;"><strong>Difficulty Level:</strong> {{sessionLevel}}</p>
-    <p style="margin: 8px 0; font-size: 14px;"><strong>Stage Manager:</strong> {{stageManager}} (Telegram: <a href="https://t.me/{{stageManagerTelegramClean}}" style="color: #FE304C;">{{stageManagerTelegram}}</a> | Whatsapp: <a href="mailto:{{stageManagerEmail}}" style="color: #FE304C;">{{stageManagerEmail}}</a>)</p>
+    <p style="margin: 8px 0; font-size: 14px;"><strong>Stage Manager:</strong> {{stageManager}}</p>
+    <p style="margin: 8px 0; font-size: 14px;">
+        <a href="https://t.me/{{stageManagerTelegramClean}}" style="color: #FE304C; display: inline-block; margin-right: 12px;">{{stageManagerTelegram}}</a> | 
+        <a href="mailto:{{stageManagerEmail}}" style="color: #FE304C; display: inline-block; margin-left: 12px;">{{stageManagerEmail}}</a>
+    </p>
     <p style="margin: 8px 0; font-size: 14px;"><strong>App Link:</strong> <a href="{{appLink}}" style="color: #FE304C;">View in Conference App</a></p>
 </div>
