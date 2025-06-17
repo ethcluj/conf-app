@@ -50,25 +50,23 @@ export default function SessionDetails() {
         setIsLoading(true)
         const foundSession = await getSessionById(sessionId)
         if (foundSession) {
-          // Apply the same session level/difficulty logic as in SessionCard
-          if (foundSession.id) {
-            const sessionIdNum = parseInt(foundSession.id);
-            if (sessionIdNum % 4 === 0) {
-              foundSession.level = "For everyone";
-              foundSession.levelColor = "green";
-              foundSession.difficulty = 1;
-            } else if (sessionIdNum % 4 === 1) {
-              foundSession.level = "Beginner";
-              foundSession.levelColor = "blue";
-              foundSession.difficulty = 2;
-            } else if (sessionIdNum % 4 === 2) {
-              foundSession.level = "Intermediate";
-              foundSession.levelColor = "orange";
-              foundSession.difficulty = 3;
-            } else {
-              foundSession.level = "Advanced";
-              foundSession.levelColor = "red";
-              foundSession.difficulty = 4;
+          // Map level to color if levelColor is not provided
+          if (!foundSession.levelColor && foundSession.level) {
+            switch (foundSession.level) {
+              case "For everyone":
+                foundSession.levelColor = "green";
+                break;
+              case "Beginner":
+                foundSession.levelColor = "blue";
+                break;
+              case "Intermediate":
+                foundSession.levelColor = "orange";
+                break;
+              case "Advanced":
+                foundSession.levelColor = "red";
+                break;
+              default:
+                foundSession.levelColor = "green";
             }
           }
           
