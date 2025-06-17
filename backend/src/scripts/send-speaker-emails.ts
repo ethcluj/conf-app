@@ -563,9 +563,9 @@ function generateSpeakerEmailContent(
                          session.speakers[0].name === speaker.name;
       
       if (isModerator) {
-        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> <span style="color: #FE304C; font-weight: bold;">Moderator</span></p>';
+        roleHtml = '<p style="margin: 8px 0; font-size: 14px;"><strong>Your Role:</strong> <span style="color: #FE304C; font-weight: bold;">Moderator</span></p>';
       } else {
-        roleHtml = '<p style="margin: 8px 0; font-size: 15px;"><strong>Your Role:</strong> <span style="color: white;">Panelist</span></p>';
+        roleHtml = '<p style="margin: 8px 0; font-size: 14px;"><strong>Your Role:</strong> <span style="color: white;">Panelist</span></p>';
       }
     }
     
