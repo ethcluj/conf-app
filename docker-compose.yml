@@ -35,7 +35,7 @@ services:
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       # Google Sheets configuration
       - DATA_SOURCE=google-sheet
-      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID:-1r4Y7tWSdyRc-XIW21b9x8felxgBUDKikglFZTB61o5E}
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID:-1VdAZ7B7btKPM0nfuELswvrD1d0ISeeuBSwPLyW9DZU4}
       - GOOGLE_SHEET_NAME=${GOOGLE_SHEET_NAME:-APP}
       # Email configuration
       - EMAIL_USER=${EMAIL_USER}

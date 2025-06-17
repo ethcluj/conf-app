@@ -148,7 +148,7 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
     const sessions: Session[] = [];
     let currentSession: RawScheduleRow | null = null;
     let slotCount = 0;
-    let sessionId = 1;
+    let fallbackId = 1; // This is only used if no sessionId is provided in the sheet
     
     for (let i = 0; i < filteredData.length; i++) {
       const row = filteredData[i];
@@ -158,8 +158,8 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
         // But end the current session if there is one
         if (currentSession) {
           try {
-            sessions.push(createSessionFromRow(currentSession, slotCount, sessionId.toString()));
-            sessionId++;
+            sessions.push(createSessionFromRow(currentSession, slotCount, fallbackId.toString()));
+            fallbackId++;
             currentSession = null;
             slotCount = 0;
           } catch (error) {
@@ -177,8 +177,8 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
         // End previous session if it exists
         if (currentSession) {
           try {
-            sessions.push(createSessionFromRow(currentSession, slotCount, sessionId.toString()));
-            sessionId++;
+            sessions.push(createSessionFromRow(currentSession, slotCount, fallbackId.toString()));
+            fallbackId++;
           } catch (error) {
             console.error('Error creating session:', error);
           }
@@ -196,7 +196,7 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
     // Add the last session if there is one
     if (currentSession) {
       try {
-        sessions.push(createSessionFromRow(currentSession, slotCount, sessionId.toString()));
+        sessions.push(createSessionFromRow(currentSession, slotCount, fallbackId.toString()));
       } catch (error) {
         console.error('Error creating final session:', error);
       }
@@ -215,11 +215,11 @@ export function processSchedule(rawData: RawScheduleRow[]): Session[] {
  * 
  * This function transforms a raw schedule row from the Google Sheet into a
  * properly formatted Session object for the API. It handles date/time parsing,
- * duration calculation, and various field mappings.
+ * speaker processing, and other transformations.
  * 
- * @param row The raw schedule row from the Google Sheet
- * @param slotCount Number of consecutive 30-minute slots this session spans
- * @param id Unique identifier for the session
+ * @param row The raw data row from the Google Sheet
+ * @param slotCount Number of consecutive slots this session occupies
+ * @param id Fallback unique identifier for the session (used if sessionId is not provided)
  * @returns A fully formed Session object
  * @throws Error if required fields are missing or invalid
  */
@@ -228,17 +228,20 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
     throw new Error('Cannot create session: row data is missing');
   }
   
-  if (!id) {
+  // Use the fixed sessionId from the Google Sheet if available, otherwise fall back to the provided id
+  const sessionId = row.sessionId && row.sessionId.trim() ? row.sessionId.trim() : id;
+  
+  if (!sessionId) {
     throw new Error('Cannot create session: id is required');
   }
   
   if (!row.timeSlot) {
-    console.warn(`Session "${row.title || 'Untitled'}" (ID: ${id}) is missing timeSlot, using current time`);
+    console.warn(`Session "${row.title || 'Untitled'}" (ID: ${sessionId}) is missing timeSlot, using current time`);
   }
   
   // Validate slot count
   if (typeof slotCount !== 'number' || slotCount <= 0) {
-    console.warn(`Invalid slot count for session "${row.title || 'Untitled'}" (ID: ${id}), defaulting to 1`);
+    console.warn(`Invalid slot count for session "${row.title || 'Untitled'}" (ID: ${sessionId}), defaulting to 1`);
     slotCount = 1;
   }
   
@@ -270,7 +273,7 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
     
     // Create the session object
     return createSession(
-      id,
+      sessionId,
       day,
       hour,
       minute,
@@ -285,8 +288,8 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
       sessionType // Pass the raw type value from Google Sheets
     );
   } catch (error) {
-    console.error(`Error creating session from row (ID: ${id}):`, error);
-    throw new Error(`Failed to create session from row (ID: ${id}): ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error(`Error creating session from row (ID: ${sessionId}):`, error);
+    throw new Error(`Failed to create session from row (ID: ${sessionId}): ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

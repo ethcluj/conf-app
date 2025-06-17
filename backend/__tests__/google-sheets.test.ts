@@ -43,7 +43,7 @@ describe('Google Sheets Module', () => {
       // Verify get method was called with correct parameters
       expect(mockSheetsClient.spreadsheets.values.get).toHaveBeenCalledWith({
         spreadsheetId: 'test-sheet-id',
-        range: 'test-sheet-name!A:I'
+        range: 'test-sheet-name!A:K'
       });
 
       // Verify result processing
