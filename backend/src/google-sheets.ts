@@ -58,7 +58,8 @@ export async function fetchSheetData(
  */
 export async function fetchFromGoogleSheet(config: GoogleSheetsConfig): Promise<RawScheduleRow[]> {
   try {
-    const rows = await fetchSheetData(config);
+    // Fetch all columns A through K to include all data
+    const rows = await fetchSheetData(config, 'A:K');
     
     if (rows.length <= 1) {
       return []; // Return empty array if only header or no data
@@ -72,25 +73,32 @@ export async function fetchFromGoogleSheet(config: GoogleSheetsConfig): Promise<
       .map((row: any, index: number) => {
         // Ensure we have enough columns, pad with empty strings if needed
         const paddedRow = [...row];
-        while (paddedRow.length < 9) {
+        while (paddedRow.length < 11) { // Ensure we have all 11 columns (A-K)
           paddedRow.push('');
         }
         
-        // Log specific rows for debugging (especially rows that might become session ID 3)
-        if (index >= 2 && index <= 5) { // Check a range of rows that might include session ID 3
-          console.log(`Raw row data for index ${index} (session ID ${index+1}):`, paddedRow);
+        // Log specific rows for debugging
+        if (index >= 2 && index <= 5) {
+          console.log(`Raw row data for index ${index}:`, paddedRow);
         }
 
+        // Get the session ID from column D (index 3)
+        // If no ID is provided, use the row index as a fallback
+        const sessionId = paddedRow[3] && paddedRow[3].trim() ? paddedRow[3].trim() : `${index+1}`;
+        
         return {
           timeSlot: paddedRow[0] || '',
           visible: paddedRow[1] && paddedRow[1].trim().toLowerCase() === 'true',
           stage: paddedRow[2] || '',
-          title: paddedRow[3] || '',
-          speakers: paddedRow[4] || '',
-          description: paddedRow[5] || '',
-          type: paddedRow[6] || '',
-          track: paddedRow[7] || '',
-          level: paddedRow[8] || ''
+          // Column D is now the ID, so we use it for sessionId
+          title: paddedRow[4] || '', // Title moved to column E (index 4)
+          speakers: paddedRow[5] || '', // Speakers moved to column F (index 5)
+          description: paddedRow[6] || '', // Description moved to column G (index 6)
+          type: paddedRow[7] || '', // Type moved to column H (index 7)
+          track: paddedRow[8] || '', // Track moved to column I (index 8)
+          level: paddedRow[9] || '', // Level moved to column J (index 9)
+          // Notes would be in column K (index 10) but we don't need it in RawScheduleRow
+          sessionId: sessionId
         };
       })
       .filter((row: any) => row.visible === true);

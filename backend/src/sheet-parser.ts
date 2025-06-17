@@ -25,6 +25,8 @@ export interface RawScheduleRow {
   track: string;
   /** Session level (e.g., 'Beginner', 'Intermediate', 'Advanced', 'For everyone') */
   level: string;
+  /** Fixed session ID (manually maintained in Google Sheet) */
+  sessionId?: string;
   /** Additional notes about the session (used in tests) */
   notes?: string;
 }
