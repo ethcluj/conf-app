@@ -12,6 +12,9 @@ build/
 .env.test
 .env.production
 
+# Sent emails tracker
+backend/src/scripts/sent-emails-tracker.json
+
 # Archives and extracted folders
 ethereum-conference.zip
 ethereum-conference/
