@@ -2,6 +2,9 @@ import { Pool } from 'pg';
 import { QnaUser, QnaQuestion, LeaderboardEntry, generateRandomEthName } from './qna-types';
 import crypto from 'crypto';
 import { sseController } from './sse-controller';
+import { logger } from './logger';
+
+// Using the centralized logger
 
 /**
  * QnA Service - Handles all QnA database operations
@@ -17,22 +20,41 @@ export class QnaService {
    * Get a user by fingerprint only (no creation)
    */
   async getUserByFingerprint(fingerprint: string): Promise<QnaUser> {
-    const result = await this.pool.query(
-      'SELECT * FROM qna_users WHERE fingerprint = $1',
-      [fingerprint]
-    );
+    logger.debug('Looking up user by fingerprint', { fingerprint: fingerprint.substring(0, 8) + '...' });
     
-    if (result.rows.length === 0) {
-      throw new Error('User not found');
+    try {
+      const result = await this.pool.query(
+        'SELECT * FROM qna_users WHERE fingerprint = $1',
+        [fingerprint]
+      );
+      
+      if (result.rows.length === 0) {
+        logger.info('No user found with fingerprint', { fingerprint: fingerprint.substring(0, 8) + '...' });
+        throw new Error('User not found');
+      }
+      
+      logger.info('User found by fingerprint', { 
+        userId: result.rows[0].id,
+        hasEmail: !!result.rows[0].email
+      });
+      
+      return this.mapDbUserToQnaUser(result.rows[0]);
+    } catch (error) {
+      logger.error('Error looking up user by fingerprint', error);
+      throw error;
     }
-    
-    return this.mapDbUserToQnaUser(result.rows[0]);
   }
 
   /**
    * Get or create a user based on email or fingerprint
    */
   async getOrCreateUser(email?: string, fingerprint?: string): Promise<QnaUser> {
+    logger.info('Getting or creating user', { 
+      hasEmail: !!email, 
+      hasFingerprint: !!fingerprint,
+      emailDomain: email ? email.split('@')[1] : undefined
+    });
+    
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -41,20 +63,51 @@ export class QnaService {
 
       // Try to find existing user by email or fingerprint
       if (email) {
+        logger.debug('Looking up user by email', { email });
         const emailResult = await client.query(
           'SELECT * FROM qna_users WHERE email = $1',
           [email]
         );
+        
         if (emailResult.rows.length > 0) {
           user = this.mapDbUserToQnaUser(emailResult.rows[0]);
+          logger.info('User found by email', { userId: user.id, displayName: user.displayName });
+          
+          // If fingerprint is provided and different, update it
+          if (fingerprint && user.fingerprint !== fingerprint) {
+            logger.debug('Updating fingerprint for existing user', { 
+              userId: user.id, 
+              oldFingerprintPrefix: user.fingerprint ? user.fingerprint.substring(0, 8) + '...' : 'none',
+              newFingerprintPrefix: fingerprint.substring(0, 8) + '...'
+            });
+            
+            await client.query(
+              'UPDATE qna_users SET fingerprint = $1 WHERE id = $2',
+              [fingerprint, user.id]
+            );
+            user.fingerprint = fingerprint;
+          }
         }
       } else if (fingerprint) {
+        logger.debug('Looking up user by fingerprint', { fingerprintPrefix: fingerprint.substring(0, 8) + '...' });
         const fingerprintResult = await client.query(
           'SELECT * FROM qna_users WHERE fingerprint = $1',
           [fingerprint]
         );
+        
         if (fingerprintResult.rows.length > 0) {
           user = this.mapDbUserToQnaUser(fingerprintResult.rows[0]);
+          logger.info('User found by fingerprint', { userId: user.id, displayName: user.displayName });
+          
+          // If email is provided and user doesn't have one, update it
+          if (email && !user.email) {
+            logger.debug('Adding email to existing fingerprint-based user', { userId: user.id, email });
+            await client.query(
+              'UPDATE qna_users SET email = $1 WHERE id = $2',
+              [email, user.id]
+            );
+            user.email = email;
+          }
         }
       }
 
@@ -63,19 +116,31 @@ export class QnaService {
         const displayName = generateRandomEthName();
         const authToken = crypto.randomBytes(32).toString('hex');
 
-        const result = await client.query(
-          'INSERT INTO qna_users (email, display_name, auth_token, fingerprint) VALUES ($1, $2, $3, $4) RETURNING *',
-          [email || null, displayName, authToken, fingerprint || null]
-        );
+        logger.info('Creating new user', { 
+          hasEmail: !!email, 
+          hasFingerprint: !!fingerprint,
+          displayName
+        });
+        
+        try {
+          const result = await client.query(
+            'INSERT INTO qna_users (email, fingerprint, display_name, auth_token) VALUES ($1, $2, $3, $4) RETURNING *',
+            [email || null, fingerprint || null, displayName, authToken]
+          );
 
-        user = this.mapDbUserToQnaUser(result.rows[0]);
+          user = this.mapDbUserToQnaUser(result.rows[0]);
+          logger.info('New user created successfully', { userId: user.id, displayName: user.displayName });
+        } catch (dbError) {
+          logger.error('Error creating new user', dbError);
+          throw dbError;
+        }
       }
 
       await client.query('COMMIT');
       return user;
     } catch (error) {
+      logger.error('Error in getOrCreateUser transaction', error);
       await client.query('ROLLBACK');
-      console.error('Error in getOrCreateUser:', error);
       throw error;
     } finally {
       client.release();
