@@ -1,37 +1,83 @@
 # Features
 
-## [DONE] Schedule
-### [DONE] Session Cards
-- Bug: Descriptions with newlines are truncated.
+## Schedule
+### Session Cards
+- [DONE] Bug: Descriptions with newlines are truncated.
 - [DONE] Bug: Time displayed in UTC. Must display in EEST (no matter the timezone of the user).
-### [DONE] "Break" slots (e.g. Lunch, Coffee)
+### "Break" slots (e.g. Lunch, Coffee)
+- [DONE] Add Break slots to the Schedule
 
 
 ### Time awareness
-Mark current slot (red dot next to stage name)
-Auto scroll to current slot (upon reload only?)
-Update the current day marker. 
-Auto switch to current date upon reload.
+- [] Server/API Time  
+- [DONE] Mark current slot (red dot next to stage name)
+- [DONE] Auto scroll to current slot (upon reload only?)
+- [] Update the current day marker. 
+- [] Auto switch to current date upon reload.
 
 ## Session details
 ### Session difficulty
 Make the following changes in the sessions API on the backend:
-1. Add a "type" field to the sessions API. Read it from the google sheet, "Type" column.
-2. The value of the "track" field should be read from the google sheet, "Track" column.
+- [DONE] 1. Add a "type" field to the sessions API. Read it from the google sheet, "Type" column.
+- [DONE] 2. The value of the "track" field should be read from the google sheet, "Track" column.
 
 
 
 Now on the session details screen:
-1. rename the "Session Details" heading to "Details" 
-2. Intead of the difficutly card, Add a "Type" card displaying the type of session. The value can be found in the sessions API "type" field.
-3. Change the "Track" card to display the "track" field from the sessions API.
+- [WONT] 1. rename the "Session Details" heading to "Details" 
+- [WONT] 2. Intead of the difficutly card, Add a "Type" card displaying the type of session. The value can be found in the sessions API "type" field.
+- [DONE] 3. Change the "Track" card to display the "track" field from the sessions API.
 
 
 ### Sessions with Multiple Speakers
+- [] Schedule View: display multiple speakers photos (now white)
+- [] Schedule View: if two speakers, write both names, otherwise write "multiple speakers"
+
 
 ## Q&A
 
+
+
+## Unified Presenter View
+- [] Session View: Switch Next / Previous
+- [] Generate Video(s) 
+- [] Session View: rearange screen (e.g. speakers below title, ethcluj logo bottom right, ETHCluj 2025 conference, stage name)
+
+
+
+## Info Tab
+
+
+
+## Disaster recovery
+- [] Backend Logs
+
+
+
+## No downtime deployments
+
+
+
+## Optimizations
+- [] Speaker images cache
+- [] UX: improve navigation (memory). remember navigation for the back and home buttons
+
+
+
+## Search feature
+
+
+
+## PWA
+- [] Add webpace ico and PWA icon
+- [] Add PWA support
+- [] Add instructions screen to install as PWA
+
+
+
 ## Notifications
+
+
 
 ## [DONE] Speakers
 BACKEND Speakers Info: Now let's add a new feature on the backend - we need a new API (/speakers) that lists information related to speakers. The data is read from another tab ("Speakers") of the same google sheet that has the following format:
@@ -51,13 +97,5 @@ Edit all the necessary files to add the speakers API endpoint. Run it and test i
 
 
 ## Favorite Sessions
-
-## Optimizations
-### Speaker images cache
-### UX: remember navigation for the back and home buttons
-### No downtime deployments
-
-## PWA
-### Add webpace ico and PWA icon
-### Add PWA support
-### Add instructions screen to install as PWA
+- [DONE] Local storage favourites
+- [] Favourites view: add day separators
