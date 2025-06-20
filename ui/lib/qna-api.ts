@@ -286,4 +286,8 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
  */
 export const logout = (): void => {
   clearAuthToken();
+  // Also clear the fingerprint to ensure a complete logout
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('qna_fingerprint');
+  }
 };
