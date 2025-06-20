@@ -3,6 +3,12 @@ FROM node:22.15.0-alpine AS builder
 
 WORKDIR /app
 
+# Set build arguments with defaults
+ARG NEXT_PUBLIC_API_URL=https://app.ethcluj.org/api
+
+# Set environment variables for the build
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 COPY . .
