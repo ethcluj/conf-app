@@ -11,6 +11,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
     ports:
       - "3002:3000"
     depends_on:
