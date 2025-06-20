@@ -2,6 +2,12 @@ FROM node:22.15.0-alpine
 
 WORKDIR /app
 
+# Set build arguments with defaults
+ARG NEXT_PUBLIC_API_URL=http://localhost:8080/api
+
+# Set environment variables for development
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Install dependencies
 COPY package.json yarn.lock ./
 RUN yarn install
