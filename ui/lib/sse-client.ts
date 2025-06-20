@@ -32,7 +32,13 @@ let currentSessionId: string | null = null;
 export function connectToSSE(sessionId: string): void {
   // Don't reconnect if already connected to the same session
   if (eventSource && currentSessionId === sessionId) {
-    return;
+    // Check if the connection is actually working
+    if (eventSource.readyState === EventSource.OPEN) {
+      return;
+    }
+    // If connection is in a closing or closed state, close it properly and reconnect
+    eventSource.close();
+    eventSource = null;
   }
   
   // Close existing connection if any
@@ -57,6 +63,7 @@ export function connectToSSE(sessionId: string): void {
   eventSource.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+      console.log(`SSE event received: ${data.type}`, data);
       
       // Dispatch event to registered handlers
       if (data.type && Array.isArray(eventHandlers[data.type as keyof typeof eventHandlers])) {
@@ -84,12 +91,22 @@ export function connectToSSE(sessionId: string): void {
   eventSource.onerror = (error) => {
     console.error('SSE connection error:', error);
     
-    // Attempt to reconnect after a delay
+    // Close the errored connection
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+    
+    // Attempt to reconnect after a delay with exponential backoff
+    const reconnectDelay = Math.min(30000, 1000 * Math.pow(2, Math.floor(Math.random() * 5)));
+    console.log(`Will attempt to reconnect in ${reconnectDelay}ms`);
+    
     setTimeout(() => {
       if (currentSessionId) {
+        console.log(`Attempting to reconnect to session ${currentSessionId}`);
         connectToSSE(currentSessionId);
       }
-    }, 5000);
+    }, reconnectDelay);
   };
 }
 
