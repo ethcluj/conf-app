@@ -141,9 +141,8 @@ export default function QnaPage() {
       // Toggle the vote using the real API
       await toggleVote(questionId, sessionId)
       
-      // Refresh the questions list to ensure consistency
-      const updatedQuestions = await getQuestionsBySession(sessionId)
-      setQuestions(updatedQuestions)
+      // Don't refresh the entire question list - rely on SSE for real-time updates
+      // The vote_updated event will handle updating the UI
     } catch (error) {
       console.error("Error toggling vote:", error)
       // Don't show an alert for vote errors to avoid disrupting the user experience
@@ -160,9 +159,8 @@ export default function QnaPage() {
       // Delete the question using the real API
       await deleteQuestion(questionId, sessionId)
       
-      // Refresh the questions list to ensure consistency
-      const updatedQuestions = await getQuestionsBySession(sessionId)
-      setQuestions(updatedQuestions)
+      // Don't manually refresh the questions list - rely on SSE for real-time updates
+      // The question_deleted event will handle updating the UI
     } catch (error) {
       console.error("Error deleting question:", error)
       alert("Failed to delete question. You may only delete your own questions.")
@@ -170,15 +168,17 @@ export default function QnaPage() {
   }
 
   const handleQuestionSubmit = async (questionContent: string) => {
-    if (!user.isAuthenticated || !session) return
+    if (!user.isAuthenticated) {
+      setIsAuthModalOpen(true)
+      return
+    }
     
     try {
       // Use the real API to add a question
-      const newQuestion = await addQuestion(questionContent, sessionId)
+      await addQuestion(questionContent, sessionId)
       
-      // After adding the question, refresh the questions list to ensure consistency
-      const updatedQuestions = await getQuestionsBySession(sessionId)
-      setQuestions(updatedQuestions)
+      // Don't manually refresh the questions list - rely on SSE for real-time updates
+      // The question_added event will handle updating the UI
     } catch (error) {
       console.error("Error submitting question:", error)
       alert("Failed to submit your question. Please try again.")
