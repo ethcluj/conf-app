@@ -44,6 +44,35 @@ export class QnaService {
       throw error;
     }
   }
+  
+  /**
+   * Get a user by auth token
+   */
+  async getUserByAuthToken(authToken: string): Promise<QnaUser> {
+    logger.debug('Looking up user by auth token');
+    
+    try {
+      const result = await this.pool.query(
+        'SELECT * FROM qna_users WHERE auth_token = $1',
+        [authToken]
+      );
+      
+      if (result.rows.length === 0) {
+        logger.info('No user found with auth token');
+        throw new Error('User not found by auth token');
+      }
+      
+      logger.info('User found by auth token', { 
+        userId: result.rows[0].id,
+        displayName: result.rows[0].display_name
+      });
+      
+      return this.mapDbUserToQnaUser(result.rows[0]);
+    } catch (error) {
+      logger.error('Error looking up user by auth token', error);
+      throw error;
+    }
+  }
 
   /**
    * Get or create a user based on email or fingerprint
@@ -113,13 +142,36 @@ export class QnaService {
 
       // If user doesn't exist, create a new one
       if (!user) {
-        const displayName = generateRandomEthName();
+        // Generate a unique display name
+        let displayName = generateRandomEthName();
+        let isUnique = false;
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        // Keep trying until we find a unique name or reach max attempts
+        while (!isUnique && attempts < maxAttempts) {
+          // Check if the display name already exists
+          const nameCheckResult = await client.query(
+            'SELECT COUNT(*) FROM qna_users WHERE display_name = $1',
+            [displayName]
+          );
+          
+          if (nameCheckResult.rows[0].count === '0') {
+            isUnique = true;
+          } else {
+            // If name exists, add a random suffix
+            displayName = `${generateRandomEthName()}-${Math.floor(Math.random() * 10000)}`;
+            attempts++;
+          }
+        }
+        
         const authToken = crypto.randomBytes(32).toString('hex');
 
         logger.info('Creating new user', { 
           hasEmail: !!email, 
           hasFingerprint: !!fingerprint,
-          displayName
+          displayName,
+          nameAttempts: attempts
         });
         
         try {
@@ -151,29 +203,52 @@ export class QnaService {
    * Update user's display name
    */
   async updateUserDisplayName(userId: number, displayName: string): Promise<QnaUser> {
-    const result = await this.pool.query(
-      'UPDATE qna_users SET display_name = $1 WHERE id = $2 RETURNING *',
-      [displayName, userId]
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Check if the display name is already in use by another user
+      const nameCheckResult = await client.query(
+        'SELECT COUNT(*) FROM qna_users WHERE display_name = $1 AND id != $2',
+        [displayName, userId]
+      );
+      
+      if (nameCheckResult.rows[0].count !== '0') {
+        logger.info('Display name already in use', { displayName, userId });
+        throw new Error('Display name already in use by another user');
+      }
+      
+      const result = await client.query(
+        'UPDATE qna_users SET display_name = $1 WHERE id = $2 RETURNING *',
+        [displayName, userId]
+      );
 
-    if (result.rows.length === 0) {
-      throw new Error(`User with ID ${userId} not found`);
+      if (result.rows.length === 0) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+      
+      const updatedUser = this.mapDbUserToQnaUser(result.rows[0]);
+      
+      // Broadcast user update to all connected clients
+      // This ensures all instances of this user's name are updated in real-time
+      sseController.broadcastUserUpdate(userId, { 
+        displayName: updatedUser.displayName 
+      });
+      
+      logger.info('User display name updated', { 
+        userId, 
+        newDisplayName: displayName 
+      });
+      
+      await client.query('COMMIT');
+      return updatedUser;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      logger.error('Error updating user display name', error);
+      throw error;
+    } finally {
+      client.release();
     }
-    
-    const updatedUser = this.mapDbUserToQnaUser(result.rows[0]);
-    
-    // Broadcast user update to all connected clients
-    // This ensures all instances of this user's name are updated in real-time
-    sseController.broadcastUserUpdate(userId, { 
-      displayName: updatedUser.displayName 
-    });
-    
-    logger.info('User display name updated', { 
-      userId, 
-      newDisplayName: displayName 
-    });
-    
-    return updatedUser;
   }
 
   /**
@@ -225,8 +300,8 @@ export class QnaService {
         sessionId: row.session_id,
         content: row.content,
         authorId: row.author_id,
-        // Include author_name from the joined users table for the frontend
-        authorName: row.author_name,
+        // authorName removed as part of data normalization
+        // Frontend will use authorId to get the current display name
         votes: parseInt(row.vote_count),
         hasUserVoted: userVotes[row.id] || false,
         createdAt: row.created_at

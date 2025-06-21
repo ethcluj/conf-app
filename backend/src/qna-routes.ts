@@ -58,9 +58,30 @@ export function createQnaRoutes(pool: Pool): Router {
         return res.status(401).json(createErrorResponse('Authentication required'));
       }
 
-      // For now, we'll just create or get a user based on the fingerprint
-      // In a real implementation, we would verify the auth token
-      const user = await qnaService.getOrCreateUser(undefined, fingerprint);
+      let user;
+      
+      // First try to authenticate with auth token if available
+      if (authToken) {
+        try {
+          // Find user by auth token
+          user = await qnaService.getUserByAuthToken(authToken);
+          logger.info('User authenticated via auth token', { userId: user.id, displayName: user.displayName });
+        } catch (tokenError) {
+          logger.error('Error authenticating with token', tokenError);
+          // Continue with fingerprint auth if token auth fails
+        }
+      }
+      
+      // Fall back to fingerprint if auth token didn't work
+      if (!user && fingerprint) {
+        user = await qnaService.getOrCreateUser(undefined, fingerprint);
+        logger.info('User authenticated via fingerprint', { userId: user.id, displayName: user.displayName });
+      }
+      
+      if (!user) {
+        logger.info('Authentication failed - invalid credentials');
+        return res.status(401).json(createErrorResponse('Authentication failed'));
+      }
       
       // Attach user to request
       (req as any).user = user;
@@ -244,29 +265,51 @@ export function createQnaRoutes(pool: Pool): Router {
     }
   });
   
-  // Authentication route - get user by fingerprint only (no creation)
+  // Authentication route - get user by fingerprint or auth token
   router.post('/auth', async (req: Request, res: Response) => {
     try {
       const { email, fingerprint } = req.body;
+      const authToken = req.headers.authorization?.split(' ')[1];
       const clientIp = req.ip;
       
-      logger.info('Auth check attempt', { hasEmail: !!email, hasFingerprint: !!fingerprint, ip: clientIp });
+      logger.info('Auth check attempt', { 
+        hasEmail: !!email, 
+        hasFingerprint: !!fingerprint, 
+        hasAuthToken: !!authToken,
+        ip: clientIp 
+      });
       
-      if (!email && !fingerprint) {
+      if (!email && !fingerprint && !authToken) {
         logger.info('No credentials provided for auth check');
-        return res.status(400).json(createErrorResponse('Email or fingerprint required'));
+        return res.status(400).json(createErrorResponse('Authentication credentials required'));
       }
       
       // Only return existing users
       let user;
-      if (fingerprint) {
+
+      // First try to authenticate with auth token if available
+      if (authToken) {
+        try {
+          user = await qnaService.getUserByAuthToken(authToken);
+          logger.info('User found by auth token', { userId: user.id, displayName: user.displayName });
+        } catch (tokenError) {
+          logger.error('Error finding user by auth token', tokenError);
+          // Continue with fingerprint auth if token auth fails
+        }
+      }
+      
+      // Fall back to fingerprint if auth token didn't work
+      if (!user && fingerprint) {
         try {
           logger.debug('Attempting to find user by fingerprint', { fingerprint });
           user = await qnaService.getUserByFingerprint(fingerprint);
           logger.info('User found by fingerprint', { userId: user.id, displayName: user.displayName });
         } catch (err) {
           logger.info('User not found by fingerprint', { fingerprint });
-          return res.status(401).json(createErrorResponse('Authentication required. Please verify your email.'));
+          // Only return error if we don't have an email to create a new user
+          if (!email) {
+            return res.status(401).json(createErrorResponse('Authentication required. Please verify your email.'));
+          }
         }
       }
       
