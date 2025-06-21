@@ -98,13 +98,28 @@ export function createQnaRoutes(pool: Pool): Router {
     try {
       const { sessionId } = req.params;
       const fingerprint = req.headers['x-fingerprint'] as string;
+      const authToken = req.headers.authorization?.split(' ')[1];
       
       let currentUserId: number | undefined;
       
-      // If fingerprint is provided, get or create user to check their votes
-      if (fingerprint) {
+      // First try to authenticate with auth token if available
+      if (authToken) {
+        try {
+          // Find user by auth token
+          const user = await qnaService.getUserByAuthToken(authToken);
+          currentUserId = user.id;
+          logger.info('User identified via auth token for questions', { userId: user.id });
+        } catch (tokenError) {
+          logger.error('Error identifying user with token for questions', tokenError);
+          // Continue with fingerprint auth if token auth fails
+        }
+      }
+      
+      // Fall back to fingerprint if auth token didn't work or wasn't provided
+      if (!currentUserId && fingerprint) {
         const user = await qnaService.getOrCreateUser(undefined, fingerprint);
         currentUserId = user.id;
+        logger.info('User identified via fingerprint for questions', { userId: user.id });
       }
       
       const questions = await qnaService.getQuestionsBySession(sessionId, currentUserId);

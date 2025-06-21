@@ -92,11 +92,7 @@ export default function QnaPage() {
           setSession(sessionData)
         }
         
-        // Get questions for this session
-        const sessionQuestions = await getQuestionsBySession(sessionId)
-        setQuestions(sessionQuestions)
-        
-        // Check if user is already authenticated with a valid auth token
+        // First check if user is already authenticated with a valid auth token
         const authToken = localStorage.getItem('qna_auth_token')
         if (authToken) {
           try {
@@ -109,6 +105,11 @@ export default function QnaPage() {
             localStorage.removeItem('qna_auth_token')
           }
         }
+        
+        // Get questions for this session AFTER authentication attempt
+        // This ensures the auth token is included in the request if available
+        const sessionQuestions = await getQuestionsBySession(sessionId)
+        setQuestions(sessionQuestions)
         
         setIsLoading(false)
       } catch (error) {
@@ -217,6 +218,10 @@ export default function QnaPage() {
       // Use the real API to authenticate
       const userData = await QnaApi.authenticateUser(email)
       setUser(userData)
+      
+      // Refresh questions after authentication to get updated hasUserVoted status
+      const updatedQuestions = await getQuestionsBySession(sessionId)
+      setQuestions(updatedQuestions)
     } catch (error) {
       console.error("Authentication error:", error)
       // Show error message to user
@@ -272,7 +277,7 @@ export default function QnaPage() {
           authorId: q.authorId.toString(),
           votes: q.votes,
           timestamp: new Date(q.createdAt),
-          hasUserVoted: false // Explicitly set to false for all questions
+          hasUserVoted: q.hasUserVoted || false // Preserve hasUserVoted from API response
         }))
         
         // Update the questions state with the fresh data
