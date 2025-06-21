@@ -180,6 +180,26 @@ describe('QnA Routes', () => {
       expect(mockQnaService.toggleVote).toHaveBeenCalledWith(1, 1);
     });
     
+    it('should handle self-vote attempts gracefully', async () => {
+      // Mock data
+      const mockUser = { id: 1, displayName: 'User1' };
+      
+      // Setup mock implementations
+      mockQnaService.getOrCreateUser.mockResolvedValue(mockUser as any);
+      mockQnaService.toggleVote.mockResolvedValue(undefined); // User trying to vote on their own question
+      
+      // Make request
+      const response = await request(app)
+        .post('/qna/questions/1/vote')
+        .set('X-Fingerprint', 'test-fingerprint')
+        .expect(200);
+      
+      // Assertions
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.voteAdded).toBe(false); // Should be false when user votes on own question
+      expect(mockQnaService.toggleVote).toHaveBeenCalledWith(1, 1);
+    });
+    
     it('should return 401 when not authenticated', async () => {
       // Make request without authentication
       const response = await request(app)

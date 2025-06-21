@@ -185,7 +185,7 @@ describe('QnaService', () => {
         sessionId: 'session1',
         content: 'Question 1',
         authorId: 1,
-        // authorName removed as part of data normalization
+        authorName: 'User1',
         votes: 5,
         hasUserVoted: false,
         createdAt: expect.any(Date),
@@ -341,11 +341,11 @@ describe('QnaService', () => {
     it('should add a vote when it does not exist', async () => {
       // Mock no existing vote
       mockClient.query.mockImplementation((query: string, params: any[]) => {
+        if (query.includes('SELECT q.id, q.session_id, q.author_id FROM qna_questions')) {
+          return { rows: [{ id: 1, session_id: 'session1', author_id: 2 }] }; // User 2 is the author, not user 1
+        }
         if (query.includes('SELECT * FROM qna_votes')) {
           return { rows: [] }; // No existing vote
-        }
-        if (query.includes('SELECT session_id FROM qna_questions')) {
-          return { rows: [{ session_id: 'session1' }] }; // Mock question exists
         }
         if (query.includes('SELECT COUNT(*) as vote_count')) {
           return { rows: [{ vote_count: '1' }] }; // Mock vote count
@@ -357,6 +357,10 @@ describe('QnaService', () => {
       const result = await qnaService.toggleVote(1, 1);
 
       // Assertions
+      expect(mockClient.query).toHaveBeenCalledWith(
+        'SELECT q.id, q.session_id, q.author_id FROM qna_questions q WHERE q.id = $1',
+        [1]
+      );
       expect(mockClient.query).toHaveBeenCalledWith(
         'SELECT * FROM qna_votes WHERE question_id = $1 AND user_id = $2',
         [1, 1]
@@ -371,11 +375,11 @@ describe('QnaService', () => {
     it('should remove a vote when it exists', async () => {
       // Mock existing vote
       mockClient.query.mockImplementation((query: string, params: any[]) => {
+        if (query.includes('SELECT q.id, q.session_id, q.author_id FROM qna_questions')) {
+          return { rows: [{ id: 1, session_id: 'session1', author_id: 2 }] }; // User 2 is the author, not user 1
+        }
         if (query.includes('SELECT * FROM qna_votes')) {
           return { rows: [{ id: 1, question_id: 1, user_id: 1 }] }; // Existing vote
-        }
-        if (query.includes('SELECT session_id FROM qna_questions')) {
-          return { rows: [{ session_id: 'session1' }] }; // Mock question exists
         }
         if (query.includes('SELECT COUNT(*) as vote_count')) {
           return { rows: [{ vote_count: '0' }] }; // Mock vote count after removal
@@ -387,6 +391,10 @@ describe('QnaService', () => {
       const result = await qnaService.toggleVote(1, 1);
 
       // Assertions
+      expect(mockClient.query).toHaveBeenCalledWith(
+        'SELECT q.id, q.session_id, q.author_id FROM qna_questions q WHERE q.id = $1',
+        [1]
+      );
       expect(mockClient.query).toHaveBeenCalledWith(
         'SELECT * FROM qna_votes WHERE question_id = $1 AND user_id = $2',
         [1, 1]
@@ -404,6 +412,9 @@ describe('QnaService', () => {
         if (query === 'BEGIN') {
           return Promise.resolve();
         }
+        if (query.includes('SELECT q.id, q.session_id, q.author_id FROM qna_questions')) {
+          return { rows: [{ id: 1, session_id: 'session1', author_id: 2 }] }; // Return valid question data
+        }
         if (query.includes('SELECT * FROM qna_votes')) {
           throw new Error('Database error');
         }
@@ -418,6 +429,35 @@ describe('QnaService', () => {
       // Verify rollback was called
       expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
       expect(mockClient.release).toHaveBeenCalled();
+    });
+
+    it('should not allow users to vote on their own questions', async () => {
+      // Mock question with the user as the author
+      mockClient.query.mockImplementation((query: string, params: any[]) => {
+        if (query.includes('SELECT q.id, q.session_id, q.author_id FROM qna_questions')) {
+          return { rows: [{ id: 1, session_id: 'session1', author_id: 5 }] }; // User 5 is the author
+        }
+        return { rows: [] };
+      });
+
+      // Call the method with the same user ID as the author
+      const result = await qnaService.toggleVote(1, 5);
+
+      // Assertions
+      expect(result).toBeUndefined(); // Should return undefined when user is the author
+      
+      // Verify that no vote operations were performed
+      expect(mockClient.query).not.toHaveBeenCalledWith(
+        expect.stringMatching(/INSERT INTO qna_votes/),
+        expect.anything()
+      );
+      expect(mockClient.query).not.toHaveBeenCalledWith(
+        expect.stringMatching(/DELETE FROM qna_votes/),
+        expect.anything()
+      );
+      
+      // Verify that COMMIT was still called (transaction completed)
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
     });
   });
 });

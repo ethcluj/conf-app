@@ -140,9 +140,12 @@ export function createQnaRoutes(pool: Pool): Router {
       const user = (req as any).user;
       
       const voteAdded = await qnaService.toggleVote(parseInt(id), user.id);
-      res.json(createSuccessResponse({ voteAdded }));
+      
+      // Always return a success response, even if no action was taken (e.g., user tried to vote on their own question)
+      // This ensures the UI doesn't show any errors when a user tries to vote on their own question
+      res.json(createSuccessResponse({ voteAdded: voteAdded === undefined ? false : voteAdded }));
     } catch (error) {
-      console.error('Error toggling vote:', error);
+      logger.error('Error toggling vote:', error);
       res.status(500).json(createErrorResponse('Failed to toggle vote', { message: (error as Error).message }));
     }
   });

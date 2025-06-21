@@ -300,8 +300,7 @@ export class QnaService {
         sessionId: row.session_id,
         content: row.content,
         authorId: row.author_id,
-        // authorName removed as part of data normalization
-        // Frontend will use authorId to get the current display name
+        authorName: row.author_name || 'Anonymous', // Include author name from the join
         votes: parseInt(row.vote_count),
         hasUserVoted: userVotes[row.id] || false,
         createdAt: row.created_at
@@ -367,21 +366,17 @@ export class QnaService {
 
   /**
    * Toggle vote on a question
+   * Returns true if vote was added, false if vote was removed
+   * Returns undefined if no action was taken (e.g., user tried to vote on their own question)
    */
-  async toggleVote(questionId: number, userId: number): Promise<boolean> {
+  async toggleVote(questionId: number, userId: number): Promise<boolean | undefined> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Check if vote exists
-      const voteResult = await client.query(
-        'SELECT * FROM qna_votes WHERE question_id = $1 AND user_id = $2',
-        [questionId, userId]
-      );
-      
-      // Get the question to find its session ID for broadcasting
+      // Get the question details including author information
       const questionResult = await client.query(
-        'SELECT session_id FROM qna_questions WHERE id = $1',
+        'SELECT q.id, q.session_id, q.author_id FROM qna_questions q WHERE q.id = $1',
         [questionId]
       );
       
@@ -389,7 +384,23 @@ export class QnaService {
         throw new Error(`Question with ID ${questionId} not found`);
       }
       
-      const sessionId = questionResult.rows[0].session_id;
+      const question = questionResult.rows[0];
+      const sessionId = question.session_id;
+      
+      // Check if user is the author of the question
+      if (question.author_id === userId) {
+        // Silently do nothing if user is trying to vote on their own question
+        logger.info('User attempted to vote on their own question', { userId, questionId });
+        await client.query('COMMIT');
+        return undefined;
+      }
+
+      // Check if vote exists
+      const voteResult = await client.query(
+        'SELECT * FROM qna_votes WHERE question_id = $1 AND user_id = $2',
+        [questionId, userId]
+      );
+      
       let voteAdded = false;
 
       if (voteResult.rows.length > 0) {
@@ -427,7 +438,7 @@ export class QnaService {
       return voteAdded;
     } catch (error) {
       await client.query('ROLLBACK');
-      console.error('Error in toggleVote:', error);
+      logger.error('Error in toggleVote:', error);
       throw error;
     } finally {
       client.release();
