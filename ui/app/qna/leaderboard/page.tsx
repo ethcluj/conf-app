@@ -2,44 +2,61 @@
 
 import { useState, useEffect } from "react"
 import { Trophy } from "lucide-react"
-import { mockLeaderboard } from "@/lib/qna-data"
 import * as QnaApi from "@/lib/qna-api"
-
-// Flag to control whether to use mock data or real API
-// Set this to false to use the real API
-const USE_MOCK_DATA = true;
+import { formatRelativeTime } from "@/lib/qna-data"
 
 export default function QnaLeaderboard() {
-  const [leaderboard, setLeaderboard] = useState(mockLeaderboard)
+  const [leaderboard, setLeaderboard] = useState<Array<{
+    userId: string;
+    displayName: string;
+    score: number;
+    questionsAsked: number;
+    upvotesReceived: number;
+  }>>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0)
   
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        setIsLoading(true)
-        
-        if (USE_MOCK_DATA) {
-          // Use mock data with a small delay to simulate loading
-          setTimeout(() => {
-            setLeaderboard(mockLeaderboard)
-            setIsLoading(false)
-          }, 500)
-        } else {
-          // Use real API
-          const leaderboardData = await QnaApi.getLeaderboard()
-          setLeaderboard(leaderboardData)
-          setIsLoading(false)
-        }
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error)
-        // Fallback to mock data if API fails
-        setLeaderboard(mockLeaderboard)
-        setIsLoading(false)
-      }
+  // Function to fetch leaderboard data
+  const fetchLeaderboard = async () => {
+    try {
+      setIsLoading(true)
+      const leaderboardData = await QnaApi.getLeaderboard()
+      setLeaderboard(leaderboardData)
+      const now = new Date()
+      setLastUpdated(now)
+      setSecondsSinceUpdate(0)
+      setIsLoading(false)
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error)
+      setIsLoading(false)
     }
-    
+  }
+  
+  // Initial fetch
+  useEffect(() => {
     fetchLeaderboard()
+    
+    // Set up a refresh interval (every minute)
+    const refreshInterval = setInterval(() => {
+      fetchLeaderboard()
+    }, 60000) // 60 seconds
+    
+    return () => clearInterval(refreshInterval)
   }, [])
+  
+  // Update the seconds counter
+  useEffect(() => {
+    if (!lastUpdated) return
+    
+    const timer = setInterval(() => {
+      const now = new Date()
+      const seconds = Math.floor((now.getTime() - lastUpdated.getTime()) / 1000)
+      setSecondsSinceUpdate(seconds)
+    }, 1000)
+    
+    return () => clearInterval(timer)
+  }, [lastUpdated])
 
   const getLeaderPosition = (index: number) => {
     switch (index) {
@@ -75,25 +92,38 @@ export default function QnaLeaderboard() {
               </div>
             ) : (
               <div className="space-y-4 mt-6">
-                {leaderboard.map((entry, index) => (
-                  <div 
-                    key={entry.userId}
-                    className="flex items-center py-2 px-3 rounded-lg bg-[#21262d] mb-2"
-                  >
-                    <div 
-                      className={`flex items-center justify-center h-6 w-6 rounded-full mr-2 text-white font-bold text-xs ${getLeaderPosition(index)}`}
-                    >
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="font-medium text-sm truncate">{entry.displayName}</div>
-                      <div className="text-xs text-gray-400">
-                        {entry.questionsAsked} Q · {entry.upvotesReceived} upvotes
-                      </div>
-                    </div>
-                    <div className="text-base font-bold text-red-500">{entry.score}</div>
+                {/* Last updated indicator */}
+                {lastUpdated && (
+                  <div className="text-xs text-gray-400 text-right mb-2">
+                    Updated {secondsSinceUpdate} seconds ago
                   </div>
-                ))}
+                )}
+                
+                {leaderboard.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    No data available yet. Start asking questions to appear on the leaderboard!
+                  </div>
+                ) : (
+                  leaderboard.map((entry, index) => (
+                    <div 
+                      key={entry.userId}
+                      className="flex items-center py-2 px-3 rounded-lg bg-[#21262d] mb-2"
+                    >
+                      <div 
+                        className={`flex items-center justify-center h-6 w-6 rounded-full mr-2 text-white font-bold text-xs ${getLeaderPosition(index)}`}
+                      >
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="font-medium text-sm truncate">{entry.displayName}</div>
+                        <div className="text-xs text-gray-400">
+                          {entry.questionsAsked} Q · {entry.upvotesReceived} upvotes
+                        </div>
+                      </div>
+                      <div className="text-base font-bold text-red-500">{entry.score}</div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -103,15 +133,15 @@ export default function QnaLeaderboard() {
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start">
                 <div className="h-4 w-4 rounded-full bg-red-600 mt-1 mr-2"></div>
-                <span>+3 points for each question asked</span>
+                <span>+3 for each question (min 1 vote)</span>
               </li>
               <li className="flex items-start">
                 <div className="h-4 w-4 rounded-full bg-red-600 mt-1 mr-2"></div>
-                <span>+1 point for each upvote received</span>
+                <span>+1 for each additional vote</span>
               </li>
               <li className="flex items-start">
                 <div className="h-4 w-4 rounded-full bg-red-600 mt-1 mr-2"></div>
-                <span>+5 points for most upvoted question in a session</span>
+                <span>+5 bonus for most voted question in a session</span>
               </li>
             </ul>
             <div className="mt-4 p-4 bg-[#0d1117] rounded-md">

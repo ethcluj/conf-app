@@ -492,34 +492,138 @@ export class QnaService {
   }
 
   /**
-   * Get leaderboard
+   * Get leaderboard with caching
    */
+  private leaderboardCache: {
+    data: LeaderboardEntry[];
+    timestamp: number;
+  } | null = null;
+
   async getLeaderboard(): Promise<LeaderboardEntry[]> {
-    const query = `
-      SELECT 
-        u.id as user_id,
-        u.display_name,
-        (COUNT(DISTINCT q.id) * 3 + COUNT(DISTINCT v.id)) as score,
-        COUNT(DISTINCT q.id) as questions_asked,
-        COUNT(DISTINCT v.id) as upvotes_received
-      FROM qna_users u
-      LEFT JOIN qna_questions q ON u.id = q.author_id
-      LEFT JOIN qna_votes v ON q.id = v.question_id
-      GROUP BY u.id, u.display_name
-      HAVING COUNT(DISTINCT q.id) > 0 OR COUNT(DISTINCT v.id) > 0
-      ORDER BY score DESC
-      LIMIT 10
-    `;
+    // Check if we have a cached result that's less than 1 minute old
+    const now = Date.now();
+    if (this.leaderboardCache && (now - this.leaderboardCache.timestamp < 60000)) {
+      return this.leaderboardCache.data;
+    }
 
-    const result = await this.pool.query(query);
+    try {
+      // Step 1: Get questions with vote counts
+      const questionsQuery = `
+        SELECT 
+          q.id as question_id, 
+          q.author_id, 
+          q.session_id,
+          COUNT(v.id) as vote_count
+        FROM qna_questions q
+        LEFT JOIN qna_votes v ON q.id = v.question_id
+        GROUP BY q.id
+      `;
+      const questionsResult = await this.pool.query(questionsQuery);
+      const questions = questionsResult.rows;
 
-    return result.rows.map(row => ({
-      userId: row.user_id,
-      displayName: row.display_name,
-      score: parseInt(row.score),
-      questionsAsked: parseInt(row.questions_asked),
-      upvotesReceived: parseInt(row.upvotes_received)
-    }));
+      // Step 2: Find the most voted question for each session
+      const sessionTopQuestions = new Map();
+      for (const q of questions) {
+        const sessionId = q.session_id;
+        const voteCount = parseInt(q.vote_count);
+        
+        if (!sessionTopQuestions.has(sessionId) || 
+            voteCount > sessionTopQuestions.get(sessionId).voteCount) {
+          sessionTopQuestions.set(sessionId, {
+            questionId: q.question_id,
+            authorId: q.author_id,
+            voteCount
+          });
+        }
+      }
+
+      // Step 3: Calculate scores for each user
+      const userScores = new Map();
+      
+      for (const q of questions) {
+        const authorId = q.author_id;
+        const voteCount = parseInt(q.vote_count);
+        const questionId = q.question_id;
+        
+        if (!userScores.has(authorId)) {
+          userScores.set(authorId, {
+            questionsAsked: 0,
+            upvotesReceived: 0,
+            score: 0
+          });
+        }
+        
+        const userData = userScores.get(authorId);
+        userData.questionsAsked++;
+        userData.upvotesReceived += voteCount;
+        
+        // Add points based on the scoring rules
+        if (voteCount > 0) {
+          // 3 points for a question with at least 1 vote
+          userData.score += 3;
+          
+          // 1 point for each additional vote
+          if (voteCount > 1) {
+            userData.score += (voteCount - 1);
+          }
+        }
+        
+        // Check if this is the top question in its session
+        for (const [sessionId, topQuestion] of sessionTopQuestions.entries()) {
+          if (topQuestion.questionId === questionId && topQuestion.voteCount > 0) {
+            // 5 bonus points for the most voted question in a session
+            userData.score += 5;
+          }
+        }
+      }
+      
+      // Step 4: Get user details and create the final leaderboard
+      const userIds = Array.from(userScores.keys());
+      
+      if (userIds.length === 0) {
+        this.leaderboardCache = {
+          data: [],
+          timestamp: now
+        };
+        return [];
+      }
+      
+      const usersQuery = `
+        SELECT id, display_name
+        FROM qna_users
+        WHERE id = ANY($1)
+      `;
+      
+      const usersResult = await this.pool.query(usersQuery, [userIds]);
+      const users = usersResult.rows;
+      
+      // Create the final leaderboard
+      const leaderboard = users.map(user => {
+        const userData = userScores.get(user.id);
+        return {
+          userId: user.id,
+          displayName: user.display_name,
+          score: userData.score,
+          questionsAsked: userData.questionsAsked,
+          upvotesReceived: userData.upvotesReceived
+        };
+      });
+      
+      // Sort by score (descending)
+      leaderboard.sort((a, b) => b.score - a.score);
+      
+      // Cache the result
+      this.leaderboardCache = {
+        data: leaderboard,
+        timestamp: now
+      };
+      
+      return leaderboard;
+    } catch (error) {
+      console.error('Error calculating leaderboard:', error);
+      // If there's an error, return cached data if available, otherwise empty array
+      return this.leaderboardCache?.data || [];
+    }
   }
 
   /**
