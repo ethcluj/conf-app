@@ -9,16 +9,19 @@ import { QnaQuestion } from './qna-data';
 type QuestionAddedHandler = (question: QnaQuestion) => void;
 type QuestionDeletedHandler = (data: { questionId: string }) => void;
 type VoteUpdatedHandler = (data: { questionId: string, voteCount: number, voteAdded: boolean }) => void;
+type UserUpdatedHandler = (data: { userId: string, displayName: string }) => void;
 
 // Event handlers storage
 const eventHandlers: {
   question_added: QuestionAddedHandler[];
   question_deleted: QuestionDeletedHandler[];
   vote_updated: VoteUpdatedHandler[];
+  user_updated: UserUpdatedHandler[];
 } = {
   question_added: [],
   question_deleted: [],
-  vote_updated: []
+  vote_updated: [],
+  user_updated: []
 };
 
 // SSE connection state
@@ -184,5 +187,24 @@ export function offVoteUpdated(handler: VoteUpdatedHandler): void {
   const index = eventHandlers.vote_updated.indexOf(handler);
   if (index !== -1) {
     eventHandlers.vote_updated.splice(index, 1);
+  }
+}
+
+/**
+ * Register a handler for user updated events
+ * @param handler Function to call when a user's display name is updated
+ */
+export function onUserUpdated(handler: UserUpdatedHandler): void {
+  eventHandlers.user_updated.push(handler);
+}
+
+/**
+ * Remove a handler for user updated events
+ * @param handler The handler to remove
+ */
+export function offUserUpdated(handler: UserUpdatedHandler): void {
+  const index = eventHandlers.user_updated.indexOf(handler);
+  if (index !== -1) {
+    eventHandlers.user_updated.splice(index, 1);
   }
 }

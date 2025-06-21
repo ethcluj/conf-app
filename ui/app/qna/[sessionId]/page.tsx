@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, MessageCircle } from "lucide-react"
 import Link from "next/link"
-import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated } from "@/lib/sse-client"
+import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated, onUserUpdated } from "@/lib/sse-client"
 import { 
   getQuestionsBySession, 
   type QnaQuestion, 
@@ -60,6 +60,26 @@ export default function QnaPage() {
     refreshQuestions()
   }, [refreshQuestions])
 
+  // Handle user display name updates
+  const handleUserUpdated = useCallback((event: { userId: string, displayName: string }) => {
+    // Update questions with the new display name for this user
+    setQuestions(prevQuestions => 
+      prevQuestions.map(question => 
+        question.authorId === event.userId 
+          ? { ...question, authorName: event.displayName }
+          : question
+      )
+    )
+    
+    // If this is the current user, update the user state too
+    if (user.isAuthenticated && user.id === event.userId) {
+      setUser(prevUser => ({
+        ...prevUser,
+        displayName: event.displayName
+      }))
+    }
+  }, [user])
+
   // Load session data and check authentication status
   useEffect(() => {
     const fetchSessionData = async () => {
@@ -111,12 +131,13 @@ export default function QnaPage() {
     onQuestionAdded(handleQuestionAdded)
     onQuestionDeleted(handleQuestionDeleted)
     onVoteUpdated(handleVoteUpdated)
+    onUserUpdated(handleUserUpdated)
     
     // Clean up on unmount
     return () => {
       disconnectFromSSE()
     }
-  }, [sessionId, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated])
+  }, [sessionId, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated, handleUserUpdated])
 
   const handleVoteToggle = async (questionId: string) => {
     if (!user.isAuthenticated) {

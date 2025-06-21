@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Video, MessageCircle, ArrowLeft, ArrowRight, Maximize, Trophy } from "lucide-react"
-import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated } from "@/lib/sse-client"
+import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onUserUpdated, onVoteUpdated } from "@/lib/sse-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { type Session } from "@/lib/data"
@@ -160,6 +160,19 @@ export function UnifiedPresenterView({
       }).sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
     })
   }, [])
+
+  // Handle user display name updates
+  const handleUserUpdated = useCallback(({ userId, displayName }: { userId: string, displayName: string }) => {
+    // Update questions with the new display name for this user
+    setQuestions(prevQuestions => 
+      prevQuestions.map(question => 
+        question.authorId === userId 
+          ? { ...question, authorName: displayName }
+          : question
+      )
+    )
+  }, [])
+
   
   // Set up SSE connection for real-time updates
   useEffect(() => {
@@ -171,13 +184,14 @@ export function UnifiedPresenterView({
       onQuestionAdded(handleQuestionAdded)
       onQuestionDeleted(handleQuestionDeleted)
       onVoteUpdated(handleVoteUpdated)
+      onUserUpdated(handleUserUpdated)
       
       // Clean up on unmount or mode change
       return () => {
         disconnectFromSSE()
       }
     }
-  }, [mode, session.id, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated])
+  }, [mode, session.id, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated, handleUserUpdated])
   
   useEffect(() => {
     // Add event listener for keyboard shortcuts

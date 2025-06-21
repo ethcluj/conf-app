@@ -159,55 +159,82 @@ export class QnaService {
     if (result.rows.length === 0) {
       throw new Error(`User with ID ${userId} not found`);
     }
-
-    return this.mapDbUserToQnaUser(result.rows[0]);
+    
+    const updatedUser = this.mapDbUserToQnaUser(result.rows[0]);
+    
+    // Broadcast user update to all connected clients
+    // This ensures all instances of this user's name are updated in real-time
+    sseController.broadcastUserUpdate(userId, { 
+      displayName: updatedUser.displayName 
+    });
+    
+    logger.info('User display name updated', { 
+      userId, 
+      newDisplayName: displayName 
+    });
+    
+    return updatedUser;
   }
 
   /**
    * Get questions for a specific session
    */
   async getQuestionsBySession(sessionId: string, currentUserId?: number): Promise<QnaQuestion[]> {
-    let query = `
-      SELECT 
-        q.id, 
-        q.session_id, 
-        q.content, 
-        q.author_id, 
-        u.display_name as author_name, 
-        q.created_at,
-        COUNT(v.id) as votes
-    `;
-
-    // Add user vote check if currentUserId is provided
-    if (currentUserId) {
-      query += `, 
-        (SELECT COUNT(*) > 0 FROM qna_votes 
-         WHERE question_id = q.id AND user_id = $2) as has_user_voted
+    try {
+      // Get questions with vote counts and join with users table to get current display names
+      const query = `
+        SELECT 
+          q.id, 
+          q.session_id, 
+          q.content, 
+          q.author_id, 
+          u.display_name as author_name, 
+          q.created_at,
+          COUNT(v.id) as vote_count
+        FROM qna_questions q
+        LEFT JOIN qna_votes v ON q.id = v.question_id
+        LEFT JOIN qna_users u ON q.author_id = u.id
+        WHERE q.session_id = $1
+        GROUP BY q.id, u.display_name
+        ORDER BY vote_count DESC, q.created_at DESC
       `;
+      
+      const result = await this.pool.query(query, [sessionId]);
+      
+      // If there's a current user, check which questions they've voted on
+      let userVotes: Record<number, boolean> = {};
+      if (currentUserId) {
+        const votesQuery = `
+          SELECT question_id 
+          FROM qna_votes 
+          WHERE user_id = $1 AND question_id IN (
+            SELECT id FROM qna_questions WHERE session_id = $2
+          )
+        `;
+        
+        const votesResult = await this.pool.query(votesQuery, [currentUserId, sessionId]);
+        userVotes = votesResult.rows.reduce((acc: Record<number, boolean>, row) => {
+          acc[row.question_id] = true;
+          return acc;
+        }, {});
+      }
+      
+      // Map database results to QnaQuestion objects
+      return result.rows.map(row => ({
+        id: row.id,
+        sessionId: row.session_id,
+        content: row.content,
+        authorId: row.author_id,
+        // Include author_name from the joined users table for the frontend
+        authorName: row.author_name,
+        votes: parseInt(row.vote_count),
+        hasUserVoted: userVotes[row.id] || false,
+        createdAt: row.created_at
+      }));
+    } catch (error) {
+      console.error('Error in getQuestionsBySession:', error);
+      throw error;
     }
-
-    query += `
-      FROM qna_questions q
-      JOIN qna_users u ON q.author_id = u.id
-      LEFT JOIN qna_votes v ON q.id = v.question_id
-      WHERE q.session_id = $1
-      GROUP BY q.id, u.display_name
-      ORDER BY votes DESC, q.created_at DESC
-    `;
-
-    const params = currentUserId ? [sessionId, currentUserId] : [sessionId];
-    const result = await this.pool.query(query, params);
-
-    return result.rows.map(row => ({
-      id: row.id,
-      sessionId: row.session_id,
-      content: row.content,
-      authorId: row.author_id,
-      authorName: row.author_name,
-      votes: parseInt(row.votes),
-      hasUserVoted: row.has_user_voted || false,
-      createdAt: row.created_at
-    }));
   }
 
   /**
@@ -238,12 +265,13 @@ export class QnaService {
 
       await client.query('COMMIT');
 
+      // Create question object with user data joined
       const newQuestion = {
         id: questionResult.rows[0].id,
         sessionId: questionResult.rows[0].session_id,
         content: questionResult.rows[0].content,
         authorId: questionResult.rows[0].author_id,
-        authorName: user.displayName,
+        authorName: user.displayName, // Include for frontend compatibility
         votes: 0,
         hasUserVoted: false,
         createdAt: questionResult.rows[0].created_at
