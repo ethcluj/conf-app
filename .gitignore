@@ -19,6 +19,9 @@ backend/src/scripts/sent-emails-tracker.json
 ethereum-conference.zip
 ethereum-conference/
 
+# Local development notes
+prompts.md
+
 # OS/system files
 .DS_Store
 Thumbs.db
