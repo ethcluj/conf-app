@@ -6,7 +6,7 @@ import { Video, MessageCircle, ArrowLeft, ArrowRight, Maximize, Trophy } from "l
 import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onUserUpdated, onVoteUpdated } from "@/lib/sse-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { type Session } from "@/lib/data"
+import { Session, getFullStageName } from "@/lib/data"
 import { getQuestionsBySession, type QnaQuestion, mockLeaderboard, type LeaderboardEntry } from "@/lib/qna-data"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { QRCodeSVG } from "qrcode.react"
@@ -424,7 +424,7 @@ export function UnifiedPresenterView({
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-3">Q&A Session</h1>
               <h2 className="text-2xl mb-4">{session.title}</h2>
-              <p className="text-xl text-gray-300 mb-2">{session.stage}</p>
+              <p className="text-xl text-gray-300 mb-2">{getFullStageName(session.stage, session.title)}</p>
               <p className="text-xl text-red-500">
                 {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
                 {new Date(session.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -441,9 +441,9 @@ export function UnifiedPresenterView({
                   className="w-full h-auto"
                 />
               </div>
-              <div className="mt-4">
-                <p className="text-xl mb-2">Scan to ask questions</p>
-                <p className="text-sm text-gray-400">or go to {qrCodeUrl}</p>
+              <div className="mt-4 w-4/5">
+                <p className="text-3xl font-medium mb-3">Scan to ask questions</p>
+                <p className="text-xl text-gray-400">or go to {qrCodeUrl}</p>
               </div>
             </div>
           </div>
