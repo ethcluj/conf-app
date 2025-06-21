@@ -103,6 +103,25 @@ export class SseController {
     });
     return total;
   }
+  
+  /**
+   * Broadcast user update to all sessions
+   * This is used when a user changes their display name
+   * @param userId User ID that was updated
+   * @param userData Updated user data
+   */
+  public broadcastUserUpdate(userId: number, userData: { displayName: string }): void {
+    // Send to all active sessions since user questions could be in any session
+    this.connections.forEach((sessionConnections, sessionId) => {
+      if (sessionConnections.size > 0) {
+        console.log(`[SSE] Broadcasting user update for user ${userId} to session ${sessionId}`);
+        this.sendEvent(sessionId, 'user_updated', {
+          userId: String(userId), // Convert to string to match frontend expectations
+          displayName: userData.displayName
+        });
+      }
+    });
+  }
 }
 
 // Create a singleton instance

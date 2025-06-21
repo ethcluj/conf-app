@@ -44,6 +44,35 @@ export class QnaService {
       throw error;
     }
   }
+  
+  /**
+   * Get a user by auth token
+   */
+  async getUserByAuthToken(authToken: string): Promise<QnaUser> {
+    logger.debug('Looking up user by auth token');
+    
+    try {
+      const result = await this.pool.query(
+        'SELECT * FROM qna_users WHERE auth_token = $1',
+        [authToken]
+      );
+      
+      if (result.rows.length === 0) {
+        logger.info('No user found with auth token');
+        throw new Error('User not found by auth token');
+      }
+      
+      logger.info('User found by auth token', { 
+        userId: result.rows[0].id,
+        displayName: result.rows[0].display_name
+      });
+      
+      return this.mapDbUserToQnaUser(result.rows[0]);
+    } catch (error) {
+      logger.error('Error looking up user by auth token', error);
+      throw error;
+    }
+  }
 
   /**
    * Get or create a user based on email or fingerprint
@@ -113,13 +142,36 @@ export class QnaService {
 
       // If user doesn't exist, create a new one
       if (!user) {
-        const displayName = generateRandomEthName();
+        // Generate a unique display name
+        let displayName = generateRandomEthName();
+        let isUnique = false;
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        // Keep trying until we find a unique name or reach max attempts
+        while (!isUnique && attempts < maxAttempts) {
+          // Check if the display name already exists
+          const nameCheckResult = await client.query(
+            'SELECT COUNT(*) FROM qna_users WHERE display_name = $1',
+            [displayName]
+          );
+          
+          if (nameCheckResult.rows[0].count === '0') {
+            isUnique = true;
+          } else {
+            // If name exists, add a random suffix
+            displayName = `${generateRandomEthName()}-${Math.floor(Math.random() * 10000)}`;
+            attempts++;
+          }
+        }
+        
         const authToken = crypto.randomBytes(32).toString('hex');
 
         logger.info('Creating new user', { 
           hasEmail: !!email, 
           hasFingerprint: !!fingerprint,
-          displayName
+          displayName,
+          nameAttempts: attempts
         });
         
         try {
@@ -151,63 +203,112 @@ export class QnaService {
    * Update user's display name
    */
   async updateUserDisplayName(userId: number, displayName: string): Promise<QnaUser> {
-    const result = await this.pool.query(
-      'UPDATE qna_users SET display_name = $1 WHERE id = $2 RETURNING *',
-      [displayName, userId]
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Check if the display name is already in use by another user
+      const nameCheckResult = await client.query(
+        'SELECT COUNT(*) FROM qna_users WHERE display_name = $1 AND id != $2',
+        [displayName, userId]
+      );
+      
+      if (nameCheckResult.rows[0].count !== '0') {
+        logger.info('Display name already in use', { displayName, userId });
+        throw new Error('Display name already in use by another user');
+      }
+      
+      const result = await client.query(
+        'UPDATE qna_users SET display_name = $1 WHERE id = $2 RETURNING *',
+        [displayName, userId]
+      );
 
-    if (result.rows.length === 0) {
-      throw new Error(`User with ID ${userId} not found`);
+      if (result.rows.length === 0) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+      
+      const updatedUser = this.mapDbUserToQnaUser(result.rows[0]);
+      
+      // Broadcast user update to all connected clients
+      // This ensures all instances of this user's name are updated in real-time
+      sseController.broadcastUserUpdate(userId, { 
+        displayName: updatedUser.displayName 
+      });
+      
+      logger.info('User display name updated', { 
+        userId, 
+        newDisplayName: displayName 
+      });
+      
+      await client.query('COMMIT');
+      return updatedUser;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      logger.error('Error updating user display name', error);
+      throw error;
+    } finally {
+      client.release();
     }
-
-    return this.mapDbUserToQnaUser(result.rows[0]);
   }
 
   /**
    * Get questions for a specific session
    */
   async getQuestionsBySession(sessionId: string, currentUserId?: number): Promise<QnaQuestion[]> {
-    let query = `
-      SELECT 
-        q.id, 
-        q.session_id, 
-        q.content, 
-        q.author_id, 
-        u.display_name as author_name, 
-        q.created_at,
-        COUNT(v.id) as votes
-    `;
-
-    // Add user vote check if currentUserId is provided
-    if (currentUserId) {
-      query += `, 
-        (SELECT COUNT(*) > 0 FROM qna_votes 
-         WHERE question_id = q.id AND user_id = $2) as has_user_voted
+    try {
+      // Get questions with vote counts and join with users table to get current display names
+      const query = `
+        SELECT 
+          q.id, 
+          q.session_id, 
+          q.content, 
+          q.author_id, 
+          u.display_name as author_name, 
+          q.created_at,
+          COUNT(v.id) as vote_count
+        FROM qna_questions q
+        LEFT JOIN qna_votes v ON q.id = v.question_id
+        LEFT JOIN qna_users u ON q.author_id = u.id
+        WHERE q.session_id = $1
+        GROUP BY q.id, u.display_name
+        ORDER BY vote_count DESC, q.created_at DESC
       `;
+      
+      const result = await this.pool.query(query, [sessionId]);
+      
+      // If there's a current user, check which questions they've voted on
+      let userVotes: Record<number, boolean> = {};
+      if (currentUserId) {
+        const votesQuery = `
+          SELECT question_id 
+          FROM qna_votes 
+          WHERE user_id = $1 AND question_id IN (
+            SELECT id FROM qna_questions WHERE session_id = $2
+          )
+        `;
+        
+        const votesResult = await this.pool.query(votesQuery, [currentUserId, sessionId]);
+        userVotes = votesResult.rows.reduce((acc: Record<number, boolean>, row) => {
+          acc[row.question_id] = true;
+          return acc;
+        }, {});
+      }
+      
+      // Map database results to QnaQuestion objects
+      return result.rows.map(row => ({
+        id: row.id,
+        sessionId: row.session_id,
+        content: row.content,
+        authorId: row.author_id,
+        authorName: row.author_name || 'Anonymous', // Include author name from the join
+        votes: parseInt(row.vote_count),
+        hasUserVoted: userVotes[row.id] || false,
+        createdAt: row.created_at
+      }));
+    } catch (error) {
+      console.error('Error in getQuestionsBySession:', error);
+      throw error;
     }
-
-    query += `
-      FROM qna_questions q
-      JOIN qna_users u ON q.author_id = u.id
-      LEFT JOIN qna_votes v ON q.id = v.question_id
-      WHERE q.session_id = $1
-      GROUP BY q.id, u.display_name
-      ORDER BY votes DESC, q.created_at DESC
-    `;
-
-    const params = currentUserId ? [sessionId, currentUserId] : [sessionId];
-    const result = await this.pool.query(query, params);
-
-    return result.rows.map(row => ({
-      id: row.id,
-      sessionId: row.session_id,
-      content: row.content,
-      authorId: row.author_id,
-      authorName: row.author_name,
-      votes: parseInt(row.votes),
-      hasUserVoted: row.has_user_voted || false,
-      createdAt: row.created_at
-    }));
   }
 
   /**
@@ -238,12 +339,13 @@ export class QnaService {
 
       await client.query('COMMIT');
 
+      // Create question object with user data joined
       const newQuestion = {
         id: questionResult.rows[0].id,
         sessionId: questionResult.rows[0].session_id,
         content: questionResult.rows[0].content,
         authorId: questionResult.rows[0].author_id,
-        authorName: user.displayName,
+        authorName: user.displayName, // Include for frontend compatibility
         votes: 0,
         hasUserVoted: false,
         createdAt: questionResult.rows[0].created_at
@@ -264,21 +366,17 @@ export class QnaService {
 
   /**
    * Toggle vote on a question
+   * Returns true if vote was added, false if vote was removed
+   * Returns undefined if no action was taken (e.g., user tried to vote on their own question)
    */
-  async toggleVote(questionId: number, userId: number): Promise<boolean> {
+  async toggleVote(questionId: number, userId: number): Promise<boolean | undefined> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Check if vote exists
-      const voteResult = await client.query(
-        'SELECT * FROM qna_votes WHERE question_id = $1 AND user_id = $2',
-        [questionId, userId]
-      );
-      
-      // Get the question to find its session ID for broadcasting
+      // Get the question details including author information
       const questionResult = await client.query(
-        'SELECT session_id FROM qna_questions WHERE id = $1',
+        'SELECT q.id, q.session_id, q.author_id FROM qna_questions q WHERE q.id = $1',
         [questionId]
       );
       
@@ -286,7 +384,23 @@ export class QnaService {
         throw new Error(`Question with ID ${questionId} not found`);
       }
       
-      const sessionId = questionResult.rows[0].session_id;
+      const question = questionResult.rows[0];
+      const sessionId = question.session_id;
+      
+      // Check if user is the author of the question
+      if (question.author_id === userId) {
+        // Silently do nothing if user is trying to vote on their own question
+        logger.info('User attempted to vote on their own question', { userId, questionId });
+        await client.query('COMMIT');
+        return undefined;
+      }
+
+      // Check if vote exists
+      const voteResult = await client.query(
+        'SELECT * FROM qna_votes WHERE question_id = $1 AND user_id = $2',
+        [questionId, userId]
+      );
+      
       let voteAdded = false;
 
       if (voteResult.rows.length > 0) {
@@ -324,7 +438,7 @@ export class QnaService {
       return voteAdded;
     } catch (error) {
       await client.query('ROLLBACK');
-      console.error('Error in toggleVote:', error);
+      logger.error('Error in toggleVote:', error);
       throw error;
     } finally {
       client.release();

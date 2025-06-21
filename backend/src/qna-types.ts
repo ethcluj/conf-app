@@ -16,10 +16,10 @@ export interface QnaQuestion {
   sessionId: string;
   content: string;
   authorId: number;
-  authorName: string;
   votes: number; // Calculated field
   hasUserVoted?: boolean; // Calculated field for the current user
   createdAt: Date;
+  // authorName removed - will be fetched from user record
 }
 
 export interface QnaVote {

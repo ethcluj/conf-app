@@ -3,10 +3,10 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Video, MessageCircle, ArrowLeft, ArrowRight, Maximize, Trophy } from "lucide-react"
-import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated } from "@/lib/sse-client"
+import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onUserUpdated, onVoteUpdated } from "@/lib/sse-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { type Session } from "@/lib/data"
+import { Session, getFullStageName } from "@/lib/data"
 import { getQuestionsBySession, type QnaQuestion, mockLeaderboard, type LeaderboardEntry } from "@/lib/qna-data"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { QRCodeSVG } from "qrcode.react"
@@ -44,7 +44,7 @@ export function UnifiedPresenterView({
     if (!document.fullscreenElement && containerRef.current?.requestFullscreen) {
       containerRef.current.requestFullscreen()
         .then(() => setIsFullscreen(true))
-        .catch(err => console.error(`Error attempting to enable fullscreen: ${err.message}`))
+        .catch(() => {})
     }
   }, [])
   
@@ -53,7 +53,7 @@ export function UnifiedPresenterView({
     if (document.fullscreenElement && document.exitFullscreen) {
       document.exitFullscreen()
         .then(() => setIsFullscreen(false))
-        .catch(err => console.error(`Error attempting to exit fullscreen: ${err.message}`))
+        .catch(() => {})
     }
   }, [])
   
@@ -108,32 +108,55 @@ export function UnifiedPresenterView({
           setIsLoading(true)
           // Get questions for this session
           const sessionQuestions = await getQuestionsBySession(session.id)
-          setQuestions(sessionQuestions)
-          setIsLoading(false)
+          
+          // Sort questions by votes (descending) and then by timestamp (newest first)
+          const sortedQuestions = [...sessionQuestions].sort((a, b) => {
+            if (b.votes !== a.votes) return b.votes - a.votes;
+            return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+          });
+          
+          setQuestions(sortedQuestions)
         } catch (error) {
-          console.error("Error loading questions:", error)
+          // Silent error handling in production
+        } finally {
           setIsLoading(false)
         }
       }
       
+      // Initial data fetch
       fetchQuestions()
     }
   }, [mode, session.id])
   
+  // Helper function to refresh all questions
+  const refreshAllQuestions = useCallback(async () => {
+    try {
+      // Get questions for this session
+      const sessionQuestions = await getQuestionsBySession(session.id)
+      
+      // Sort questions by votes (descending) and then by timestamp (newest first)
+      const sortedQuestions = [...sessionQuestions].sort((a, b) => {
+        if (b.votes !== a.votes) return b.votes - a.votes;
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+      
+      setQuestions(sortedQuestions);
+    } catch (error) {
+      // Silent error handling in production
+    }
+  }, [session.id]);
+
   // Handle real-time question updates
   const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
     setQuestions(prevQuestions => {
-      // Check if question already exists to prevent duplicates
-      if (prevQuestions.some(q => q.id === newQuestion.id)) {
-        return prevQuestions
-      }
-      // Ensure timestamp is a Date object
+      // Convert timestamp to Date if it's not already
       const questionWithDate = {
         ...newQuestion,
-        timestamp: newQuestion.timestamp instanceof Date ? 
-          newQuestion.timestamp : 
-          new Date(newQuestion.timestamp || newQuestion.createdAt || Date.now())
-      };
+        timestamp: newQuestion.timestamp instanceof Date 
+          ? newQuestion.timestamp 
+          : new Date(newQuestion.timestamp)
+      }
+      
       // Add new question and sort by votes and creation time
       return [...prevQuestions, questionWithDate]
         .sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
@@ -142,12 +165,36 @@ export function UnifiedPresenterView({
 
   // Handle real-time question deletion
   const handleQuestionDeleted = useCallback(({ questionId }: { questionId: string }) => {
-    setQuestions(prevQuestions => prevQuestions.filter(q => q.id !== questionId))
-  }, [])
+    // Check if we have this question in our state
+    setQuestions(prevQuestions => {
+      const questionExists = prevQuestions.some(q => q.id === questionId);
+      
+      // If the question doesn't exist in our state, we should refresh all questions
+      // to ensure our state is in sync with the server
+      if (!questionExists && mode === 'qna') {
+        refreshAllQuestions();
+      }
+      
+      // Remove the question from our state if it exists
+      return prevQuestions.filter(q => q.id !== questionId);
+    });
+  }, [mode, refreshAllQuestions])
 
   // Handle real-time vote updates
   const handleVoteUpdated = useCallback(({ questionId, voteCount }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
     setQuestions(prevQuestions => {
+      // Check if the question exists in our current state
+      const questionExists = prevQuestions.some(q => q.id === questionId);
+      
+      // If the question doesn't exist in our state but we received a vote update for it,
+      // we need to fetch all questions to get the updated state
+      if (!questionExists && mode === 'qna') {
+        // Refresh all questions to get the complete state
+        refreshAllQuestions();
+        return prevQuestions; // Return current state, refreshAllQuestions will update it
+      }
+      
+      // Update the vote count for the question if it exists in our state
       return prevQuestions.map(q => {
         if (q.id === questionId) {
           // Update vote count
@@ -159,7 +206,31 @@ export function UnifiedPresenterView({
         return q
       }).sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
     })
-  }, [])
+  }, [mode, refreshAllQuestions])
+
+  // Handle user display name updates
+  const handleUserUpdated = useCallback(({ userId, displayName }: { userId: string, displayName: string }) => {
+    // Update questions with the new display name for this user
+    setQuestions(prevQuestions => {
+      // Check if we have any questions from this user
+      const hasUserQuestions = prevQuestions.some(q => q.authorId === userId);
+      
+      // If we don't have any questions from this user but received an update,
+      // we might need to refresh all questions
+      if (!hasUserQuestions && mode === 'qna') {
+        // Refresh all questions to get the complete state
+        refreshAllQuestions();
+      }
+      
+      // Update display names for questions we already have
+      return prevQuestions.map(question => 
+        question.authorId === userId 
+          ? { ...question, authorName: displayName }
+          : question
+      );
+    });
+  }, [mode, refreshAllQuestions])
+
   
   // Set up SSE connection for real-time updates
   useEffect(() => {
@@ -171,13 +242,14 @@ export function UnifiedPresenterView({
       onQuestionAdded(handleQuestionAdded)
       onQuestionDeleted(handleQuestionDeleted)
       onVoteUpdated(handleVoteUpdated)
+      onUserUpdated(handleUserUpdated)
       
       // Clean up on unmount or mode change
       return () => {
         disconnectFromSSE()
       }
     }
-  }, [mode, session.id, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated])
+  }, [mode, session.id, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated, handleUserUpdated])
   
   useEffect(() => {
     // Add event listener for keyboard shortcuts
@@ -346,7 +418,7 @@ export function UnifiedPresenterView({
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-3">Q&A Session</h1>
               <h2 className="text-2xl mb-4">{session.title}</h2>
-              <p className="text-xl text-gray-300 mb-2">{session.stage}</p>
+              <p className="text-xl text-gray-300 mb-2">{getFullStageName(session.stage, session.title)}</p>
               <p className="text-xl text-red-500">
                 {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
                 {new Date(session.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -363,9 +435,9 @@ export function UnifiedPresenterView({
                   className="w-full h-auto"
                 />
               </div>
-              <div className="mt-4">
-                <p className="text-xl mb-2">Scan to ask questions</p>
-                <p className="text-sm text-gray-400">or go to {qrCodeUrl}</p>
+              <div className="mt-4 w-4/5">
+                <p className="text-3xl font-medium mb-3">Scan to ask questions</p>
+                <p className="text-xl text-gray-400">or go to {qrCodeUrl}</p>
               </div>
             </div>
           </div>

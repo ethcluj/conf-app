@@ -190,7 +190,7 @@ describe('QnA Integration Tests', () => {
       expect(question.sessionId).toBe(sessionId);
       expect(question.content).toBe('Test question content');
       expect(question.authorId).toBe(testUser.id);
-      expect(question.authorName).toBe(testUser.displayName);
+      // authorName assertion removed as part of data normalization
       expect(question.votes).toBe(0);
     });
     

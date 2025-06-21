@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, MessageCircle } from "lucide-react"
 import Link from "next/link"
-import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated } from "@/lib/sse-client"
+import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onVoteUpdated, onUserUpdated } from "@/lib/sse-client"
 import { 
   getQuestionsBySession, 
   type QnaQuestion, 
@@ -35,43 +35,50 @@ export default function QnaPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Handle real-time question updates
-  const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
-    setQuestions(prevQuestions => {
-      // Check if question already exists to prevent duplicates
-      if (prevQuestions.some(q => q.id === newQuestion.id)) {
-        return prevQuestions
-      }
-      // Add new question and sort by votes and creation time
-      return [...prevQuestions, newQuestion]
-        .sort((a, b) => b.votes - a.votes || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    })
-  }, [])
+  // Refresh the entire question list from the server
+  const refreshQuestions = useCallback(async () => {
+    try {
+      const updatedQuestions = await getQuestionsBySession(sessionId);
+      setQuestions(updatedQuestions);
+    } catch (error) {
+      console.error('Error refreshing questions:', error);
+    }
+  }, [sessionId]);
+  
+  // Handle real-time question updates by refreshing the entire list
+  const handleQuestionAdded = useCallback((_newQuestion: QnaQuestion) => {
+    refreshQuestions();
+  }, [refreshQuestions])
 
-  // Handle real-time question deletion
-  const handleQuestionDeleted = useCallback(({ questionId }: { questionId: string }) => {
-    setQuestions(prevQuestions => prevQuestions.filter(q => q.id !== questionId))
-  }, [])
+  // Handle real-time question deletion by refreshing the entire list
+  const handleQuestionDeleted = useCallback((_event: { questionId: string }) => {
+    refreshQuestions()
+  }, [refreshQuestions])
 
-  // Handle real-time vote updates
-  const handleVoteUpdated = useCallback(({ questionId, voteCount, voteAdded }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
-    setQuestions(prevQuestions => {
-      return prevQuestions.map(q => {
-        if (q.id === questionId) {
-          // Update vote count and user vote status if this is the current user
-          return {
-            ...q,
-            votes: voteCount,
-            // Only update hasUserVoted if we know this is the current user's vote
-            hasUserVoted: q.hasUserVoted !== undefined ? 
-              (user.id && voteAdded !== undefined ? voteAdded : q.hasUserVoted) : 
-              q.hasUserVoted
-          }
-        }
-        return q
-      }).sort((a, b) => b.votes - a.votes || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    })
-  }, [user.id])
+  // Handle real-time vote updates by refreshing the entire list
+  const handleVoteUpdated = useCallback((_event: { questionId: string, voteCount: number, voteAdded: boolean }) => {
+    refreshQuestions()
+  }, [refreshQuestions])
+
+  // Handle user display name updates
+  const handleUserUpdated = useCallback((event: { userId: string, displayName: string }) => {
+    // Update questions with the new display name for this user
+    setQuestions(prevQuestions => 
+      prevQuestions.map(question => 
+        question.authorId === event.userId 
+          ? { ...question, authorName: event.displayName }
+          : question
+      )
+    )
+    
+    // If this is the current user, update the user state too
+    if (user.isAuthenticated && user.id === event.userId) {
+      setUser(prevUser => ({
+        ...prevUser,
+        displayName: event.displayName
+      }))
+    }
+  }, [user])
 
   // Load session data and check authentication status
   useEffect(() => {
@@ -85,11 +92,7 @@ export default function QnaPage() {
           setSession(sessionData)
         }
         
-        // Get questions for this session
-        const sessionQuestions = await getQuestionsBySession(sessionId)
-        setQuestions(sessionQuestions)
-        
-        // Check if user is already authenticated with a valid auth token
+        // First check if user is already authenticated with a valid auth token
         const authToken = localStorage.getItem('qna_auth_token')
         if (authToken) {
           try {
@@ -102,6 +105,11 @@ export default function QnaPage() {
             localStorage.removeItem('qna_auth_token')
           }
         }
+        
+        // Get questions for this session AFTER authentication attempt
+        // This ensures the auth token is included in the request if available
+        const sessionQuestions = await getQuestionsBySession(sessionId)
+        setQuestions(sessionQuestions)
         
         setIsLoading(false)
       } catch (error) {
@@ -124,14 +132,15 @@ export default function QnaPage() {
     onQuestionAdded(handleQuestionAdded)
     onQuestionDeleted(handleQuestionDeleted)
     onVoteUpdated(handleVoteUpdated)
+    onUserUpdated(handleUserUpdated)
     
     // Clean up on unmount
     return () => {
       disconnectFromSSE()
     }
-  }, [sessionId, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated])
+  }, [sessionId, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated, handleUserUpdated])
 
-  const handleVote = async (questionId: string) => {
+  const handleVoteToggle = async (questionId: string) => {
     if (!user.isAuthenticated) {
       setIsAuthModalOpen(true)
       return
@@ -141,8 +150,8 @@ export default function QnaPage() {
       // Toggle the vote using the real API
       await toggleVote(questionId, sessionId)
       
-      // Don't refresh the entire question list - rely on SSE for real-time updates
-      // The vote_updated event will handle updating the UI
+      // Refresh the questions list to show the latest state
+      await refreshQuestions()
     } catch (error) {
       console.error("Error toggling vote:", error)
       // Don't show an alert for vote errors to avoid disrupting the user experience
@@ -159,8 +168,8 @@ export default function QnaPage() {
       // Delete the question using the real API
       await deleteQuestion(questionId, sessionId)
       
-      // Don't manually refresh the questions list - rely on SSE for real-time updates
-      // The question_deleted event will handle updating the UI
+      // Refresh the questions list to show the latest state
+      await refreshQuestions()
     } catch (error) {
       console.error("Error deleting question:", error)
       alert("Failed to delete question. You may only delete your own questions.")
@@ -174,11 +183,30 @@ export default function QnaPage() {
     }
     
     try {
-      // Use the real API to add a question
+      // Show a temporary loading state by adding a placeholder question
+      const tempId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+      const tempQuestion: QnaQuestion = {
+        id: tempId, // Temporary ID that won't conflict with server IDs
+        sessionId,
+        content: questionContent,
+        authorName: user.displayName,
+        authorId: user.id,
+        votes: 0,
+        timestamp: new Date(),
+        hasUserVoted: false
+      }
+      
+      // Add the temporary question to the UI immediately for better UX
+      setQuestions(prevQuestions => {
+        return [...prevQuestions, tempQuestion]
+          .sort((a, b) => b.votes - a.votes || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      })
+      
+      // Send the question to the API
       await addQuestion(questionContent, sessionId)
       
-      // Don't manually refresh the questions list - rely on SSE for real-time updates
-      // The question_added event will handle updating the UI
+      // Refresh the entire question list to get the server-side data
+      await refreshQuestions()
     } catch (error) {
       console.error("Error submitting question:", error)
       alert("Failed to submit your question. Please try again.")
@@ -190,6 +218,10 @@ export default function QnaPage() {
       // Use the real API to authenticate
       const userData = await QnaApi.authenticateUser(email)
       setUser(userData)
+      
+      // Refresh questions after authentication to get updated hasUserVoted status
+      const updatedQuestions = await getQuestionsBySession(sessionId)
+      setQuestions(updatedQuestions)
     } catch (error) {
       console.error("Authentication error:", error)
       // Show error message to user
@@ -213,13 +245,51 @@ export default function QnaPage() {
     }
   }
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Call the API logout function to clear tokens
+    QnaApi.logout()
+    
     // Reset user state
     setUser({ 
       id: '', 
       displayName: '', 
       isAuthenticated: false 
     })
+    
+    try {
+      // Directly fetch questions from the API without authentication
+      // This ensures we get a fresh set of questions with no user-specific data
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/qna/questions/${sessionId}`, {
+        headers: {
+          'Content-Type': 'application/json'
+          // No auth token or fingerprint here
+        }
+      })
+      
+      const data = await response.json()
+      if (data.data) {
+        // Process the questions to ensure hasUserVoted is false for all
+        const freshQuestions = data.data.map((q: any) => ({
+          id: q.id.toString(),
+          sessionId: q.sessionId,
+          content: q.content,
+          authorName: q.authorName,
+          authorId: q.authorId.toString(),
+          votes: q.votes,
+          timestamp: new Date(q.createdAt),
+          hasUserVoted: q.hasUserVoted || false // Preserve hasUserVoted from API response
+        }))
+        
+        // Update the questions state with the fresh data
+        setQuestions(freshQuestions.sort((a: QnaQuestion, b: QnaQuestion) => 
+          b.votes - a.votes || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        ))
+      }
+    } catch (error) {
+      console.error('Error refreshing questions after logout:', error)
+      // Fallback to normal refresh if direct fetch fails
+      refreshQuestions()
+    }
   }
 
   if (isLoading) {
@@ -276,7 +346,7 @@ export default function QnaPage() {
                   <QnaQuestionCard
                     key={question.id}
                     question={question}
-                    onVote={handleVote}
+                    onVote={handleVoteToggle}
                     isAuthenticated={user.isAuthenticated}
                     onAuthRequest={handleAuthRequest}
                     currentUserId={user.id}
