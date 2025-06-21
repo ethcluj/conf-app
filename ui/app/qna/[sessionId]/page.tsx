@@ -219,13 +219,51 @@ export default function QnaPage() {
     }
   }
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Call the API logout function to clear tokens
+    QnaApi.logout()
+    
     // Reset user state
     setUser({ 
       id: '', 
       displayName: '', 
       isAuthenticated: false 
     })
+    
+    try {
+      // Directly fetch questions from the API without authentication
+      // This ensures we get a fresh set of questions with no user-specific data
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/qna/questions/${sessionId}`, {
+        headers: {
+          'Content-Type': 'application/json'
+          // No auth token or fingerprint here
+        }
+      })
+      
+      const data = await response.json()
+      if (data.data) {
+        // Process the questions to ensure hasUserVoted is false for all
+        const freshQuestions = data.data.map((q: any) => ({
+          id: q.id.toString(),
+          sessionId: q.sessionId,
+          content: q.content,
+          authorName: q.authorName,
+          authorId: q.authorId.toString(),
+          votes: q.votes,
+          timestamp: new Date(q.createdAt),
+          hasUserVoted: false // Explicitly set to false for all questions
+        }))
+        
+        // Update the questions state with the fresh data
+        setQuestions(freshQuestions.sort((a: QnaQuestion, b: QnaQuestion) => 
+          b.votes - a.votes || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        ))
+      }
+    } catch (error) {
+      console.error('Error refreshing questions after logout:', error)
+      // Fallback to normal refresh if direct fetch fails
+      refreshQuestions()
+    }
   }
 
   if (isLoading) {

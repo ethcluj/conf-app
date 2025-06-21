@@ -90,7 +90,8 @@ export function QnaQuestionCard({ question, onVote, isAuthenticated, onAuthReque
           className={cn(
             "flex flex-col items-center rounded-md py-1 px-3", 
             "transition-colors",
-            question.hasUserVoted 
+            // Only show red background if user is authenticated AND has voted
+            isAuthenticated && question.hasUserVoted 
               ? "bg-red-600 text-white" 
               : "bg-[#21262d] text-gray-300 hover:bg-[#30363d]"
           )}
@@ -117,7 +118,7 @@ export function QnaQuestionCard({ question, onVote, isAuthenticated, onAuthReque
             )}
           </div>
           <div className="flex justify-between text-xs text-gray-400">
-            <span className={isOwnQuestion ? "text-red-500" : ""}>
+            <span className={isAuthenticated && isOwnQuestion ? "text-red-500" : ""}>
               {question.authorName}
             </span>
             <span>{formatRelativeTime(question.timestamp)}</span>
