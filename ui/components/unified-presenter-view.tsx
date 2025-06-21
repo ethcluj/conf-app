@@ -108,7 +108,14 @@ export function UnifiedPresenterView({
           setIsLoading(true)
           // Get questions for this session
           const sessionQuestions = await getQuestionsBySession(session.id)
-          setQuestions(sessionQuestions)
+          
+          // Sort questions by votes (descending) and then by timestamp (newest first)
+          const sortedQuestions = [...sessionQuestions].sort((a, b) => {
+            if (b.votes !== a.votes) return b.votes - a.votes;
+            return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+          });
+          
+          setQuestions(sortedQuestions)
           setIsLoading(false)
         } catch (error) {
           console.error("Error loading questions:", error)
@@ -116,24 +123,41 @@ export function UnifiedPresenterView({
         }
       }
       
+      // Initial data fetch
       fetchQuestions()
     }
   }, [mode, session.id])
   
+  // Fetch all questions and update state
+  const refreshAllQuestions = useCallback(async () => {
+    if (mode === 'qna' && session.id) {
+      try {
+        const sessionQuestions = await getQuestionsBySession(session.id);
+        // Sort questions by votes (descending) and then by timestamp (newest first)
+        const sortedQuestions = [...sessionQuestions].sort((a, b) => {
+          if (b.votes !== a.votes) return b.votes - a.votes;
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        });
+        
+        setQuestions(sortedQuestions);
+      } catch (error) {
+        console.error("Error refreshing questions:", error);
+      }
+    }
+  }, [mode, session.id]);
+
   // Handle real-time question updates
   const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
+    console.log(`Question added: ${newQuestion.id}`);
     setQuestions(prevQuestions => {
-      // Check if question already exists to prevent duplicates
-      if (prevQuestions.some(q => q.id === newQuestion.id)) {
-        return prevQuestions
-      }
-      // Ensure timestamp is a Date object
+      // Convert timestamp to Date if it's not already
       const questionWithDate = {
         ...newQuestion,
-        timestamp: newQuestion.timestamp instanceof Date ? 
-          newQuestion.timestamp : 
-          new Date(newQuestion.timestamp || newQuestion.createdAt || Date.now())
-      };
+        timestamp: newQuestion.timestamp instanceof Date 
+          ? newQuestion.timestamp 
+          : new Date(newQuestion.timestamp)
+      }
+      
       // Add new question and sort by votes and creation time
       return [...prevQuestions, questionWithDate]
         .sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
@@ -142,12 +166,39 @@ export function UnifiedPresenterView({
 
   // Handle real-time question deletion
   const handleQuestionDeleted = useCallback(({ questionId }: { questionId: string }) => {
-    setQuestions(prevQuestions => prevQuestions.filter(q => q.id !== questionId))
-  }, [])
+    console.log(`Question deleted: ${questionId}`);
+    
+    // Check if we have this question in our state
+    setQuestions(prevQuestions => {
+      const questionExists = prevQuestions.some(q => q.id === questionId);
+      
+      // If the question doesn't exist in our state, we should refresh all questions
+      // to ensure our state is in sync with the server
+      if (!questionExists && mode === 'qna') {
+        refreshAllQuestions();
+      }
+      
+      // Remove the question from our state if it exists
+      return prevQuestions.filter(q => q.id !== questionId);
+    });
+  }, [mode, refreshAllQuestions])
 
   // Handle real-time vote updates
   const handleVoteUpdated = useCallback(({ questionId, voteCount }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
+    console.log(`Vote updated for question ${questionId}: ${voteCount} votes`);
     setQuestions(prevQuestions => {
+      // Check if the question exists in our current state
+      const questionExists = prevQuestions.some(q => q.id === questionId);
+      
+      // If the question doesn't exist in our state but we received a vote update for it,
+      // we need to fetch all questions to get the updated state
+      if (!questionExists && mode === 'qna') {
+        // Refresh all questions to get the complete state
+        refreshAllQuestions();
+        return prevQuestions; // Return current state, refreshAllQuestions will update it
+      }
+      
+      // Update the vote count for the question if it exists in our state
       return prevQuestions.map(q => {
         if (q.id === questionId) {
           // Update vote count
@@ -159,19 +210,32 @@ export function UnifiedPresenterView({
         return q
       }).sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
     })
-  }, [])
+  }, [mode, refreshAllQuestions])
 
   // Handle user display name updates
   const handleUserUpdated = useCallback(({ userId, displayName }: { userId: string, displayName: string }) => {
+    console.log(`User updated: ${userId} - ${displayName}`);
+    
     // Update questions with the new display name for this user
-    setQuestions(prevQuestions => 
-      prevQuestions.map(question => 
+    setQuestions(prevQuestions => {
+      // Check if we have any questions from this user
+      const hasUserQuestions = prevQuestions.some(q => q.authorId === userId);
+      
+      // If we don't have any questions from this user but received an update,
+      // we might need to refresh all questions
+      if (!hasUserQuestions && mode === 'qna') {
+        // Refresh all questions to get the complete state
+        refreshAllQuestions();
+      }
+      
+      // Update display names for questions we already have
+      return prevQuestions.map(question => 
         question.authorId === userId 
           ? { ...question, authorName: displayName }
           : question
-      )
-    )
-  }, [])
+      );
+    });
+  }, [mode, refreshAllQuestions])
 
   
   // Set up SSE connection for real-time updates
