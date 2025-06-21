@@ -7,7 +7,8 @@ import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, on
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Session, getFullStageName } from "@/lib/data"
-import { getQuestionsBySession, type QnaQuestion, mockLeaderboard, type LeaderboardEntry } from "@/lib/qna-data"
+import { getQuestionsBySession, type QnaQuestion, type LeaderboardEntry } from "@/lib/qna-data"
+import * as QnaApi from "@/lib/qna-api"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { QRCodeSVG } from "qrcode.react"
 
@@ -35,6 +36,10 @@ export function UnifiedPresenterView({
   const [mode, setMode] = useState<PresenterMode>(initialMode)
   const [questions, setQuestions] = useState<QnaQuestion[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true)
+  const [lastLeaderboardUpdate, setLastLeaderboardUpdate] = useState<Date | null>(null)
+  const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0)
   
   // Get speakers data from API
   const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers()
@@ -146,6 +151,22 @@ export function UnifiedPresenterView({
     }
   }, [session.id]);
 
+  // Fetch leaderboard data
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      setLeaderboardLoading(true);
+      const data = await QnaApi.getLeaderboard();
+      setLeaderboard(data);
+      const now = new Date();
+      setLastLeaderboardUpdate(now);
+      setSecondsSinceUpdate(0);
+      setLeaderboardLoading(false);
+    } catch (error) {
+      // Silent error handling for production
+      setLeaderboardLoading(false);
+    }
+  }, []);
+
   // Handle real-time question updates
   const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
     setQuestions(prevQuestions => {
@@ -252,6 +273,19 @@ export function UnifiedPresenterView({
   }, [mode, session.id, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated, handleUserUpdated])
   
   useEffect(() => {
+    refreshAllQuestions();
+    fetchLeaderboard();
+    setIsLoading(false);
+    
+    // Set up a refresh interval for leaderboard (every minute)
+    const leaderboardInterval = setInterval(() => {
+      fetchLeaderboard();
+    }, 60000); // 60 seconds
+    
+    return () => clearInterval(leaderboardInterval);
+  }, [refreshAllQuestions, fetchLeaderboard]);
+
+  useEffect(() => {
     // Add event listener for keyboard shortcuts
     document.addEventListener('keydown', handleKeyDown)
     
@@ -316,48 +350,73 @@ export function UnifiedPresenterView({
                 <h1 className="text-5xl font-bold">Q&A Leaderboard</h1>
               </div>
               <p className="text-xl text-gray-300 mb-8">Top contributors from the audience</p>
+              
+              {/* Last updated indicator */}
+              {lastLeaderboardUpdate && (
+                <p className="text-lg text-gray-400">
+                  Updated {secondsSinceUpdate} seconds ago
+                </p>
+              )}
             </div>
             
             {/* Leaderboard content */}
             <div className="flex-grow flex items-center justify-center">
               <div className="w-full max-w-4xl">
-                <div className="bg-[#161b22] rounded-lg overflow-hidden">
-                  {/* Header row */}
-                  <div className="grid grid-cols-12 gap-2 p-2 bg-[#21262d] text-sm font-bold">
-                    <div className="col-span-1 text-center">#</div>
-                    <div className="col-span-4">Participant</div>
-                    <div className="col-span-3 text-center">Questions</div>
-                    <div className="col-span-3 text-center">Upvotes</div>
-                    <div className="col-span-1 text-center">Score</div>
+                {leaderboardLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
                   </div>
-                  
-                  {/* Leaderboard entries */}
-                  {mockLeaderboard.map((entry, index) => (
-                    <div 
-                      key={entry.userId}
-                      className={`grid grid-cols-12 gap-2 py-2 px-2 ${index % 2 === 0 ? 'bg-[#161b22]' : 'bg-[#1c2129]'} ${index < 3 ? 'border-l-4' : ''} ${
-                        index === 0 ? 'border-yellow-500' : 
-                        index === 1 ? 'border-gray-400' : 
-                        index === 2 ? 'border-amber-700' : ''
-                      }`}
-                    >
-                      <div className="col-span-1 text-center font-bold flex items-center justify-center">
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                      </div>
-                      <div className="col-span-4 font-medium text-base truncate">{entry.displayName}</div>
-                      <div className="col-span-3 text-center">{entry.questionsAsked}</div>
-                      <div className="col-span-3 text-center">{entry.upvotesReceived}</div>
-                      <div className="col-span-1 text-center font-bold text-yellow-500">{entry.score}</div>
+                ) : (
+                  <div className="bg-[#161b22] rounded-lg overflow-hidden">
+                    {/* Header row */}
+                    <div className="grid grid-cols-12 gap-2 p-2 bg-[#21262d] text-sm font-bold">
+                      <div className="col-span-1 text-center">#</div>
+                      <div className="col-span-4">Participant</div>
+                      <div className="col-span-3 text-center">Questions</div>
+                      <div className="col-span-3 text-center">Upvotes</div>
+                      <div className="col-span-1 text-center">Score</div>
                     </div>
-                  ))}
-                </div>
+                    
+                    {/* Leaderboard entries */}
+                    {leaderboard.length === 0 ? (
+                      <div className="py-12 text-center text-gray-400 text-xl">
+                        No data available yet
+                      </div>
+                    ) : (
+                      leaderboard.map((entry: LeaderboardEntry, index: number) => (
+                        <div 
+                          key={entry.userId}
+                          className={`grid grid-cols-12 gap-2 py-2 px-2 ${index % 2 === 0 ? 'bg-[#161b22]' : 'bg-[#1c2129]'} ${index < 3 ? 'border-l-4' : ''} ${
+                            index === 0 ? 'border-yellow-500' : 
+                            index === 1 ? 'border-gray-400' : 
+                            index === 2 ? 'border-amber-700' : ''
+                          }`}
+                        >
+                          <div className="col-span-1 text-center font-bold flex items-center justify-center">
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                          </div>
+                          <div className="col-span-4 font-medium text-base truncate">{entry.displayName}</div>
+                          <div className="col-span-3 text-center">{entry.questionsAsked}</div>
+                          <div className="col-span-3 text-center">{entry.upvotesReceived}</div>
+                          <div className="col-span-1 text-center font-bold text-yellow-500">{entry.score}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             
-            {/* Bottom section with note */}
+            {/* Bottom section with note and scoring explanation */}
             <div className="flex-grow-0 flex justify-center items-center py-8">
               <div className="text-center">
-                <div className="text-xl text-gray-300">Join the conversation and ask questions to participate in the leaderboard</div>
+                <div className="text-xl text-gray-300 mb-4">Join the conversation and ask questions to participate in the leaderboard</div>
+                
+                <div className="text-sm text-gray-400">
+                  <p className="mb-1">• Each question with at least 1 vote: 3 points</p>
+                  <p className="mb-1">• Each additional vote: 1 point</p>
+                  <p>• Most voted question in a session: 5 bonus points</p>
+                </div>
               </div>
             </div>
           </div>
