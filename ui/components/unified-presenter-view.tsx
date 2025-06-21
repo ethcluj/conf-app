@@ -44,7 +44,7 @@ export function UnifiedPresenterView({
     if (!document.fullscreenElement && containerRef.current?.requestFullscreen) {
       containerRef.current.requestFullscreen()
         .then(() => setIsFullscreen(true))
-        .catch(err => console.error(`Error attempting to enable fullscreen: ${err.message}`))
+        .catch(() => {})
     }
   }, [])
   
@@ -53,7 +53,7 @@ export function UnifiedPresenterView({
     if (document.fullscreenElement && document.exitFullscreen) {
       document.exitFullscreen()
         .then(() => setIsFullscreen(false))
-        .catch(err => console.error(`Error attempting to exit fullscreen: ${err.message}`))
+        .catch(() => {})
     }
   }, [])
   
@@ -116,9 +116,9 @@ export function UnifiedPresenterView({
           });
           
           setQuestions(sortedQuestions)
-          setIsLoading(false)
         } catch (error) {
-          console.error("Error loading questions:", error)
+          // Silent error handling in production
+        } finally {
           setIsLoading(false)
         }
       }
@@ -128,27 +128,26 @@ export function UnifiedPresenterView({
     }
   }, [mode, session.id])
   
-  // Fetch all questions and update state
+  // Helper function to refresh all questions
   const refreshAllQuestions = useCallback(async () => {
-    if (mode === 'qna' && session.id) {
-      try {
-        const sessionQuestions = await getQuestionsBySession(session.id);
-        // Sort questions by votes (descending) and then by timestamp (newest first)
-        const sortedQuestions = [...sessionQuestions].sort((a, b) => {
-          if (b.votes !== a.votes) return b.votes - a.votes;
-          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-        });
-        
-        setQuestions(sortedQuestions);
-      } catch (error) {
-        console.error("Error refreshing questions:", error);
-      }
+    try {
+      // Get questions for this session
+      const sessionQuestions = await getQuestionsBySession(session.id)
+      
+      // Sort questions by votes (descending) and then by timestamp (newest first)
+      const sortedQuestions = [...sessionQuestions].sort((a, b) => {
+        if (b.votes !== a.votes) return b.votes - a.votes;
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+      
+      setQuestions(sortedQuestions);
+    } catch (error) {
+      // Silent error handling in production
     }
-  }, [mode, session.id]);
+  }, [session.id]);
 
   // Handle real-time question updates
   const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
-    console.log(`Question added: ${newQuestion.id}`);
     setQuestions(prevQuestions => {
       // Convert timestamp to Date if it's not already
       const questionWithDate = {
@@ -166,8 +165,6 @@ export function UnifiedPresenterView({
 
   // Handle real-time question deletion
   const handleQuestionDeleted = useCallback(({ questionId }: { questionId: string }) => {
-    console.log(`Question deleted: ${questionId}`);
-    
     // Check if we have this question in our state
     setQuestions(prevQuestions => {
       const questionExists = prevQuestions.some(q => q.id === questionId);
@@ -185,7 +182,6 @@ export function UnifiedPresenterView({
 
   // Handle real-time vote updates
   const handleVoteUpdated = useCallback(({ questionId, voteCount }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
-    console.log(`Vote updated for question ${questionId}: ${voteCount} votes`);
     setQuestions(prevQuestions => {
       // Check if the question exists in our current state
       const questionExists = prevQuestions.some(q => q.id === questionId);
@@ -214,8 +210,6 @@ export function UnifiedPresenterView({
 
   // Handle user display name updates
   const handleUserUpdated = useCallback(({ userId, displayName }: { userId: string, displayName: string }) => {
-    console.log(`User updated: ${userId} - ${displayName}`);
-    
     // Update questions with the new display name for this user
     setQuestions(prevQuestions => {
       // Check if we have any questions from this user
