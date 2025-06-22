@@ -112,10 +112,14 @@ export function createQnaRoutes(pool: Pool): Router {
       // First try to authenticate with auth token if available
       if (authToken) {
         try {
-          // Find user by auth token
+          // Find user by auth token (will use cache if available)
           const user = await qnaService.getUserByAuthToken(authToken);
           currentUserId = user.id;
-          logger.info('User identified via auth token for questions', { userId: user.id });
+          logger.info('User identified via auth token for questions', { 
+            userId: user.id,
+            sessionId,
+            path: req.path
+          });
         } catch (tokenError) {
           logger.error('Error identifying user with token for questions', tokenError);
           // Continue with fingerprint auth if token auth fails
