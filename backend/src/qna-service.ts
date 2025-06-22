@@ -507,32 +507,38 @@ export class QnaService {
     }
 
     try {
-      // Step 1: Get questions with vote counts
+      // Step 1: Get questions with vote counts and creation time (for tiebreaking)
       const questionsQuery = `
         SELECT 
           q.id as question_id, 
           q.author_id, 
           q.session_id,
+          q.created_at,
           COUNT(v.id) as vote_count
         FROM qna_questions q
         LEFT JOIN qna_votes v ON q.id = v.question_id
         GROUP BY q.id
+        ORDER BY q.session_id, COUNT(v.id) DESC, q.created_at ASC
       `;
       const questionsResult = await this.pool.query(questionsQuery);
       const questions = questionsResult.rows;
 
-      // Step 2: Find the most voted question for each session
+      // Step 2: Find the most voted question for each session (with tiebreaker)
       const sessionTopQuestions = new Map();
       for (const q of questions) {
         const sessionId = q.session_id;
         const voteCount = parseInt(q.vote_count);
+        const createdAt = new Date(q.created_at);
         
         if (!sessionTopQuestions.has(sessionId) || 
-            voteCount > sessionTopQuestions.get(sessionId).voteCount) {
+            voteCount > sessionTopQuestions.get(sessionId).voteCount || 
+            (voteCount === sessionTopQuestions.get(sessionId).voteCount && 
+             createdAt < sessionTopQuestions.get(sessionId).createdAt)) {
           sessionTopQuestions.set(sessionId, {
             questionId: q.question_id,
             authorId: q.author_id,
-            voteCount
+            voteCount,
+            createdAt
           });
         }
       }
@@ -624,6 +630,13 @@ export class QnaService {
       // If there's an error, return cached data if available, otherwise empty array
       return this.leaderboardCache?.data || [];
     }
+  }
+
+  /**
+   * Reset the leaderboard cache for testing purposes
+   */
+  resetLeaderboardCache(): void {
+    this.leaderboardCache = null;
   }
 
   /**
