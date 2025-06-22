@@ -367,6 +367,11 @@ describe('QnA Integration Tests', () => {
     });
     
     it('should use creation time as tiebreaker for bonus points', async () => {
+      // Skip if database is not available
+      if (!dbAvailable) {
+        console.log('Skipping tiebreaker test as database is not available');
+        return;  
+      }
       // Create users with unique emails to avoid conflicts with other tests
       const user1 = await qnaService.getOrCreateUser('user-tie-test-1@example.com');
       const user2 = await qnaService.getOrCreateUser('user-tie-test-2@example.com');
