@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import * as QnaApi from "@/lib/qna-api"
+import { ApiError } from "@/lib/qna-api"
 import { VerificationCodeInput } from "@/components/verification-code-input"
 
 interface AuthModalProps {
@@ -58,7 +59,33 @@ export function QnaAuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps
       onClose()
     } catch (error) {
       console.error('Error verifying code:', error)
-      setErrorMessage('Invalid verification code. Please try again.')
+      
+      // Extract error message from response if available
+      let message = 'Invalid verification code. Please try again.'
+      
+      if (error instanceof ApiError) {
+        // Use our structured API error message
+        message = error.message
+        
+        // If max attempts reached, reset to email entry state after showing the message
+        if (message.includes('Maximum verification attempts reached') || 
+            error.data?.error?.includes('Maximum verification attempts reached')) {
+          setTimeout(() => {
+            setIsVerifying(false)
+            setVerificationCode('')
+          }, 3000)
+        }
+        
+        // If attempts remaining info is available
+        if (message.includes('attempts remaining')) {
+          // Already formatted nicely by the backend
+        }
+      } else if (error instanceof Error) {
+        // Use standard error message
+        message = error.message
+      }
+      
+      setErrorMessage(message)
       setIsSubmitting(false)
     }
   }

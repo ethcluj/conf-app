@@ -255,12 +255,31 @@ export function createQnaRoutes(pool: Pool): Router {
         return res.status(400).json(createErrorResponse('Email and verification code are required'));
       }
       
+      // Check attempts remaining before verification
+      const attemptsRemaining = emailService.getAttemptsRemaining(email);
+      if (attemptsRemaining === 0) {
+        logger.info('Maximum verification attempts reached before verification', { email });
+        return res.status(401).json(createErrorResponse('Maximum verification attempts reached. Please request a new code.'));
+      }
+      
       // Verify the code
       const isValid = emailService.verifyCode(email, code);
       
       if (!isValid) {
-        logger.info('Invalid or expired verification code', { email });
-        return res.status(401).json(createErrorResponse('Invalid or expired verification code'));
+        // Get updated attempts remaining after the failed verification
+        const updatedAttemptsRemaining = emailService.getAttemptsRemaining(email);
+        
+        if (updatedAttemptsRemaining === -1) {
+          // Code was deleted due to max attempts reached
+          logger.info('Maximum verification attempts reached', { email });
+          return res.status(401).json(createErrorResponse('Maximum verification attempts reached. Please request a new code.'));
+        } else {
+          // Still has attempts remaining
+          logger.info('Invalid verification code', { email, attemptsRemaining: updatedAttemptsRemaining });
+          return res.status(401).json(createErrorResponse(
+            `Invalid verification code. ${updatedAttemptsRemaining} ${updatedAttemptsRemaining === 1 ? 'attempt' : 'attempts'} remaining.`
+          ));
+        }
       }
       
       // Create or get user after successful verification
