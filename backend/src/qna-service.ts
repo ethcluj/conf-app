@@ -9,11 +9,44 @@ import { logger } from './logger';
 /**
  * QnA Service - Handles all QnA database operations
  */
-export class QnaService {
+// Simple cache interface for auth tokens
+interface TokenCacheEntry {
+  user: QnaUser;
+  timestamp: number;
+}
+
+export class QnaService {  
+  // In-memory cache for auth tokens with 10-second TTL
+  private tokenCache: Map<string, TokenCacheEntry> = new Map();
+  private readonly TOKEN_CACHE_TTL_MS = 10000; // 10 seconds
+  private cacheCleanupInterval: NodeJS.Timeout | null = null;
   private pool: Pool;
 
   constructor(pool: Pool) {
     this.pool = pool;
+    
+    // Start cache cleanup interval
+    this.cacheCleanupInterval = setInterval(() => this.cleanupExpiredCacheEntries(), 60000); // Run every minute
+    logger.info('Auth token cache initialized with TTL of 10 seconds');
+  }
+  
+  /**
+   * Clean up expired cache entries to prevent memory leaks
+   */
+  private cleanupExpiredCacheEntries(): void {
+    const now = Date.now();
+    let expiredCount = 0;
+    
+    for (const [token, entry] of this.tokenCache.entries()) {
+      if (now - entry.timestamp > this.TOKEN_CACHE_TTL_MS) {
+        this.tokenCache.delete(token);
+        expiredCount++;
+      }
+    }
+    
+    if (expiredCount > 0) {
+      logger.debug(`Cleaned up ${expiredCount} expired auth token cache entries. Current cache size: ${this.tokenCache.size}`);
+    }
   }
 
   /**
@@ -49,15 +82,20 @@ export class QnaService {
    * Get a user by auth token
    */
   async getUserByAuthToken(authToken: string): Promise<QnaUser> {
-    // Performance diagnostics - track DB query frequency
     const startTime = Date.now();
     const shortToken = authToken.substring(0, 6) + '...'; // Show only beginning for safety
     const callId = Math.random().toString(36).substring(2, 10);
     
-    console.log(`[DB-AUTH-${callId}] Looking up user by auth token (${shortToken}) at ${new Date().toISOString()}`);
-    // Get stack trace to identify caller
-    const stackTrace = new Error().stack;
-    console.log(`[DB-AUTH-${callId}] Called from:`, stackTrace);
+    // Check cache first
+    const cachedEntry = this.tokenCache.get(authToken);
+    if (cachedEntry && (startTime - cachedEntry.timestamp) < this.TOKEN_CACHE_TTL_MS) {
+      // Cache hit - use cached user
+      logger.debug(`[DB-AUTH-${callId}] Cache hit for token ${shortToken}`);
+      return cachedEntry.user;
+    }
+    
+    // Cache miss - perform database lookup
+    logger.debug(`[DB-AUTH-${callId}] Cache miss for token ${shortToken}, querying database`);
     
     try {
       const result = await this.pool.query(
@@ -70,16 +108,27 @@ export class QnaService {
         throw new Error('User not found by auth token');
       }
       
-      logger.info('User found by auth token', { 
-        userId: result.rows[0].id,
-        displayName: result.rows[0].display_name
+      // Map DB user to QnaUser
+      const user = this.mapDbUserToQnaUser(result.rows[0]);
+      
+      // Cache the result
+      this.tokenCache.set(authToken, {
+        user,
+        timestamp: Date.now()
       });
       
-      return this.mapDbUserToQnaUser(result.rows[0]);
+      logger.info('User found by auth token', { 
+        userId: user.id,
+        displayName: user.displayName,
+        fromCache: false,
+        queryTimeMs: Date.now() - startTime
+      });
+      
+      return user;
     } catch (error) {
       logger.error('Error looking up user by auth token', error);
       throw error;
-    }
+    }  
   }
 
   /**
