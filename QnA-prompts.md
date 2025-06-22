@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ETHCluj Conference Q&A System allows attendees to submit and upvote questions during conference sessions. Questions are displayed in descending order by votes, with the most popular questions at the top. The system updates in real-time and minimizes authentication requirements while preventing abuse.
+The ETHCluj Conference Q&A System allows attendees to submit and upvote questions during conference sessions. Questions are displayed in descending order by votes, with the most popular questions at the top. The system updates in real-time and minimizes authentication requirements.
 
 ## User Access Points
 
@@ -16,7 +16,7 @@ Attendees can access the Q&A system through two entry points:
 
 ### For Attendees
 1. View questions anonymously without authentication
-2. Ask questions (requires minimal authentication). Can delete and edit own questions.
+2. Ask questions (requires minimal authentication). Can delete own questions.
 3. Upvote questions (requires minimal authentication). Cannot upvote own questions.
 4. Withdraw votes from previously upvoted questions
 5. Vote for multiple questions within the same session
@@ -36,7 +36,7 @@ Attendees can access the Q&A system through two entry points:
    - Users are assigned random funny Ethereum-themed names (like Docker containers)
    - Users can customize their display name
    - Names persist across sessions
-4. **Anti-Sybil Protection**: Simple measures using browser fingerprinting or device identification. Note that IP-based identification won't be effective as most attendees will likely connect through the same venue WiFi network.
+4. **Anti-Sybil Protection**: Simple measures using browser fingerprinting. Note that IP-based identification won't be effective as most attendees will likely connect through the same venue WiFi network.
 
 ## UI/UX Requirements
 
@@ -49,7 +49,7 @@ Attendees can access the Q&A system through two entry points:
    - Sorted by vote count (descending)
    - Each question shows: vote count, question text, submitter name, timestamp
    - Visual indicator for questions the user has voted on
-   - Real-time updates via WebSockets
+   - Real-time updates via SSE
 
 3. **Question Input**:
    - Fixed at bottom of screen
@@ -89,7 +89,7 @@ Attendees can access the Q&A system through two entry points:
 
 ## Technical Requirements
 
-1. **Real-time Updates**: WebSocket implementation for immediate question and vote synchronization
+1. **Real-time Updates**: SSE implementation for immediate question and vote synchronization
 2. **Data Persistence**: Questions and votes should be stored permanently
 3. **Analytics**: Simple dashboard with basic statistics (questions per session, engagement metrics)
 

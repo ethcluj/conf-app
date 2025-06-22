@@ -82,4 +82,3 @@ Potential enhancements to the real-time system:
 1. Authentication for SSE connections
 2. Reconnection with backoff strategy for network interruptions
 3. Event replay for missed events
-4. WebSocket fallback for environments where SSE is not supported
