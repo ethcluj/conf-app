@@ -350,20 +350,80 @@ describe('QnA Integration Tests', () => {
       const leader1 = leaderboard.find(l => l.userId === user1.id);
       const leader2 = leaderboard.find(l => l.userId === user2.id);
       
-      // Check user1 score: 2 questions (3 points each) + 1 upvote = 7 points
+      // Check user1 score: 3 points for question with votes + 5 bonus points for top question in session = 8 points
       expect(leader1).toBeDefined();
       expect(leader1!.questionsAsked).toBe(2);
       expect(leader1!.upvotesReceived).toBe(1);
-      expect(leader1!.score).toBe(7); // 2*3 + 1
+      expect(leader1!.score).toBe(8); // 3 + 5 bonus points for top question
       
-      // Check user2 score: 1 question (3 points) + 1 upvote = 4 points
+      // Check user2 score: 3 points for question with votes + 0 bonus points = 3 points
       expect(leader2).toBeDefined();
       expect(leader2!.questionsAsked).toBe(1);
       expect(leader2!.upvotesReceived).toBe(1);
-      expect(leader2!.score).toBe(4); // 1*3 + 1
+      expect(leader2!.score).toBe(3); // 3 points for a question with votes
       
       // Check that the leaderboard is sorted by score
       expect(leaderboard[0].score).toBeGreaterThanOrEqual(leaderboard[1].score);
+    });
+    
+    it('should use creation time as tiebreaker for bonus points', async () => {
+      // Skip if database is not available
+      if (!dbAvailable) {
+        console.log('Skipping tiebreaker test as database is not available');
+        return;  
+      }
+      // Create users with unique emails to avoid conflicts with other tests
+      const user1 = await qnaService.getOrCreateUser('user-tie-test-1@example.com');
+      const user2 = await qnaService.getOrCreateUser('user-tie-test-2@example.com');
+      const voter1 = await qnaService.getOrCreateUser('voter-tie-test-1@example.com');
+      const voter2 = await qnaService.getOrCreateUser('voter-tie-test-2@example.com');
+      
+      // Use a unique session ID to isolate this test
+      const sessionId = 'tiebreaker-test-session-' + Date.now();
+      
+      // User 1 asks a question first
+      const q1 = await qnaService.addQuestion(sessionId, 'First Question', user1.id);
+      console.log('Created first question:', q1.id, 'by user:', user1.id);
+      
+      // Delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // User 2 asks a question later
+      const q2 = await qnaService.addQuestion(sessionId, 'Second Question', user2.id);
+      console.log('Created second question:', q2.id, 'by user:', user2.id);
+      
+      // Both questions get 1 vote each (creating a tie in votes)
+      await qnaService.toggleVote(q1.id, voter1.id); 
+      await qnaService.toggleVote(q2.id, voter2.id);
+      console.log('Added votes to both questions');
+      
+      // Reset the leaderboard cache to ensure fresh calculation
+      qnaService.resetLeaderboardCache();
+      
+      // Get leaderboard 
+      const leaderboard = await qnaService.getLeaderboard();
+      console.log('Leaderboard entries:', leaderboard.length);
+      console.log('User IDs in leaderboard:', leaderboard.map(l => l.userId));
+      
+      // Find our test users in the leaderboard
+      const leader1 = leaderboard.find(l => l.userId === user1.id);
+      const leader2 = leaderboard.find(l => l.userId === user2.id);
+      
+      // Make sure we found both users
+      expect(leader1).toBeDefined();
+      expect(leader2).toBeDefined();
+      
+      if (leader1 && leader2) {
+        // Both users should have 1 question with 1 vote (3 points)
+        expect(leader1.questionsAsked).toBe(1);
+        expect(leader1.upvotesReceived).toBe(1);
+        expect(leader2.questionsAsked).toBe(1);
+        expect(leader2.upvotesReceived).toBe(1);
+        
+        // User 1 should get the 5 bonus points because their question was created first
+        expect(leader1.score).toBe(8); // 3 + 5 bonus points
+        expect(leader2.score).toBe(3); // 3 points, no bonus
+      }
     });
   });
 });
