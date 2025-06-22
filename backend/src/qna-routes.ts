@@ -95,6 +95,13 @@ export function createQnaRoutes(pool: Pool): Router {
 
   // Get questions for a session
   router.get('/questions/:sessionId', async (req, res) => {
+    // Diagnostic logging - Add request ID and trace info
+    const requestId = Math.random().toString(36).substring(2, 10);
+    console.log(`[${new Date().toISOString()}] GET /questions/${req.params.sessionId} request started (ID: ${requestId})`);
+    console.log(`[${requestId}] Request source: ${req.get('referer') || 'unknown'}`);
+    
+    // Uncomment to get stack trace to identify what's triggering this request
+    // console.log(`[${requestId}] Stack trace:`, new Error().stack);
     try {
       const { sessionId } = req.params;
       const fingerprint = req.headers['x-fingerprint'] as string;
@@ -328,7 +335,14 @@ export function createQnaRoutes(pool: Pool): Router {
       if (authToken) {
         try {
           user = await qnaService.getUserByAuthToken(authToken);
-          logger.info('User found by auth token', { userId: user.id, displayName: user.displayName });
+          // Track unique requests to identify patterns
+      const requestKey = `${req.method}:${req.path}:${user.id}`;
+      logger.info('User found by auth token', { 
+        userId: user.id, 
+        displayName: user.displayName,
+        requestKey,
+        timestamp: new Date().toISOString()
+      });
         } catch (tokenError) {
           logger.error('Error finding user by auth token', tokenError);
           // Continue with fingerprint auth if token auth fails

@@ -49,7 +49,15 @@ export class QnaService {
    * Get a user by auth token
    */
   async getUserByAuthToken(authToken: string): Promise<QnaUser> {
-    logger.debug('Looking up user by auth token');
+    // Performance diagnostics - track DB query frequency
+    const startTime = Date.now();
+    const shortToken = authToken.substring(0, 6) + '...'; // Show only beginning for safety
+    const callId = Math.random().toString(36).substring(2, 10);
+    
+    console.log(`[DB-AUTH-${callId}] Looking up user by auth token (${shortToken}) at ${new Date().toISOString()}`);
+    // Get stack trace to identify caller
+    const stackTrace = new Error().stack;
+    console.log(`[DB-AUTH-${callId}] Called from:`, stackTrace);
     
     try {
       const result = await this.pool.query(
