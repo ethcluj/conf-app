@@ -1,0 +1,43 @@
+# QnA Performance Test Configuration
+
+# API Configuration
+api:
+  baseUrl: "https://app.ethcluj.org/api"
+  timeout: 1000  # Request timeout in ms
+
+# Test Parameters
+parameters:
+  questionsPerSession: 20
+  upvotesPerSession: 100
+  parallelSessions: 1
+  sessionPopulationTimeMinutes: 1
+  
+  # Session selection mode
+  # When set to true, the script will fetch all available sessions from the API
+  # and ignore the sessions list below
+  # When set to false, only the sessions explicitly listed below will be used
+  fetchAllSessions: true
+  
+# Session IDs to populate (the script will process them in order)
+sessions:
+  - id: "3"
+    name: "ariutokintumi: Meet the Ethereum Virtual Virtual Machine: EVVM"
+  # - id: "31" 
+  #   name: "Václav Pavlín: Let's put things off-chain"
+  # - id: "61"
+  #   name: "Georgy Sokolov: On-chain payments in real world: Are we there yet?"
+
+# Users for testing - each will run on a separate thread
+users:
+  - email: "alexandru.males@gmail.com"
+    displayName: "TestUser1"
+    authToken: "f15095ac7c26d40dde91e482182d1eb2639640b63ade3b56875f4ea0116d33c8"
+  - email: "alex@ethcluj.org"
+    displayName: "TestUser2"
+    authToken: "0da303448ed1fc8e6f5c2c43dcd010779dfb93a442dfc186031514a7ef170afa"
+  - email: "dappcoder@gmail.com"
+    displayName: "TestUser3"
+    authToken: "b4241d5ab42df416dcc66e7487ea212587dc735e7c1b3620190b7fb536a63189"
+  - email: "conference@ethcluj.org"
+    displayName: "TestUser4"
+    authToken: "dbfa40d2048fe14af1c32b13e9af824590ed340109b663b9f8af67643de9bc1f"
