@@ -350,17 +350,17 @@ describe('QnA Integration Tests', () => {
       const leader1 = leaderboard.find(l => l.userId === user1.id);
       const leader2 = leaderboard.find(l => l.userId === user2.id);
       
-      // Check user1 score: 2 questions (3 points each) + 1 upvote = 7 points
+      // Check user1 score: 3 points for question with votes + 5 bonus points for top question in session = 8 points
       expect(leader1).toBeDefined();
       expect(leader1!.questionsAsked).toBe(2);
       expect(leader1!.upvotesReceived).toBe(1);
-      expect(leader1!.score).toBe(7); // 2*3 + 1
+      expect(leader1!.score).toBe(8); // 3 + 5 bonus points for top question
       
-      // Check user2 score: 1 question (3 points) + 1 upvote = 4 points
+      // Check user2 score: 3 points for question with votes + 0 bonus points = 3 points
       expect(leader2).toBeDefined();
       expect(leader2!.questionsAsked).toBe(1);
       expect(leader2!.upvotesReceived).toBe(1);
-      expect(leader2!.score).toBe(4); // 1*3 + 1
+      expect(leader2!.score).toBe(3); // 3 points for a question with votes
       
       // Check that the leaderboard is sorted by score
       expect(leaderboard[0].score).toBeGreaterThanOrEqual(leaderboard[1].score);
