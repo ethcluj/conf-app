@@ -31,6 +31,20 @@ export function UnifiedPresenterView({
   initialMode = 'session',
   autoFullscreen = false 
 }: UnifiedPresenterViewProps) {
+  // Disable presenter view for break sessions (stage is 'NA')
+  if (initialSession.stage === 'NA') {
+    // Close the presenter view immediately for break sessions
+    setTimeout(() => onClose(), 0)
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold mb-4">Presenter View Not Available</h2>
+          <p className="mb-4">Presenter view is disabled for break sessions.</p>
+          <Button onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    )
+  }
   const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
