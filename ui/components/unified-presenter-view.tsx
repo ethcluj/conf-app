@@ -11,6 +11,7 @@ import { getQuestionsBySession, type QnaQuestion, type LeaderboardEntry } from "
 import * as QnaApi from "@/lib/qna-api"
 import { useSpeakers } from "@/hooks/use-speakers"
 import { QRCodeSVG } from "qrcode.react"
+import { fetchAllSessions } from "@/lib/data"
 
 // QR code configuration
 const QR_CODE_LEVEL = "H"; // High error correction level
@@ -25,7 +26,7 @@ interface UnifiedPresenterViewProps {
 }
 
 export function UnifiedPresenterView({ 
-  session, 
+  session: initialSession, 
   onClose, 
   initialMode = 'session',
   autoFullscreen = false 
@@ -38,8 +39,12 @@ export function UnifiedPresenterView({
   const [isLoading, setIsLoading] = useState(true)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [leaderboardLoading, setLeaderboardLoading] = useState(true)
+  const [sessionsOnSameStage, setSessionsOnSameStage] = useState<Session[]>([])
+  const [currentSessionIndex, setCurrentSessionIndex] = useState<number>(-1)
+  const [session, setSession] = useState<Session>(initialSession)
   const [lastLeaderboardUpdate, setLastLeaderboardUpdate] = useState<Date | null>(null)
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0)
+  const [showNavigation, setShowNavigation] = useState(false)
   
   // Get speakers data from API
   const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers()
@@ -62,6 +67,63 @@ export function UnifiedPresenterView({
     }
   }, [])
   
+  // Fetch sessions on the same stage as the current session
+  const fetchSessionsOnSameStage = useCallback(async () => {
+    try {
+      const allSessions = await fetchAllSessions();
+      
+      // Filter sessions that are on the same stage as the current session
+      const sameStageSessionsUnsorted = allSessions.filter(s => 
+        s.stage === session.stage && s.stage !== 'NA' // Exclude break sessions
+      );
+      
+      // Sort sessions by start time
+      const sameStageSessions = sameStageSessionsUnsorted.sort((a, b) => 
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
+      
+      setSessionsOnSameStage(sameStageSessions);
+      
+      // Find the index of the current session
+      const index = sameStageSessions.findIndex(s => s.id === session.id);
+      setCurrentSessionIndex(index);
+    } catch (error) {
+      console.error('Error fetching sessions on same stage:', error);
+    }
+  }, [session.id, session.stage]);
+  
+  // Switch to the previous session on the same stage
+  const navigateToPreviousSession = useCallback(() => {
+    if (currentSessionIndex > 0 && sessionsOnSameStage.length > 0) {
+      const previousSession = sessionsOnSameStage[currentSessionIndex - 1];
+      setSession(previousSession);
+      setCurrentSessionIndex(currentSessionIndex - 1);
+      
+      // Reset questions and other session-specific data
+      setQuestions([]);
+      setMode('session'); // Switch back to session mode when changing sessions
+      
+      // Update URL without navigating (for bookmarking purposes)
+      window.history.replaceState({}, '', `/session/${previousSession.id}`);
+    }
+  }, [currentSessionIndex, sessionsOnSameStage]);
+  
+  // Switch to the next session on the same stage
+  const navigateToNextSession = useCallback(() => {
+    if (currentSessionIndex < sessionsOnSameStage.length - 1 && sessionsOnSameStage.length > 0) {
+      const nextSession = sessionsOnSameStage[currentSessionIndex + 1];
+      setSession(nextSession);
+      setCurrentSessionIndex(currentSessionIndex + 1);
+      
+      // Reset questions and other session-specific data
+      setQuestions([]);
+      setMode('session'); // Switch back to session mode when changing sessions
+      
+      // Update URL without navigating (for bookmarking purposes)
+      window.history.replaceState({}, '', `/session/${nextSession.id}`);
+    }
+  }, [currentSessionIndex, sessionsOnSameStage]);
+
   // Fetch leaderboard data
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -80,9 +142,9 @@ export function UnifiedPresenterView({
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    // When not in fullscreen mode and dialog is showing
+    // If not in fullscreen mode, only handle Enter key to enter fullscreen
     if (!isFullscreen) {
-      // Enter key to enter fullscreen
+      // Enter key to enter fullscreen (no modifier keys required)
       if (event.key === 'Enter') {
         enterFullscreen()
         return
@@ -114,61 +176,72 @@ export function UnifiedPresenterView({
       
       // L key for leaderboard view
       if (event.key === 'l' || event.key === 'L') {
+        console.log('L key pressed, current mode:', mode)
+        
         if (mode === 'leaderboard') {
-          // If already in leaderboard mode, refresh the data
+          console.log('Already in leaderboard mode, refreshing data')
+          // Force refresh the leaderboard data
           fetchLeaderboard()
         } else {
-          // Otherwise switch to leaderboard mode
+          console.log('Switching to leaderboard mode')
+          // Switch to leaderboard mode
           setMode('leaderboard')
+        }
+        
+        // Always refresh on Shift+L regardless of mode
+        if (event.shiftKey) {
+          console.log('Shift+L pressed, forcing refresh')
+          fetchLeaderboard()
+        }
+      }
+      
+      // Left arrow key to navigate to previous session on the same stage
+      if (event.key === 'ArrowLeft') {
+        if (currentSessionIndex > 0) {
+          setShowNavigation(true) // Show navigation indicator
+          navigateToPreviousSession()
+        }
+      }
+      
+      // Right arrow key to navigate to next session on the same stage
+      if (event.key === 'ArrowRight') {
+        if (currentSessionIndex < sessionsOnSameStage.length - 1) {
+          setShowNavigation(true) // Show navigation indicator
+          navigateToNextSession()
         }
       }
       
       // Escape key handling is done by the browser for fullscreen
     }
-  }, [isFullscreen, enterFullscreen, onClose, mode, fetchLeaderboard])
+  }, [isFullscreen, enterFullscreen, onClose, setMode, fetchLeaderboard, currentSessionIndex, sessionsOnSameStage.length, navigateToPreviousSession, navigateToNextSession, setShowNavigation])
   
-  // Fetch questions for Q&A mode
-  useEffect(() => {
-    if (mode === 'qna') {
-      const fetchQuestions = async () => {
-        try {
-          setIsLoading(true)
-          // Get questions for this session
-          const sessionQuestions = await getQuestionsBySession(session.id)
-          
-          // Sort questions by votes (descending) and then by timestamp (newest first)
-          const sortedQuestions = [...sessionQuestions].sort((a, b) => {
-            if (b.votes !== a.votes) return b.votes - a.votes;
-            return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-          });
-          
-          setQuestions(sortedQuestions)
-        } catch (error) {
-          // Silent error handling in production
-        } finally {
-          setIsLoading(false)
-        }
-      }
-      
-      // Initial data fetch
-      fetchQuestions()
-    }
-  }, [mode, session.id])
-  
-  // This section was removed to fix duplicate declaration
-
   // Helper function to refresh all questions
   const refreshAllQuestions = useCallback(async () => {
     try {
       setIsLoading(true)
       const sessionQuestions = await getQuestionsBySession(session.id)
-      setQuestions(sessionQuestions)
-      setIsLoading(false)
+      
+      // Sort questions by votes (descending) and then by timestamp (newest first)
+      const sortedQuestions = [...sessionQuestions].sort((a, b) => {
+        if (b.votes !== a.votes) return b.votes - a.votes;
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+      
+      setQuestions(sortedQuestions)
     } catch (error) {
       // Silent error handling in production
+    } finally {
+      setIsLoading(false)
     }
   }, [session.id]);
-
+  
+  // Fetch questions for Q&A mode
+  useEffect(() => {
+    if (mode === 'qna') {
+      refreshAllQuestions();
+    }
+  }, [mode, session.id, refreshAllQuestions])
+  
   // Handle real-time question updates
   const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
     setQuestions(prevQuestions => {
@@ -258,6 +331,9 @@ export function UnifiedPresenterView({
   // Set up SSE connection for real-time updates
   useEffect(() => {
     if (mode === 'qna' && session.id) {
+      // Disconnect from any existing SSE connection first
+      disconnectFromSSE()
+      
       // Connect to SSE for this session
       connectToSSE(session.id)
       
@@ -274,8 +350,9 @@ export function UnifiedPresenterView({
     }
   }, [mode, session.id, handleQuestionAdded, handleQuestionDeleted, handleVoteUpdated, handleUserUpdated])
   
+  // Initial setup when component mounts
   useEffect(() => {
-    refreshAllQuestions();
+    fetchSessionsOnSameStage(); // Fetch sessions on the same stage
     fetchLeaderboard();
     setIsLoading(false);
     
@@ -285,7 +362,15 @@ export function UnifiedPresenterView({
     }, 60000); // 60 seconds
     
     return () => clearInterval(leaderboardInterval);
-  }, [refreshAllQuestions, fetchLeaderboard]);
+  }, [fetchLeaderboard, fetchSessionsOnSameStage]);
+  
+  // Handle session changes
+  useEffect(() => {
+    // When session changes, refresh questions if in QnA mode
+    if (mode === 'qna') {
+      refreshAllQuestions();
+    }
+  }, [session.id, mode, refreshAllQuestions]);
 
   useEffect(() => {
     // Add event listener for keyboard shortcuts
@@ -309,9 +394,28 @@ export function UnifiedPresenterView({
   }, [handleKeyDown, onClose])
   
   // Generate QR code URL for audience to join Q&A
+  // Update this whenever session changes
   const qrCodeUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/qna/${session.id}`
     : `/qna/${session.id}`
+    
+  // Session navigation status text
+  const sessionNavigationText = sessionsOnSameStage.length > 1 
+    ? `Session ${currentSessionIndex + 1} of ${sessionsOnSameStage.length} on ${getFullStageName(session.stage)}` 
+    : ""
+  
+  // Handle navigation visibility
+  useEffect(() => {
+    // Show navigation when session changes or component mounts
+    setShowNavigation(true)
+    
+    // Hide navigation after 3 seconds
+    const timer = setTimeout(() => {
+      setShowNavigation(false)
+    }, 3000)
+    
+    return () => clearTimeout(timer)
+  }, [session.id]) // Reset timer when session changes
   
   // If showing intro video
   if (mode === 'video') {
@@ -345,7 +449,24 @@ export function UnifiedPresenterView({
                 <Trophy className="h-12 w-12 text-yellow-500 mr-4" />
                 <h1 className="text-5xl font-bold">Q&A Leaderboard</h1>
               </div>
-              <p className="text-xl text-gray-300 mb-6">Top contributors from the audience</p>
+              <p className="text-xl text-gray-300 mb-4">Top contributors from the audience</p>
+              {/* Session navigation indicator for leaderboard mode */}
+              {sessionsOnSameStage.length > 1 && (
+                <div className={`absolute left-1/2 transform -translate-x-1/2 bottom-4 py-2 px-4 bg-gray-800 rounded-lg border border-gray-700 transition-opacity duration-500 ${showNavigation ? 'opacity-100' : 'opacity-0'}`}>
+                  <p className="text-sm text-gray-300">
+                    <span className="font-medium">{sessionNavigationText}</span>
+                    <br />
+                    <span className="text-xs">
+                      {currentSessionIndex > 0 && (
+                        <span className="mr-3"><span className="inline-block bg-gray-700 rounded px-1 mr-1">←</span> Previous session</span>
+                      )}
+                      {currentSessionIndex < sessionsOnSameStage.length - 1 && (
+                        <span><span className="inline-block bg-gray-700 rounded px-1 mr-1">→</span> Next session</span>
+                      )}
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
             
             {/* Leaderboard content */}
@@ -471,11 +592,30 @@ export function UnifiedPresenterView({
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-3">Q&A Session</h1>
               <h2 className="text-2xl mb-4">{session.title}</h2>
-              <p className="text-xl text-gray-300 mb-2">{getFullStageName(session.stage, session.title)}</p>
+              <p className="text-xl text-gray-300 mb-2">{getFullStageName(session.stage)}</p>
               <p className="text-xl text-red-500">
                 {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
                 {new Date(session.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </p>
+              {/* Session navigation indicator for QnA mode */}
+              {sessionsOnSameStage.length > 1 && (
+                <div 
+                  className={`absolute left-1/2 transform -translate-x-1/2 bottom-4 py-2 px-3 bg-gray-800 rounded-lg border border-gray-700 transition-opacity duration-500 ${showNavigation ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  <p className="text-sm text-gray-300">
+                    <span className="font-medium">{sessionNavigationText}</span>
+                    <br />
+                    <span className="text-xs">
+                      {currentSessionIndex > 0 && (
+                        <span className="mr-2"><span className="inline-block bg-gray-700 rounded px-1 mr-1">←</span> Previous</span>
+                      )}
+                      {currentSessionIndex < sessionsOnSameStage.length - 1 && (
+                        <span><span className="inline-block bg-gray-700 rounded px-1 mr-1">→</span> Next</span>
+                      )}
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
             
             {/* QR Code */}
@@ -549,7 +689,7 @@ export function UnifiedPresenterView({
           </div>
           
           {/* Bottom section - Logo and Speakers */}
-          <div className="flex-grow-0 flex justify-between pb-8">
+          <div className="flex-grow-0 flex justify-between pb-8 relative">
             {/* Akasha Logo - Bottom Left */}
             <div className="flex items-start">
               <div className="h-28 w-28 flex items-center justify-center">
@@ -562,35 +702,55 @@ export function UnifiedPresenterView({
             </div>
             
             {/* Speakers - Bottom Right */}
-            <div className="flex flex-row-reverse gap-6 items-start">
+            <div className="flex flex-row gap-6 justify-end items-start">
               {session.speakers && session.speakers.map((speaker, index) => (
                 !speaker.isMultiple && (
                   <div key={index} className="flex flex-col items-center">
-                    <Avatar className="mb-3 h-24 w-24 border-2 border-red-500">
+                    <Avatar className="mb-3 h-20 w-20 border-2 border-red-500">
                       {/* Try to find the speaker in our API data */}
                       {(() => {
                         const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
-                        const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image.replace("40&width=40", "200&width=200");
+                        const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image?.replace("40&width=40", "200&width=200");
                         return <AvatarImage src={speakerImage} alt={speaker.name} />;
                       })()}
-                      <AvatarFallback className="text-2xl">{speaker.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="text-xl">{speaker.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="text-xl font-medium text-white">{speaker.name}</span>
+                    <span className="text-lg font-medium text-white">{speaker.name}</span>
                     {speaker.title && <span className="text-sm text-gray-400 text-center">{speaker.title}</span>}
                   </div>
                 )
               ))}
               {session.speakers && session.speakers.some((speaker) => speaker.isMultiple) && (
                 <div className="flex flex-col items-center">
-                  <Avatar className="mb-3 h-24 w-24 border-2 border-red-500">
+                  <Avatar className="mb-3 h-20 w-20 border-2 border-red-500">
                     <AvatarImage src="/placeholder.svg?height=200&width=200" alt="Multiple Speakers" />
-                    <AvatarFallback className="text-2xl">MS</AvatarFallback>
+                    <AvatarFallback className="text-xl">MS</AvatarFallback>
                   </Avatar>
-                  <span className="text-xl font-medium text-white">Multiple Speakers</span>
+                  <span className="text-lg font-medium text-white">Multiple Speakers</span>
                   <span className="text-sm text-gray-400 text-center">Various Organizations</span>
                 </div>
               )}
             </div>
+            
+            {/* Session Navigation - Bottom Center, with fade effect */}
+            {sessionsOnSameStage.length > 1 && (
+              <div 
+                className={`absolute left-1/2 transform -translate-x-1/2 bottom-0 py-2 px-4 bg-gray-800/80 rounded-t-lg border border-gray-700 text-center transition-opacity duration-500 ${showNavigation ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <p className="text-base text-gray-200">
+                  <span className="font-medium">{sessionNavigationText}</span>
+                  <br />
+                  <span className="text-sm">
+                    {currentSessionIndex > 0 && (
+                      <span className="mr-4"><span className="inline-block bg-gray-700 rounded px-2 py-1 mr-1">←</span> Previous session</span>
+                    )}
+                    {currentSessionIndex < sessionsOnSameStage.length - 1 && (
+                      <span><span className="inline-block bg-gray-700 rounded px-2 py-1 mr-1">→</span> Next session</span>
+                    )}
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
