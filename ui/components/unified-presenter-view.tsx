@@ -62,6 +62,22 @@ export function UnifiedPresenterView({
     }
   }, [])
   
+  // Fetch leaderboard data
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      setLeaderboardLoading(true);
+      const data = await QnaApi.getLeaderboard();
+      setLeaderboard(data);
+      const now = new Date();
+      setLastLeaderboardUpdate(now);
+      setSecondsSinceUpdate(0);
+      setLeaderboardLoading(false);
+    } catch (error) {
+      // Silent error handling for production
+      setLeaderboardLoading(false);
+    }
+  }, [setLeaderboard, setLeaderboardLoading, setLastLeaderboardUpdate, setSecondsSinceUpdate]);
+
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // When not in fullscreen mode and dialog is showing
@@ -98,12 +114,18 @@ export function UnifiedPresenterView({
       
       // L key for leaderboard view
       if (event.key === 'l' || event.key === 'L') {
-        setMode('leaderboard')
+        if (mode === 'leaderboard') {
+          // If already in leaderboard mode, refresh the data
+          fetchLeaderboard()
+        } else {
+          // Otherwise switch to leaderboard mode
+          setMode('leaderboard')
+        }
       }
       
       // Escape key handling is done by the browser for fullscreen
     }
-  }, [isFullscreen, enterFullscreen, onClose])
+  }, [isFullscreen, enterFullscreen, onClose, mode, fetchLeaderboard])
   
   // Fetch questions for Q&A mode
   useEffect(() => {
@@ -133,39 +155,19 @@ export function UnifiedPresenterView({
     }
   }, [mode, session.id])
   
+  // This section was removed to fix duplicate declaration
+
   // Helper function to refresh all questions
   const refreshAllQuestions = useCallback(async () => {
     try {
-      // Get questions for this session
+      setIsLoading(true)
       const sessionQuestions = await getQuestionsBySession(session.id)
-      
-      // Sort questions by votes (descending) and then by timestamp (newest first)
-      const sortedQuestions = [...sessionQuestions].sort((a, b) => {
-        if (b.votes !== a.votes) return b.votes - a.votes;
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-      });
-      
-      setQuestions(sortedQuestions);
+      setQuestions(sessionQuestions)
+      setIsLoading(false)
     } catch (error) {
       // Silent error handling in production
     }
   }, [session.id]);
-
-  // Fetch leaderboard data
-  const fetchLeaderboard = useCallback(async () => {
-    try {
-      setLeaderboardLoading(true);
-      const data = await QnaApi.getLeaderboard();
-      setLeaderboard(data);
-      const now = new Date();
-      setLastLeaderboardUpdate(now);
-      setSecondsSinceUpdate(0);
-      setLeaderboardLoading(false);
-    } catch (error) {
-      // Silent error handling for production
-      setLeaderboardLoading(false);
-    }
-  }, []);
 
   // Handle real-time question updates
   const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
@@ -329,18 +331,12 @@ export function UnifiedPresenterView({
   
   // If showing leaderboard mode
   if (mode === 'leaderboard') {
+    // Only show top 10 entries
+    const topEntries = leaderboard.slice(0, 10);
+    const totalParticipants = leaderboard.length;
+    
     return (
       <div ref={containerRef} className="fixed inset-0 z-50 bg-[#0d1117] text-white">
-        <div className="absolute top-4 right-4 z-10">
-          <Button 
-            onClick={() => setMode('session')}
-            className="bg-[#21262d] hover:bg-[#30363d] p-2 rounded-md text-gray-300 hover:text-white"
-            size="icon"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </div>
-        
         <div className="container mx-auto px-4 py-6 flex flex-col h-screen">
           <div className="flex flex-col h-full">
             {/* Header */}
@@ -349,14 +345,7 @@ export function UnifiedPresenterView({
                 <Trophy className="h-12 w-12 text-yellow-500 mr-4" />
                 <h1 className="text-5xl font-bold">Q&A Leaderboard</h1>
               </div>
-              <p className="text-xl text-gray-300 mb-8">Top contributors from the audience</p>
-              
-              {/* Last updated indicator */}
-              {lastLeaderboardUpdate && (
-                <p className="text-lg text-gray-400">
-                  Updated {secondsSinceUpdate} seconds ago
-                </p>
-              )}
+              <p className="text-xl text-gray-300 mb-6">Top contributors from the audience</p>
             </div>
             
             {/* Leaderboard content */}
@@ -369,7 +358,7 @@ export function UnifiedPresenterView({
                 ) : (
                   <div className="bg-[#161b22] rounded-lg overflow-hidden">
                     {/* Header row */}
-                    <div className="grid grid-cols-12 gap-2 p-2 bg-[#21262d] text-sm font-bold">
+                    <div className="grid grid-cols-12 gap-2 p-3 bg-[#21262d] text-sm font-bold">
                       <div className="col-span-1 text-center">#</div>
                       <div className="col-span-4">Participant</div>
                       <div className="col-span-3 text-center">Questions</div>
@@ -378,15 +367,15 @@ export function UnifiedPresenterView({
                     </div>
                     
                     {/* Leaderboard entries */}
-                    {leaderboard.length === 0 ? (
+                    {topEntries.length === 0 ? (
                       <div className="py-12 text-center text-gray-400 text-xl">
                         No data available yet
                       </div>
                     ) : (
-                      leaderboard.map((entry: LeaderboardEntry, index: number) => (
+                      topEntries.map((entry: LeaderboardEntry, index: number) => (
                         <div 
                           key={entry.userId}
-                          className={`grid grid-cols-12 gap-2 py-2 px-2 ${index % 2 === 0 ? 'bg-[#161b22]' : 'bg-[#1c2129]'} ${index < 3 ? 'border-l-4' : ''} ${
+                          className={`grid grid-cols-12 gap-2 py-3 px-2 ${index % 2 === 0 ? 'bg-[#161b22]' : 'bg-[#1c2129]'} ${index < 3 ? 'border-l-4' : ''} ${
                             index === 0 ? 'border-yellow-500' : 
                             index === 1 ? 'border-gray-400' : 
                             index === 2 ? 'border-amber-700' : ''
@@ -402,16 +391,21 @@ export function UnifiedPresenterView({
                         </div>
                       ))
                     )}
+                    
+                    {/* Total participants count */}
+                    {totalParticipants > 0 && (
+                      <div className="text-right p-3 text-gray-400 bg-[#21262d]">
+                        Total participants: {totalParticipants}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
             
-            {/* Bottom section with note and scoring explanation */}
-            <div className="flex-grow-0 flex justify-center items-center py-8">
+            {/* Bottom section with scoring explanation */}
+            <div className="flex-grow-0 flex justify-center items-center py-6">
               <div className="text-center">
-                <div className="text-xl text-gray-300 mb-4">Join the conversation and ask questions to participate in the leaderboard</div>
-                
                 <div className="text-sm text-gray-400">
                   <p className="mb-1">• Each question with at least 1 vote: 3 points</p>
                   <p className="mb-1">• Each additional vote: 1 point</p>
