@@ -725,7 +725,7 @@ export function UnifiedPresenterView({
                       {(() => {
                         const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
                         const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image?.replace("40&width=40", "200&width=200");
-                        return <AvatarImage src={speakerImage} alt={speaker.name} />;
+                        return <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />;
                       })()}
                       <AvatarFallback className="text-xl">{speaker.name.charAt(0)}</AvatarFallback>
                     </Avatar>
@@ -737,7 +737,7 @@ export function UnifiedPresenterView({
               {session.speakers && session.speakers.some((speaker) => speaker.isMultiple) && (
                 <div className="flex flex-col items-center">
                   <Avatar className="mb-3 h-20 w-20 border-2 border-red-500">
-                    <AvatarImage src="/placeholder.svg?height=200&width=200" alt="Multiple Speakers" />
+                    <AvatarImage src="/placeholder.svg?height=200&width=200" alt="Multiple Speakers" speakerName="Multiple Speakers" />
                     <AvatarFallback className="text-xl">MS</AvatarFallback>
                   </Avatar>
                   <span className="text-lg font-medium text-white">Multiple Speakers</span>

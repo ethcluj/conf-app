@@ -32,7 +32,13 @@ const AvatarImage = React.forwardRef<
   const CENTER_FOCUSED_SPEAKERS = [
     "George Loukovitis",
     "Anders Holmbjerg Kristiansen",
-    "Luis"
+    "Luis",
+    "Joao Alves",
+    "Liana Toderean",
+    "Robert Benedek",
+    "Bogdan Arsene",
+    "Alex Gazdac",
+    // "Alena Yudina",
   ];
   
   // Determine image positioning based on speaker name
