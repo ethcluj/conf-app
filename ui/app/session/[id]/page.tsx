@@ -265,23 +265,24 @@ export default function SessionDetails() {
           <div className="mb-8">
             <h3 className="mb-4 text-xl font-semibold">Speakers</h3>
             <div className="flex flex-wrap gap-6">
-              {session.speakers.map(
-                (speaker, index) =>
-                  !speaker.isMultiple && (
-                    <div key={index} className="flex flex-col items-center mb-2" style={{ minWidth: '80px', maxWidth: '120px' }}>
-                      <Avatar className="mb-2 h-16 w-16">
-                        {/* Try to find the speaker in our API data */}
-                        {(() => {
-                          const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
-                          const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image.replace("40&width=40", "64&width=64");
-                          return <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />;
-                        })()}
-                        <AvatarFallback>{speaker.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium text-center">{speaker.name}</span>
-                      {speaker.title && <span className="text-xs text-gray-400 text-center">{speaker.title}</span>}
-                    </div>
-                  )
+              {!session.speakers.some((speaker) => speaker.isMultiple) && session.speakers.map((speaker) => 
+                <Link 
+                  key={speaker.name} 
+                  href={`/speaker/${encodeURIComponent(speaker.name)}?sessionId=${session.id}`}
+                  className="flex flex-col items-center mb-2 hover:opacity-80 transition-opacity" 
+                  style={{ minWidth: '80px', maxWidth: '120px' }}
+                >
+                  <Avatar className="mb-2 h-16 w-16 cursor-pointer hover:border-2 hover:border-red-500 transition-colors">
+                    {(() => {
+                      const apiSpeaker = apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase());
+                      const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image.replace("40&width=40", "64&width=64");
+                      return <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />;
+                    })()}
+                    <AvatarFallback>{speaker.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium text-center">{speaker.name}</span>
+                  {speaker.title && <span className="text-xs text-gray-400 text-center">{speaker.title}</span>}
+                </Link>
               )}
               {session.speakers.some((speaker) => speaker.isMultiple) && (
                 <div className="flex flex-col items-center mb-2" style={{ minWidth: '80px', maxWidth: '120px' }}>

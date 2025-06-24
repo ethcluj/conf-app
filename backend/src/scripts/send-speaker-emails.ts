@@ -719,7 +719,7 @@ async function sendSpeakerEmails(
             await transporter.sendMail({
               from: process.env.EMAIL_FROM || '"ETHCluj Conference" <noreply@ethcluj.org>',
               to: testEmailAddress!,
-              subject: `[TEST] Your ETHCluj Conference Sessions Information - ${speaker.name}`,
+              subject: `[TEST] [UPDATE] Your ETHCluj Conference Sessions Information - ${speaker.name}`,
               html: emailContent
             });
             
@@ -727,7 +727,7 @@ async function sendSpeakerEmails(
           } else {
             // Log the test email content
             console.log(`\n\n=== TEST EMAIL for ${speaker.name} (to: ${testEmailAddress}) ===\n`);
-            console.log(`Subject: Your ETHCluj Conference Sessions Information`);
+            console.log(`Subject: [UPDATE] Your ETHCluj Conference Sessions Information`);
             console.log(`Sessions included: ${sessions.map(s => s.title).join(', ')}`);
             
             // Save the email to a file for inspection
@@ -754,7 +754,7 @@ async function sendSpeakerEmails(
         await transporter.sendMail({
           from: process.env.EMAIL_FROM || '"ETHCluj Conference" <noreply@ethcluj.org>',
           to: actualRecipient,
-          subject: 'Your ETHCluj Conference Sessions Information',
+          subject: '[UPDATE] Your ETHCluj Conference Sessions Information',
           html: emailContent
         });
         
@@ -767,7 +767,7 @@ async function sendSpeakerEmails(
       } else {
         // Log the email content for testing
         console.log(`\n\n=== TEST EMAIL for ${speaker.name} (to: ${recipient}) ===\n`);
-        console.log(`Subject: Your ETHCluj Conference Sessions Information`);
+        console.log(`Subject: [UPDATE] Your ETHCluj Conference Sessions Information`);
         console.log(`Sessions included: ${sessions.map(s => s.title).join(', ')}`);
         
         // Save the email to a file for inspection in test mode
