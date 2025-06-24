@@ -39,6 +39,7 @@ const AvatarImage = React.forwardRef<
     "Bogdan Arsene",
     "Alex Gazdac",
     // "Alena Yudina",
+    "Maria Yudina"
   ];
   
   // Determine image positioning based on speaker name
