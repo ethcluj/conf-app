@@ -93,34 +93,26 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
 
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          {session.speakers.length > 2 ? (
-            <div className="flex -space-x-2">
-              {[...Array(3)].map((_, i) => (
+          <div className="flex -space-x-2">
+            {session.speakers.map((speaker, i) => {
+              // Skip multiple speakers placeholder
+              if (speaker.isMultiple) return null;
+              
+              // Try to find the speaker in our API data
+              // Make sure apiSpeakers is an array before using find
+              const apiSpeaker = Array.isArray(apiSpeakers) 
+                ? apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase())
+                : undefined;
+              const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image;
+              
+              return (
                 <Avatar key={i} className="h-6 w-6 border border-[#161b22]">
-                  <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Speaker" />
-                  <AvatarFallback>S</AvatarFallback>
+                  <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />
+                  <AvatarFallback>{speaker.name[0]}</AvatarFallback>
                 </Avatar>
-              ))}
-            </div>
-          ) : (
-            <div className="flex -space-x-2">
-              {session.speakers.map((speaker, i) => {
-                // Try to find the speaker in our API data
-                // Make sure apiSpeakers is an array before using find
-                const apiSpeaker = Array.isArray(apiSpeakers) 
-                  ? apiSpeakers.find((s) => s.name.toLowerCase() === speaker.name.toLowerCase())
-                  : undefined;
-                const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image;
-                
-                return (
-                  <Avatar key={i} className="h-6 w-6 border border-[#161b22]">
-                    <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />
-                    <AvatarFallback>{speaker.name[0]}</AvatarFallback>
-                  </Avatar>
-                );
-              })}
-            </div>
-          )}
+              );
+            })}
+          </div>
           <span className="ml-2 text-sm text-gray-400">
             {session.speakers.length === 1 && !session.speakers[0].isMultiple
               ? session.speakers[0].name
