@@ -1,12 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { type Session, formatSessionTime, getFullStageName } from "@/lib/data"
 import { isSessionPast, isSessionActive } from "@/lib/time-utils"
-import { useSpeakers } from "@/hooks/use-speakers"
+import { useSpeakers, type Speaker } from "@/hooks/use-speakers"
 import { SessionStatus } from "@/components/session-status"
+import { SpeakerDetails } from "@/components/speaker-details"
 
 interface SessionCardProps {
   session: Session
@@ -17,6 +19,8 @@ interface SessionCardProps {
 
 export function SessionCard({ session, onClick, onToggleFavorite, isActive: propIsActive }: SessionCardProps) {
   const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers();
+  const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null);
+  const [showSpeakerDetails, setShowSpeakerDetails] = useState(false);
   
   // Map level to color if levelColor is not provided
   if (!session.levelColor && session.level) {
@@ -105,8 +109,24 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
                 : undefined;
               const speakerImage = apiSpeaker ? apiSpeaker.photo : speaker.image;
               
+              // Handle speaker click
+              const handleSpeakerClick = (e: React.MouseEvent) => {
+                e.stopPropagation(); // Prevent session card click
+                if (apiSpeaker) {
+                  setSelectedSpeaker(apiSpeaker);
+                  setShowSpeakerDetails(true);
+                }
+              };
+              
               return (
-                <Avatar key={i} className="h-6 w-6 border border-[#161b22]">
+                <Avatar 
+                  key={i} 
+                  className={cn(
+                    "h-6 w-6 border border-[#161b22]", 
+                    apiSpeaker ? "cursor-pointer hover:border-red-500 transition-colors" : ""
+                  )}
+                  onClick={apiSpeaker ? handleSpeakerClick : undefined}
+                >
                   <AvatarImage src={speakerImage} alt={speaker.name} speakerName={speaker.name} />
                   <AvatarFallback>{speaker.name[0]}</AvatarFallback>
                 </Avatar>
@@ -122,7 +142,13 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
 
         <div className={cn("rounded-md px-2 py-1 text-xs font-medium", getLevelBgColor())}>{session.level}</div>
       </div>
+
+      {/* Speaker Details Dialog */}
+      <SpeakerDetails
+        speaker={selectedSpeaker}
+        isOpen={showSpeakerDetails}
+        onClose={() => setShowSpeakerDetails(false)}
+      />
     </div>
   )
 }
-
