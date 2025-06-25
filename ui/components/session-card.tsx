@@ -136,7 +136,7 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
           <span className="ml-2 text-sm text-gray-400">
             {session.speakers.length === 1 && !session.speakers[0].isMultiple
               ? session.speakers[0].name
-              : "Multiple speakers"}
+              : `${session.speakers.length} speakers`}
           </span>
         </div>
 

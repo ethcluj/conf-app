@@ -101,16 +101,17 @@ export function isSessionFuture(session: { startTime: Date }): boolean {
  * QnA is available 5 minutes before the session starts, during the session, and 5 minutes after it ends
  */
 export function isQnAAvailable(session: { startTime: Date; endTime: Date }): boolean {
-  const now = getCurrentTime();
-  const fiveMinutesMs = 5 * 60 * 1000; // 5 minutes in milliseconds
+  // const now = getCurrentTime();
+  // const fiveMinutesMs = 5 * 60 * 1000; // 5 minutes in milliseconds
   
-  // Available 5 minutes before session starts
-  const qnaStartTime = new Date(session.startTime.getTime() - fiveMinutesMs);
+  // // Available 5 minutes before session starts
+  // const qnaStartTime = new Date(session.startTime.getTime() - fiveMinutesMs);
   
-  // Available until 5 minutes after session ends
-  const qnaEndTime = new Date(session.endTime.getTime() + fiveMinutesMs);
+  // // Available until 5 minutes after session ends
+  // const qnaEndTime = new Date(session.endTime.getTime() + fiveMinutesMs);
   
-  return now >= qnaStartTime && now <= qnaEndTime;
+  // return now >= qnaStartTime && now <= qnaEndTime;
+  return true;
 }
 
 /**
