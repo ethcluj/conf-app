@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Star, Bell, Trophy } from "lucide-react"
+import { Home, Star, Info, Trophy } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -25,9 +25,9 @@ export function BottomNavigation() {
       icon: Trophy,
     },
     {
-      name: "Notifications",
-      href: "/notifications",
-      icon: Bell,
+      name: "Info",
+      href: "/info",
+      icon: Info,
     },
   ]
 
