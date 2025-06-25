@@ -87,7 +87,7 @@ export function QnaQuestionInput({
   const isOverLimit = remainingChars < 0
   
   return (
-    <div className="p-4">
+    <div className="fixed bottom-14 left-0 right-0 bg-[#0d1117] border-t border-[#30363d] p-4 z-10">
       <QnaLogoutModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
@@ -97,7 +97,7 @@ export function QnaQuestionInput({
           setIsLogoutModalOpen(false);
         }}
       />
-      <div className="container mx-auto max-w-md">
+      <div className="container mx-auto max-w-md pb-safe">
         {isAuthenticated && (
           <div className="flex items-center gap-2 mb-2">
             {isEditingName ? (
@@ -133,8 +133,8 @@ export function QnaQuestionInput({
               </div>
             ) : (
               <div className="flex items-center w-full">
-                <div className="text-sm text-gray-400 font-medium truncate flex-1 flex items-center">
-                  {user.displayName}
+                <div className="text-sm font-medium truncate flex-1 flex items-center">
+                  <span className="text-gray-400">You:&nbsp;&nbsp;</span><span className="text-red-500">{user.displayName}</span>
                   <button
                     onClick={() => setIsEditingName(true)}
                     className="text-gray-400 hover:text-white p-1 ml-1"
@@ -161,7 +161,7 @@ export function QnaQuestionInput({
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder={isAuthenticated ? "Ask a question..." : randomPlaceholder}
-            className="flex-1 bg-[#0d1117] text-white rounded-md p-3 outline-none border border-[#30363d] focus:border-red-600 text-sm resize-none"
+            className="flex-1 bg-[#0d1117] text-white rounded-md p-3 outline-none border border-[#30363d] focus:border-red-600 text-base resize-none"
             rows={2}
             maxLength={maxLength}
             disabled={isSubmitting}

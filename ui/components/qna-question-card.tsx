@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronUp, Trash2 } from "lucide-react"
+import { ThumbsUp, Trash2, Ban } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { type QnaQuestion, formatRelativeTime } from "@/lib/qna-data"
@@ -22,6 +22,11 @@ export function QnaQuestionCard({ question, onVote, isAuthenticated, onAuthReque
   const isOwnQuestion = currentUserId && question.authorId === currentUserId
   
   const handleVoteClick = async () => {
+    // Prevent voting on own questions
+    if (isOwnQuestion) {
+      return
+    }
+    
     if (!isAuthenticated) {
       onAuthRequest?.()
       return
@@ -96,10 +101,14 @@ export function QnaQuestionCard({ question, onVote, isAuthenticated, onAuthReque
               : "bg-[#21262d] text-gray-300 hover:bg-[#30363d]"
           )}
         >
-          <ChevronUp className={cn(
-            "h-4 w-4 mb-1",
-            isVoting && "animate-pulse"
-          )} />
+          {isOwnQuestion ? (
+            <Ban className="h-4 w-4 mb-1 text-gray-500" />
+          ) : (
+            <ThumbsUp className={cn(
+              "h-4 w-4 mb-1",
+              isVoting && "animate-pulse"
+            )} />
+          )}
           <span className="text-sm font-semibold">{question.votes}</span>
         </button>
         
