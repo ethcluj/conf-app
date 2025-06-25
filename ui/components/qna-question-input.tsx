@@ -87,7 +87,7 @@ export function QnaQuestionInput({
   const isOverLimit = remainingChars < 0
   
   return (
-    <div className="fixed bottom-14 left-0 right-0 bg-[#0d1117] border-t border-[#30363d] p-4 z-10">
+    <div className="p-4">
       <QnaLogoutModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
@@ -97,7 +97,7 @@ export function QnaQuestionInput({
           setIsLogoutModalOpen(false);
         }}
       />
-      <div className="container mx-auto max-w-md pb-safe">
+      <div className="container mx-auto max-w-md">
         {isAuthenticated && (
           <div className="flex items-center gap-2 mb-2">
             {isEditingName ? (
