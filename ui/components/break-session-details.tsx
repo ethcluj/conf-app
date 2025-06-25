@@ -34,7 +34,7 @@ export function BreakSessionDetails({ session }: BreakSessionDetailsProps) {
       }
     } else {
       return {
-        message: "Break time. Enjoy!",
+        message: "@Cluj Arena - VIP Lounge!",
         icon: "✨"
       }
     }

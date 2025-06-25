@@ -133,8 +133,8 @@ export function QnaQuestionInput({
               </div>
             ) : (
               <div className="flex items-center w-full">
-                <div className="text-sm text-gray-400 font-medium truncate flex-1 flex items-center">
-                  {user.displayName}
+                <div className="text-sm font-medium truncate flex-1 flex items-center">
+                  <span className="text-gray-400">You:&nbsp;&nbsp;</span><span className="text-red-500">{user.displayName}</span>
                   <button
                     onClick={() => setIsEditingName(true)}
                     className="text-gray-400 hover:text-white p-1 ml-1"
