@@ -9,7 +9,10 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
   title: "ETHCluj 2025",
   description: "Ethereum Conference Schedule",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/favicon.png'
+  }
 }
 
 export default function RootLayout({
