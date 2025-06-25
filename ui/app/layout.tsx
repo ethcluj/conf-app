@@ -8,8 +8,36 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "ETHCluj 2025",
-  description: "Ethereum Conference Schedule",
-    generator: 'v0.dev'
+  description: "Conference Schedule (June 26-28)",
+  generator: 'dappcoder.org',
+  icons: {
+    icon: '/favicon.png'
+  },
+  // Open Graph / Facebook
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://app.ethcluj.org',
+    siteName: 'ETHCluj 2025',
+    title: 'ETHCluj 2025',
+    description: 'Conference Schedule (June 26-28)',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'ETHCluj 2025',
+      },
+    ],
+  },
+  // Twitter
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ETHCluj 2025',
+    description: 'Conference Schedule (June 26-28)',
+    images: ['/og-image.png'],
+    creator: '@ethcluj',
+  },
 }
 
 export default function RootLayout({
