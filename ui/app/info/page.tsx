@@ -17,20 +17,38 @@ export default function InfoPage() {
           <span role="img" aria-label="wave" className="text-2xl">👋</span>
           <h2 className="text-xl font-semibold">Welcome!</h2>
         </div>
-        <p className="text-gray-300">Have a great experience and take the opportunity to connect with others.</p>
+        <p className="text-gray-300">Have a great experience and take the opportunity to connect with others!</p>
       </Card>
       
-      {/* Venue Access */}
+      {/* Venue */}
       <Card className="p-4 mb-6">
         <div className="flex items-center gap-2 mb-2">
           <span role="img" aria-label="building" className="text-2xl">🏢</span>
-          <h2 className="text-xl font-semibold">Venue Access Times</h2>
+          <h2 className="text-xl font-semibold">Venue</h2>
         </div>
-        <ul className="space-y-2 text-gray-300">
-          <li><span className="font-medium">Thursday:</span> 1:00 PM - 6:00 PM</li>
-          <li><span className="font-medium">Friday:</span> 10:00 AM - 6:00 PM</li>
-          <li><span className="font-medium">Saturday:</span> 10:00 AM - 5:00 PM</li>
-        </ul>
+        
+        {/* Location */}
+        <div className="mb-4">
+          <h3 className="text-base font-medium mb-2">Location</h3>
+          <Link 
+            href="https://maps.app.goo.gl/hN6hF8dKm7snhmxj6" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center text-gray-300 hover:text-white transition-colors">
+            <span className="mr-1">Str. Baritiu nr. 4, Hub UTCN, Cluj-Napoca</span>
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
+        
+        {/* Access Times */}
+        <div>
+          <h3 className="text-base font-medium mb-2">Access Times</h3>
+          <ul className="space-y-2 text-gray-300">
+            <li><span className="font-medium">Thursday:</span> 1:00 PM - 7:00 PM</li>
+            <li><span className="font-medium">Friday:</span> 10:00 AM - 7:00 PM</li>
+            <li><span className="font-medium">Saturday:</span> 10:00 AM - 6:00 PM</li>
+          </ul>
+        </div>
       </Card>
       
       {/* Rules */}
