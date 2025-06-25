@@ -23,7 +23,7 @@ export const metadata = {
     description: 'Conference Schedule (June 26-28)',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://app.ethcluj.org/og-image.png',
         width: 1200,
         height: 630,
         alt: 'ETHCluj 2025',
@@ -35,8 +35,9 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'ETHCluj 2025',
     description: 'Conference Schedule (June 26-28)',
-    images: ['/og-image.png'],
+    images: ['https://app.ethcluj.org/og-image.png'],
     creator: '@ethcluj',
+    site: '@ethcluj',
   },
 }
 
