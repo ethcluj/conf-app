@@ -66,16 +66,16 @@ export default function SpeakerDetails() {
     if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
       return (
         <div className="flex items-center gap-1">
-          <XLogo className="h-5 w-5" />
+          <XLogo className="h-6 w-6" />
 
         </div>
       )
     } else if (lowerUrl.includes('linkedin.com')) {
-      return <Linkedin className="h-5 w-5" />
+      return <Linkedin className="h-6 w-6" />
     } else if (lowerUrl.includes('github.com')) {
-      return <Github className="h-5 w-5" />
+      return <Github className="h-6 w-6" />
     } else {
-      return <Globe className="h-5 w-5" />
+      return <Globe className="h-6 w-6" />
     }
   }
 
@@ -134,14 +134,14 @@ export default function SpeakerDetails() {
         <div className="pt-20">
           {/* Speaker Profile Header */}
           <div className="mb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-5">
               <h2 className="text-2xl font-bold leading-tight">{speaker.name}</h2>
               {speaker.social && (
                 <a 
                   href={speaker.social} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors"
+                  className="flex items-center text-red-400 hover:text-red-300 transition-colors"
                 >
                   {getSocialIcon(speaker.social)}
                 </a>
