@@ -338,7 +338,7 @@ export default function QnaPage() {
       {/* Chat-like interface with fixed header and footer */}
       <div className="flex flex-col h-[calc(100vh-64px)] pt-16">
         {/* Messages area with auto scroll */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 pb-40">
+        <div className="flex-1 overflow-y-auto px-4 py-6">
           <div className="container mx-auto max-w-md">
             {questions.length > 0 ? (
               <div className="space-y-4">
