@@ -72,10 +72,12 @@ function parseMockTimeParam(timeParam: string): Date {
 
 /**
  * Check if a session is currently active based on its start and end times
+ * A session is considered active if the current time is after or equal to the start time
+ * AND before (but not equal to) the end time
  */
 export function isSessionActive(session: { startTime: Date; endTime: Date }): boolean {
   const now = getCurrentTime();
-  return now >= session.startTime && now <= session.endTime;
+  return now >= session.startTime && now < session.endTime;
 }
 
 /**

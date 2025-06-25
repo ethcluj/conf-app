@@ -196,24 +196,31 @@ export default function ConferenceSchedule() {
           ) : (
           <div className="space-y-4 pb-20 pt-4">
             {sortedSessions.length > 0 ? (
-              sortedSessions.map((session) => (
-                <div key={session.id} ref={isSessionActive(session) ? currentSessionRef : undefined}>
-                  {session.stage === 'NA' ? (
-                    <BreakSessionCard
-                      session={session}
-                      onClick={() => handleSessionClick(session.id)}
-                      isActive={isSessionActive(session)}
-                    />
-                  ) : (
-                    <SessionCard
-                      session={session}
-                      onClick={() => handleSessionClick(session.id)}
-                      onToggleFavorite={handleToggleFavorite}
-                      isActive={isSessionActive(session)}
-                    />
-                  )}
-                </div>
-              ))
+              sortedSessions.map((session, index) => {
+                // Find the first active session to assign the ref
+                const isActive = isSessionActive(session);
+                const isFirstActive = isActive && 
+                  sortedSessions.findIndex(s => isSessionActive(s)) === index;
+                  
+                return (
+                  <div key={session.id} ref={isFirstActive ? currentSessionRef : undefined}>
+                    {session.stage === 'NA' ? (
+                      <BreakSessionCard
+                        session={session}
+                        onClick={() => handleSessionClick(session.id)}
+                        isActive={isActive}
+                      />
+                    ) : (
+                      <SessionCard
+                        session={session}
+                        onClick={() => handleSessionClick(session.id)}
+                        onToggleFavorite={handleToggleFavorite}
+                        isActive={isActive}
+                      />
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <div className="text-center py-12">
                 <p className="text-gray-400">No sessions found for this day and filter</p>
