@@ -3,6 +3,7 @@ import "./globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { BottomNavigation } from "@/components/bottom-navigation"
+import { PwaInstaller } from "@/components/pwa-installer"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -10,8 +11,16 @@ export const metadata = {
   title: "ETHCluj 2025",
   description: "Conference Schedule (June 26-28)",
   generator: 'dappcoder.org',
+  manifest: '/manifest.json',
+  themeColor: '#0d1117',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'ETHCluj 2025',
+  },
   icons: {
-    icon: '/favicon.png'
+    icon: '/favicon.png',
+    apple: '/icons/icon-192x192.png',
   },
   // Open Graph / Facebook
   openGraph: {
@@ -50,10 +59,12 @@ export default function RootLayout({
     <html lang="en" className="dark" style={{ colorScheme: 'dark' }}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <script src="/pwa-register.js" defer></script>
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
+          <PwaInstaller />
           <BottomNavigation />
         </ThemeProvider>
       </body>
