@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Video, MessageCircle, ArrowLeft, ArrowRight, Maximize, Trophy } from "lucide-react"
-import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onUserUpdated, onVoteUpdated } from "@/lib/sse-client"
+import { connectToSSE, disconnectFromSSE, onQuestionAdded, onQuestionDeleted, onUserUpdated, onVoteUpdated, offQuestionAdded, offQuestionDeleted, offVoteUpdated, offUserUpdated } from "@/lib/sse-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Session, getFullStageName } from "@/lib/data"
@@ -109,6 +109,11 @@ export function UnifiedPresenterView({
   // Switch to the previous session on the same stage
   const navigateToPreviousSession = useCallback(() => {
     if (currentSessionIndex > 0 && sessionsOnSameStage.length > 0) {
+      // Disconnect from SSE before changing sessions
+      if (mode === 'qna') {
+        disconnectFromSSE();
+      }
+      
       const previousSession = sessionsOnSameStage[currentSessionIndex - 1];
       setSession(previousSession);
       setCurrentSessionIndex(currentSessionIndex - 1);
@@ -120,11 +125,16 @@ export function UnifiedPresenterView({
       // Update URL without navigating (for bookmarking purposes)
       window.history.replaceState({}, '', `/session/${previousSession.id}`);
     }
-  }, [currentSessionIndex, sessionsOnSameStage]);
+  }, [currentSessionIndex, sessionsOnSameStage, mode]);
   
   // Switch to the next session on the same stage
   const navigateToNextSession = useCallback(() => {
     if (currentSessionIndex < sessionsOnSameStage.length - 1 && sessionsOnSameStage.length > 0) {
+      // Disconnect from SSE before changing sessions
+      if (mode === 'qna') {
+        disconnectFromSSE();
+      }
+      
       const nextSession = sessionsOnSameStage[currentSessionIndex + 1];
       setSession(nextSession);
       setCurrentSessionIndex(currentSessionIndex + 1);
@@ -136,7 +146,7 @@ export function UnifiedPresenterView({
       // Update URL without navigating (for bookmarking purposes)
       window.history.replaceState({}, '', `/session/${nextSession.id}`);
     }
-  }, [currentSessionIndex, sessionsOnSameStage]);
+  }, [currentSessionIndex, sessionsOnSameStage, mode]);
 
   // Fetch leaderboard data
   const fetchLeaderboard = useCallback(async () => {
@@ -231,21 +241,30 @@ export function UnifiedPresenterView({
   
   // Helper function to refresh all questions
   const refreshAllQuestions = useCallback(async () => {
+    // Prevent refreshing if component is unmounted or session has changed
+    const currentSessionId = session.id;
+    
     try {
       setIsLoading(true)
-      const sessionQuestions = await getQuestionsBySession(session.id)
+      const sessionQuestions = await getQuestionsBySession(currentSessionId)
       
-      // Sort questions by votes (descending) and then by timestamp (newest first)
-      const sortedQuestions = [...sessionQuestions].sort((a, b) => {
-        if (b.votes !== a.votes) return b.votes - a.votes;
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-      });
-      
-      setQuestions(sortedQuestions)
+      // Only update state if we're still on the same session
+      if (session.id === currentSessionId) {
+        // Sort questions by votes (descending) and then by timestamp (newest first)
+        const sortedQuestions = [...sessionQuestions].sort((a, b) => {
+          if (b.votes !== a.votes) return b.votes - a.votes;
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        });
+        
+        setQuestions(sortedQuestions)
+      }
     } catch (error) {
+      console.error('Error fetching questions:', error);
       // Silent error handling in production
     } finally {
-      setIsLoading(false)
+      if (session.id === currentSessionId) {
+        setIsLoading(false)
+      }
     }
   }, [session.id]);
   
@@ -258,20 +277,32 @@ export function UnifiedPresenterView({
   
   // Handle real-time question updates
   const handleQuestionAdded = useCallback((newQuestion: QnaQuestion) => {
-    setQuestions(prevQuestions => {
-      // Convert timestamp to Date if it's not already
-      const questionWithDate = {
-        ...newQuestion,
-        timestamp: newQuestion.timestamp instanceof Date 
-          ? newQuestion.timestamp 
-          : new Date(newQuestion.timestamp)
-      }
-      
-      // Add new question and sort by votes and creation time
-      return [...prevQuestions, questionWithDate]
-        .sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
-    })
-  }, [])
+    // Only add the question if it belongs to the current session
+    if (newQuestion.sessionId === session.id) {
+      setQuestions(prevQuestions => {
+        // Check if question already exists to prevent duplicates
+        const exists = prevQuestions.some(q => q.id === newQuestion.id);
+        if (exists) return prevQuestions;
+        
+        // Convert timestamp to Date if it's not already
+        const questionWithDate = {
+          ...newQuestion,
+          timestamp: newQuestion.timestamp instanceof Date 
+            ? newQuestion.timestamp 
+            : new Date(newQuestion.timestamp)
+        }
+        
+        // Add new question and sort by votes and creation time
+        return [...prevQuestions, questionWithDate]
+          .sort((a, b) => {
+            // Primary sort by votes (descending)
+            if (b.votes !== a.votes) return b.votes - a.votes;
+            // Secondary sort by timestamp (newest first)
+            return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+          })
+      })
+    }
+  }, [session.id])
 
   // Handle real-time question deletion
   const handleQuestionDeleted = useCallback(({ questionId }: { questionId: string }) => {
@@ -282,7 +313,9 @@ export function UnifiedPresenterView({
       // If the question doesn't exist in our state, we should refresh all questions
       // to ensure our state is in sync with the server
       if (!questionExists && mode === 'qna') {
-        refreshAllQuestions();
+        // Use setTimeout to avoid state update during another state update
+        setTimeout(() => refreshAllQuestions(), 0);
+        return prevQuestions;
       }
       
       // Remove the question from our state if it exists
@@ -291,7 +324,7 @@ export function UnifiedPresenterView({
   }, [mode, refreshAllQuestions])
 
   // Handle real-time vote updates
-  const handleVoteUpdated = useCallback(({ questionId, voteCount }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
+  const handleVoteUpdated = useCallback(({ questionId, voteCount, voteAdded }: { questionId: string, voteCount: number, voteAdded: boolean }) => {
     setQuestions(prevQuestions => {
       // Check if the question exists in our current state
       const questionExists = prevQuestions.some(q => q.id === questionId);
@@ -299,22 +332,30 @@ export function UnifiedPresenterView({
       // If the question doesn't exist in our state but we received a vote update for it,
       // we need to fetch all questions to get the updated state
       if (!questionExists && mode === 'qna') {
-        // Refresh all questions to get the complete state
-        refreshAllQuestions();
+        // Use setTimeout to avoid state update during another state update
+        setTimeout(() => refreshAllQuestions(), 0);
         return prevQuestions; // Return current state, refreshAllQuestions will update it
       }
       
       // Update the vote count for the question if it exists in our state
-      return prevQuestions.map(q => {
+      const updatedQuestions = prevQuestions.map(q => {
         if (q.id === questionId) {
           // Update vote count
           return {
             ...q,
-            votes: voteCount
+            votes: voteCount,
+            // Update hasUserVoted if this is the current user's vote
+            hasUserVoted: voteAdded !== undefined ? q.hasUserVoted !== voteAdded : q.hasUserVoted
           }
         }
         return q
-      }).sort((a, b) => b.votes - a.votes || b.timestamp.getTime() - a.timestamp.getTime())
+      });
+      
+      // Sort questions by votes (descending) and then by timestamp (newest first)
+      return updatedQuestions.sort((a, b) => {
+        if (b.votes !== a.votes) return b.votes - a.votes;
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
     })
   }, [mode, refreshAllQuestions])
 
@@ -359,6 +400,12 @@ export function UnifiedPresenterView({
       
       // Clean up on unmount or mode change
       return () => {
+        // Unregister event handlers to prevent memory leaks
+        // and avoid stale closures causing updates to wrong session
+        offQuestionAdded(handleQuestionAdded)
+        offQuestionDeleted(handleQuestionDeleted)
+        offVoteUpdated(handleVoteUpdated)
+        offUserUpdated(handleUserUpdated)
         disconnectFromSSE()
       }
     }
