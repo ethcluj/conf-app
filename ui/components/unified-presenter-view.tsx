@@ -13,6 +13,66 @@ import { useSpeakers } from "@/hooks/use-speakers"
 import { QRCodeSVG } from "qrcode.react"
 import { fetchAllSessions } from "@/lib/data"
 
+// Custom hook for video caching
+function useVideoCache(videoUrl: string) {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  const [videoObjectUrl, setVideoObjectUrl] = useState<string | null>(null)
+  
+  useEffect(() => {
+    // Check if we already have this video in sessionStorage
+    if (typeof window !== 'undefined') {
+      const cachedVideoKey = `video-cache-${videoUrl}`
+      const cachedVideo = sessionStorage.getItem(cachedVideoKey)
+      
+      if (cachedVideo) {
+        console.log(`Using cached video for ${videoUrl}`)
+        setVideoObjectUrl(cachedVideo)
+        setIsVideoLoaded(true)
+        return
+      }
+      
+      // If not cached, fetch and cache the video
+      console.log(`Preloading video: ${videoUrl}`)
+      
+      fetch(videoUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          // Create a local URL for the video blob
+          const objectUrl = URL.createObjectURL(blob)
+          
+          // Store in sessionStorage for this browser session
+          try {
+            sessionStorage.setItem(cachedVideoKey, objectUrl)
+          } catch (error) {
+            console.warn('Failed to cache video in sessionStorage:', error)
+          }
+          
+          setVideoObjectUrl(objectUrl)
+          setIsVideoLoaded(true)
+          console.log(`Video loaded and cached: ${videoUrl}`)
+        })
+        .catch(error => {
+          console.error(`Error preloading video ${videoUrl}:`, error)
+          // If caching fails, fall back to direct URL
+          setVideoObjectUrl(null)
+          setIsVideoLoaded(true)
+        })
+    } else {
+      // Server-side rendering case
+      setIsVideoLoaded(true)
+    }
+    
+    // Cleanup function to revoke object URL when component unmounts
+    return () => {
+      if (videoObjectUrl && !videoObjectUrl.startsWith('/')) {
+        URL.revokeObjectURL(videoObjectUrl)
+      }
+    }
+  }, [videoUrl])
+  
+  return { videoSrc: videoObjectUrl || videoUrl, isLoaded: isVideoLoaded }
+}
+
 // QR code configuration
 const QR_CODE_LEVEL = "H"; // High error correction level
 
@@ -417,6 +477,13 @@ export function UnifiedPresenterView({
     fetchLeaderboard();
     setIsLoading(false);
     
+    // Preload the intro video in the background
+    // This will trigger our useVideoCache hook
+    if (typeof window !== 'undefined') {
+      console.log('Preloading intro video in background');
+      // The hook will handle the actual caching
+    }
+    
     // Set up a refresh interval for leaderboard (every minute)
     const leaderboardInterval = setInterval(() => {
       fetchLeaderboard();
@@ -478,18 +545,28 @@ export function UnifiedPresenterView({
     return () => clearTimeout(timer)
   }, [session.id]) // Reset timer when session changes
   
+  // Video caching for intro video
+  const introVideoUrl = '/intro01.mp4'
+  const { videoSrc, isLoaded } = useVideoCache(introVideoUrl)
+  
   // If showing intro video
   if (mode === 'video') {
     return (
       <div ref={containerRef} className="fixed inset-0 z-50 bg-black text-white">
-        <video
-          className="w-full h-full object-cover"
-          src="/intro01.mp4"
-          autoPlay
-          muted={false}
-          controls={false}
-          onEnded={() => setMode('session')}
-        />
+        {!isLoaded ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+          </div>
+        ) : (
+          <video
+            className="w-full h-full object-cover"
+            src={videoSrc}
+            autoPlay
+            muted={false}
+            controls={false}
+            onEnded={() => setMode('session')}
+          />
+        )}
       </div>
     )
   }
