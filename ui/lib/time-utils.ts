@@ -168,12 +168,13 @@ function formatTimeDifference(earlier: Date, later: Date): string {
 
 /**
  * Check if a date is today
+ * Uses date-fns isSameDay for more consistent comparison across environments
  */
+import { isSameDay } from 'date-fns';
+
 export function isToday(date: Date): boolean {
   const now = getCurrentTime();
-  return date.getDate() === now.getDate() && 
-         date.getMonth() === now.getMonth() && 
-         date.getFullYear() === now.getFullYear();
+  return isSameDay(date, now);
 }
 
 /**
