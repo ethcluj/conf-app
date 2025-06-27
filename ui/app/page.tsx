@@ -18,12 +18,8 @@ import { cn } from "@/lib/utils"
 
 export default function ConferenceSchedule() {
   const router = useRouter()
-  const [selectedDate, setSelectedDate] = useState(() => {
-    // Default to today if it's a conference day, otherwise first day
-    const today = new Date()
-    const todayConferenceDay = conferenceDays.find((day) => isToday(day))
-    return todayConferenceDay || conferenceDays[0]
-  })
+  // Initialize with the first day as default, client-side effect will update if needed
+  const [selectedDate, setSelectedDate] = useState(conferenceDays[0])
   
   // References for auto-scrolling
   const containerRef = useRef<HTMLDivElement>(null)
@@ -34,6 +30,14 @@ export default function ConferenceSchedule() {
   const [isLoading, setIsLoading] = useState(true)
   const currentSessionRef = useRef<HTMLDivElement>(null)
   
+  // Force client-side date selection after hydration
+  useEffect(() => {
+    const todayConferenceDay = conferenceDays.find((day) => isToday(day))
+    if (todayConferenceDay) {
+      setSelectedDate(todayConferenceDay)
+    }
+  }, [])
+
   // Fetch all sessions on component mount
   useEffect(() => {
     const loadSessions = async () => {
@@ -42,13 +46,6 @@ export default function ConferenceSchedule() {
         const fetchedSessions = await fetchAllSessions()
         setSessions(fetchedSessions)
         setIsLoading(false)
-        
-        // Auto switch to current date if it's a conference day
-        const today = new Date()
-        const todayConferenceDay = conferenceDays.find((day) => isToday(day))
-        if (todayConferenceDay) {
-          setSelectedDate(todayConferenceDay)
-        }
       } catch (error) {
         console.error('Error loading sessions:', error)
         setIsLoading(false)
