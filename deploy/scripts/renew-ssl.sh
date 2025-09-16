@@ -42,29 +42,9 @@ if [ $? -ne 0 ]; then
     error "Certificate renewal failed"
 fi
 
-# Copy the renewed certificates to the app directory
-section "Copying certificates"
-echo "Copying certificates to ${CERTS_DIR}..."
-cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem "${CERTS_DIR}/"
-cp /etc/letsencrypt/live/${DOMAIN}/privkey.pem "${CERTS_DIR}/"
-
-# Set appropriate permissions
-section "Setting permissions"
-echo "Setting appropriate permissions..."
-chmod 644 "${CERTS_DIR}/fullchain.pem"
-chmod 644 "${CERTS_DIR}/privkey.pem"
-
-# If running as root, change ownership to the deploy user
-if [ "$(id -u)" -eq 0 ]; then
-    chown deploy:deploy "${CERTS_DIR}/fullchain.pem"
-    chown deploy:deploy "${CERTS_DIR}/privkey.pem"
-fi
-
-# Restart Nginx container to pick up new certificates
-section "Restarting Nginx"
-echo "Restarting Nginx container..."
-cd "${APP_DIR}"
-docker-compose -f "${COMPOSE_FILE}" restart nginx
+# Run the SSL fix script to copy certificates and restart Nginx
+section "Fixing SSL configuration"
+"${APP_DIR}/deploy/scripts/fix-ssl.sh"
 
 # Log the renewal attempt
 echo "Certificate renewal completed successfully at $(date)" >> "${LOG_FILE}"
