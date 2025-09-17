@@ -4,7 +4,8 @@
 # Configuration
 APP_DIR="${APP_DIR:-/opt/conf-app}"
 COMPOSE_FILE="${APP_DIR}/deploy/docker-compose.prod.yml"
-DOMAIN="app.ethcluj.org"
+DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
+PRIMARY_DOMAIN="app.ethcluj.org"
 CERTS_DIR="${APP_DIR}/certs"
 LOG_FILE="${APP_DIR}/ssl-renewal.log"
 

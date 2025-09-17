@@ -3,7 +3,8 @@
 
 # Configuration
 APP_DIR="${APP_DIR:-/opt/conf-app}"
-DOMAIN="app.ethcluj.org"
+DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
+PRIMARY_DOMAIN="app.ethcluj.org"
 CERTS_DIR="${APP_DIR}/certs"
 NGINX_SSL_DIR="${APP_DIR}/deploy/nginx/ssl"
 COMPOSE_FILE="${APP_DIR}/deploy/docker-compose.prod.yml"
@@ -50,13 +51,22 @@ copy_certs() {
 }
 
 # Try to find certificates in different locations
+FOUND=false
 if [ -f "${CERTS_DIR}/fullchain.pem" ] && [ -f "${CERTS_DIR}/privkey.pem" ]; then
     copy_certs "${CERTS_DIR}"
     FOUND=true
-elif [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/${DOMAIN}/privkey.pem" ]; then
-    copy_certs "/etc/letsencrypt/live/${DOMAIN}"
-    FOUND=true
 else
+    # Try each domain location
+    for domain in "${DOMAINS[@]}"; do
+        if [ -f "/etc/letsencrypt/live/${domain}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/${domain}/privkey.pem" ]; then
+            copy_certs "/etc/letsencrypt/live/${domain}"
+            FOUND=true
+            break
+        fi
+    done
+fi
+
+if [ "$FOUND" = false ]; then
     warning "No SSL certificates found!"
     exit 1
 fi
@@ -67,6 +77,12 @@ cat > "${APP_DIR}/deploy/nginx/default.conf" << 'EOL'
 server {
     listen 80;
     server_name app.ethcluj.org;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 80;
+    server_name ethcluj.org www.ethcluj.org;
     return 301 https://$host$request_uri;
 }
 
@@ -101,6 +117,24 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 }
+
+server {
+    listen 443 ssl;
+    server_name ethcluj.org www.ethcluj.org;
+
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
 EOL
 
 # Restart Nginx
@@ -115,5 +149,8 @@ docker-compose -f "${COMPOSE_FILE}" ps nginx
 docker-compose -f "${COMPOSE_FILE}" logs --tail=20 nginx
 
 section "SSL fix complete!"
-echo "HTTPS should now be working at https://${DOMAIN}"
+echo "HTTPS should now be working at:"
+for domain in "${DOMAINS[@]}"; do
+    echo "  - https://${domain}"
+done
 echo "HTTP requests should redirect to HTTPS"

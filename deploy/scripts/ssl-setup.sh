@@ -3,7 +3,8 @@
 
 # Configuration
 APP_DIR="${APP_DIR:-/opt/conf-app}"
-DOMAIN="app.ethcluj.org"
+DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
+PRIMARY_DOMAIN="app.ethcluj.org"
 EMAIL="your-email@example.com"  # Change this to your email
 CERTS_DIR="${APP_DIR}/certs"
 
@@ -57,10 +58,17 @@ docker-compose -f "${APP_DIR}/deploy/docker-compose.prod.yml" down nginx || true
 
 # Get SSL certificate
 section "Obtaining SSL certificate"
-echo "Obtaining SSL certificate for ${DOMAIN}..."
+echo "Obtaining SSL certificate for domains: ${DOMAINS[*]}..."
+
+# Build domain arguments for certbot
+DOMAIN_ARGS=""
+for domain in "${DOMAINS[@]}"; do
+    DOMAIN_ARGS="${DOMAIN_ARGS} -d ${domain}"
+done
+
 certbot certonly --standalone --preferred-challenges http \
     --agree-tos --email "${EMAIL}" \
-    -d "${DOMAIN}"
+    ${DOMAIN_ARGS}
 
 if [ $? -ne 0 ]; then
     error "Failed to obtain SSL certificate"
@@ -69,8 +77,8 @@ fi
 # Copy certificates to app directory
 section "Copying certificates"
 echo "Copying certificates to ${CERTS_DIR}..."
-cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem "${CERTS_DIR}/"
-cp /etc/letsencrypt/live/${DOMAIN}/privkey.pem "${CERTS_DIR}/"
+cp /etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem "${CERTS_DIR}/"
+cp /etc/letsencrypt/live/${PRIMARY_DOMAIN}/privkey.pem "${CERTS_DIR}/"
 
 # Set appropriate permissions
 section "Setting permissions"
