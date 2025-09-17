@@ -96,29 +96,36 @@ chmod 755 "${APP_DIR}/deploy/nginx/ssl"
 
 # Check if valid SSL certificates exist
 SSL_AVAILABLE=false
+DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
 
-# First check in /etc/letsencrypt (standard location)
-if [ -d "/etc/letsencrypt/live/app.ethcluj.org" ] && 
-   [ -f "/etc/letsencrypt/live/app.ethcluj.org/fullchain.pem" ] && 
-   [ -f "/etc/letsencrypt/live/app.ethcluj.org/privkey.pem" ]; then
-  echo "Copying SSL certificates from /etc/letsencrypt/..."
-  cp /etc/letsencrypt/live/app.ethcluj.org/fullchain.pem "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
-  cp /etc/letsencrypt/live/app.ethcluj.org/privkey.pem "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
-  chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
-  SSL_AVAILABLE=true
-# Then check in ${APP_DIR}/certs (where ssl-setup.sh puts them)
-elif [ -d "${APP_DIR}/certs" ] && 
-     [ -f "${APP_DIR}/certs/fullchain.pem" ] && 
-     [ -f "${APP_DIR}/certs/privkey.pem" ]; then
+# First check in ${APP_DIR}/certs (where ssl-setup.sh puts them)
+if [ -d "${APP_DIR}/certs" ] && 
+   [ -f "${APP_DIR}/certs/fullchain.pem" ] && 
+   [ -f "${APP_DIR}/certs/privkey.pem" ]; then
   echo "Copying SSL certificates from ${APP_DIR}/certs/..."
   cp "${APP_DIR}/certs/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
   cp "${APP_DIR}/certs/privkey.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
   chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
   SSL_AVAILABLE=true
 else
-  warning "Valid SSL certificates not found at /etc/letsencrypt/live/app.ethcluj.org or ${APP_DIR}/certs/"
-  warning "Falling back to HTTP-only mode"
-  SSL_AVAILABLE=false
+  # Check in /etc/letsencrypt for any of the domains
+  for domain in "${DOMAINS[@]}"; do
+    if [ -d "/etc/letsencrypt/live/${domain}" ] && 
+       [ -f "/etc/letsencrypt/live/${domain}/fullchain.pem" ] && 
+       [ -f "/etc/letsencrypt/live/${domain}/privkey.pem" ]; then
+      echo "Copying SSL certificates from /etc/letsencrypt/live/${domain}/..."
+      cp "/etc/letsencrypt/live/${domain}/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/fullchain.pem"
+      cp "/etc/letsencrypt/live/${domain}/privkey.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+      chmod 644 "${APP_DIR}/deploy/nginx/ssl/fullchain.pem" "${APP_DIR}/deploy/nginx/ssl/privkey.pem"
+      SSL_AVAILABLE=true
+      break
+    fi
+  done
+  
+  if [ "$SSL_AVAILABLE" = false ]; then
+    warning "Valid SSL certificates not found for any domain in /etc/letsencrypt/ or ${APP_DIR}/certs/"
+    warning "Falling back to HTTP-only mode"
+  fi
 fi
 
 # Ensure default.conf is a file, not a directory
@@ -135,6 +142,12 @@ if [ "$SSL_AVAILABLE" = true ]; then
 server {
     listen 80;
     server_name app.ethcluj.org;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 80;
+    server_name ethcluj.org www.ethcluj.org;
     return 301 https://$host$request_uri;
 }
 
@@ -169,6 +182,24 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 }
+
+server {
+    listen 443 ssl;
+    server_name ethcluj.org www.ethcluj.org;
+
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
 EOL
 else
   echo "Using HTTP-only configuration (no SSL)..."
@@ -196,6 +227,18 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+    }
+}
+
+server {
+    listen 80;
+    server_name ethcluj.org www.ethcluj.org;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
     }
 }
 EOL
