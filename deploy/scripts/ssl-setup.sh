@@ -5,7 +5,7 @@
 APP_DIR="${APP_DIR:-/opt/conf-app}"
 DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
 PRIMARY_DOMAIN="app.ethcluj.org"
-EMAIL="your-email@example.com"  # Change this to your email
+EMAIL="${SSL_EMAIL:-contact@ethcluj.org}"  # Use environment variable or default
 CERTS_DIR="${APP_DIR}/certs"
 
 # Print colored output
