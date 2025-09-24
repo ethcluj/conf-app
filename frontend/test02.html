@@ -413,8 +413,33 @@
             overflow: hidden;
             position: relative;
             transition: all 0.3s ease;
-            cursor: pointer;
+            cursor: pointer; /* Changed back to pointer to suggest clickable */
             margin-right: 0.5rem;
+        }
+        
+        /* Card button styles */
+        .card-overlay-bottom {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6); /* Increased opacity from 0.4 to 0.6 */
+            z-index: 2;
+        }
+        
+        .card-action-text {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 3;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
         }
         
         .card:hover {
@@ -426,66 +451,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
-        
-        .card-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 1rem;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .card:hover .card-overlay {
-            opacity: 1;
-        }
-        
-        .card-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-        }
-        
-        .card-meta {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        .slider-nav {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 50px;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 3;
-        }
-        
-        .row:hover .slider-nav {
-            opacity: 1;
-        }
-        
-        .slider-nav.prev {
-            left: 0;
-            border-radius: 0 4px 4px 0;
-        }
-        
-        .slider-nav.next {
-            right: 0;
-            border-radius: 4px 0 0 4px;
-        }
-        
-        .slider-nav-icon {
-            font-size: 2rem;
-            color: white;
         }
         
         /* Featured Row Styles */
@@ -507,8 +472,9 @@
                     <li><a href="#" class="active">Home</a></li>
                     <li><a href="#">Meetups</a></li>
                     <li><a href="#">Conference</a></li>
+                    <li><a href="#">Incubator</a></li>
                     <li><a href="#">Academia</a></li>
-                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Content</a></li>
                 </ul>
                 <div class="nav-right">
                     <div class="search-icon">🔍</div>
@@ -523,8 +489,9 @@
                     <li><a href="#" class="active">Home</a></li>
                     <li><a href="#">Meetups</a></li>
                     <li><a href="#">Conference</a></li>
+                    <li><a href="#">Incubator</a></li>
                     <li><a href="#">Academia</a></li>
-                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Content</a></li>
                 </ul>
             </div>
         </div>
@@ -557,59 +524,25 @@
                 <div class="slider-container">
                     <div class="card">
                         <img src="resources/meetups/01. Gasly - X Landscape.png" alt="Meetup 1">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Gasly</h3>
-                            <div class="card-meta">Meetup #1</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="resources/meetups/02. X Landscape.png" alt="Meetup 2">
-                        <div class="card-overlay">
-                            <h3 class="card-title">ETHCluj</h3>
-                            <div class="card-meta">Meetup #2</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="resources/meetups/03. Buzea - X Landscape.png" alt="Meetup 3">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Buzea</h3>
-                            <div class="card-meta">Meetup #3</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="resources/meetups/04. Marius X Landscape.png" alt="Meetup 4">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Marius</h3>
-                            <div class="card-meta">Meetup #4</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="resources/meetups/05. Pranshu - X Landscape.png" alt="Meetup 5">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Pranshu</h3>
-                            <div class="card-meta">Meetup #5</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="resources/meetups/06. Starknet - X Landscape.png" alt="Meetup 6">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Starknet</h3>
-                            <div class="card-meta">Meetup #6</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="resources/meetups/07. Rob - X Landscape.png" alt="Meetup 7">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Rob</h3>
-                            <div class="card-meta">Meetup #7</div>
-                        </div>
                     </div>
-                </div>
-                <div class="slider-nav prev">
-                    <div class="slider-nav-icon">❮</div>
-                </div>
-                <div class="slider-nav next">
-                    <div class="slider-nav-icon">❯</div>
                 </div>
             </div>
         </section>
@@ -623,18 +556,15 @@
             <div class="slider">
                 <div class="slider-container">
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="ETHCluj Conference 2025">
-                        <div class="card-overlay">
-                            <h3 class="card-title">ETHCluj Conference 2025</h3>
-                            <div class="card-meta">May 15-17, 2025</div>
-                        </div>
+                        <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Conference Aftermovie">
+                        <div class="card-overlay-bottom"></div>
+                        <div class="card-action-text">Aftermovie</div>
                     </div>
-                </div>
-                <div class="slider-nav prev">
-                    <div class="slider-nav-icon">❮</div>
-                </div>
-                <div class="slider-nav next">
-                    <div class="slider-nav-icon">❯</div>
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="ETHCluj Conference 2025">
+                        <div class="card-overlay-bottom"></div>
+                        <div class="card-action-text">2025 Conference Page</div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -649,45 +579,19 @@
                 <div class="slider-container">
                     <div class="card">
                         <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="DeFi Lending Protocol">
-                        <div class="card-overlay">
-                            <h3 class="card-title">DeFi Lending Protocol</h3>
-                            <div class="card-meta">Batch 2025.1</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="NFT Marketplace">
-                        <div class="card-overlay">
-                            <h3 class="card-title">NFT Marketplace</h3>
-                            <div class="card-meta">Batch 2025.1</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="https://images.unsplash.com/photo-1639322537228-f710d846310a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="DAO Governance Tool">
-                        <div class="card-overlay">
-                            <h3 class="card-title">DAO Governance Tool</h3>
-                            <div class="card-meta">Batch 2025.1</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="https://images.unsplash.com/photo-1639322537504-6427a16b0a28?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Cross-chain Bridge">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Cross-chain Bridge</h3>
-                            <div class="card-meta">Batch 2024.2</div>
-                        </div>
                     </div>
                     <div class="card">
                         <img src="https://images.unsplash.com/photo-1642104704074-907c0698cbd9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Web3 Social Platform">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Web3 Social Platform</h3>
-                            <div class="card-meta">Batch 2024.2</div>
-                        </div>
                     </div>
-                </div>
-                <div class="slider-nav prev">
-                    <div class="slider-nav-icon">❮</div>
-                </div>
-                <div class="slider-nav next">
-                    <div class="slider-nav-icon">❯</div>
                 </div>
             </div>
         </section>
@@ -702,42 +606,29 @@
                 <div class="slider-container">
                     <div class="card">
                         <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Academic Research">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Academic Research</h3>
-                            <div class="card-meta">Blockchain Studies</div>
-                        </div>
                     </div>
-                </div>
-                <div class="slider-nav prev">
-                    <div class="slider-nav-icon">❮</div>
-                </div>
-                <div class="slider-nav next">
-                    <div class="slider-nav-icon">❯</div>
                 </div>
             </div>
         </section>
         
-        <!-- Blog Row -->
+        <!-- Content Row -->
         <section class="row">
             <div class="row-header">
-                <h2 class="row-title">Blog</h2>
+                <h2 class="row-title">Content</h2>
                 <a href="#" class="see-all">→</a>
             </div>
             <div class="slider">
                 <div class="slider-container">
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Latest Articles">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Latest Articles</h3>
-                            <div class="card-meta">Ethereum News</div>
-                        </div>
+                        <img src="https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Videos">
+                        <div class="card-overlay-bottom"></div>
+                        <div class="card-action-text">Videos</div>
                     </div>
-                </div>
-                <div class="slider-nav prev">
-                    <div class="slider-nav-icon">❮</div>
-                </div>
-                <div class="slider-nav next">
-                    <div class="slider-nav-icon">❯</div>
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Latest Articles">
+                        <div class="card-overlay-bottom"></div>
+                        <div class="card-action-text">Write an article</div>
+                    </div>
                 </div>
             </div>
         </section>
