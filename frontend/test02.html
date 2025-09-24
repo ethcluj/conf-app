@@ -149,43 +149,95 @@
             font-size: 1.2rem;
         }
         /* Hero Banner Styles */
-        .hero-banner {
+        .hero-section {
             position: relative;
-            height: 80vh;
-            min-height: 600px;
             width: 100%;
             max-width: 100vw;
             overflow: hidden;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8)), 
-                        url('https://framerusercontent.com/images/ldBOlRFxt5cQ6idALO1jUqgaEKY.jpg');
-            background-size: cover;
-            background-position: center top;
-            margin-top: 70px; /* Reduced margin-top to account for more compact header */
+            margin-top: 80px; /* Space for header */
             margin-bottom: 20px;
             box-sizing: border-box;
-        }
-        
-        .hero-vignette {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                0deg,
-                var(--primary-bg) 0%,
-                transparent 40%,
-                transparent 80%,
-                rgba(0,0,0,0.7) 100%
-            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .hero-content {
+            text-align: center;
+            width: 100%;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
             position: absolute;
-            bottom: 25%;
-            left: 4%;
-            width: 40%;
-            z-index: 2;
+            bottom: 3rem;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px; /* Rounded buttons */
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-primary {
+            background-color: #FE304C; /* Explicit red color */
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #FF5A71; /* Lighter red on hover */
+        }
+        
+        .btn-secondary {
+            background-color: #FF5A71; /* Lighter red */
+            color: white;
+            border: none;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #FF8598; /* Even lighter red on hover */
+        }
+        
+        .hero-image-placeholder {
+            width: 100%;
+            height: 70vh; /* 70% of viewport height for portrait proportions */
+            border: 3px dashed var(--accent-red);
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(254, 48, 76, 0.1);
+            color: var(--accent-red);
+        }
+        
+        .placeholder-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+        }
+        
+        .placeholder-dimensions {
+            font-size: 1rem;
+            opacity: 0.8;
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
         }
         
         .hero-logo {
@@ -197,8 +249,9 @@
         .hero-title {
             font-size: 3rem;
             font-weight: 800;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin: 0;
+            line-height: 1.2;
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
         }
         
         .hero-description {
@@ -252,7 +305,7 @@
         
         /* Content Row Styles */
         .content {
-            padding: 0 4%;
+            padding: 0 10px;
             margin-top: -100px;
             position: relative;
             z-index: 3;
@@ -263,7 +316,7 @@
         }
         
         .row {
-            margin-bottom: 4vw;
+            margin-bottom: 5vw; /* Increased spacing between sections */
             position: relative;
         }
         
@@ -271,24 +324,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.1rem; /* Extremely reduced spacing */
+            padding: 0 2%; /* Reduced side padding */
         }
         
         .row-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
+            font-size: 1.2rem; /* Smaller font size to match Hero Section on mobile */
+            font-weight: 600;
+            color: #FE304C; /* Red color */
         }
         
         .see-all {
-            color: var(--text-secondary);
+            color: #FE304C; /* Red color */
             text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s ease;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            font-weight: bold;
         }
         
         .see-all:hover {
-            color: var(--text-primary);
+            transform: translateX(5px);
         }
         
         .slider {
@@ -302,7 +357,7 @@
             overflow-x: auto;
             scroll-behavior: smooth;
             scrollbar-width: none; /* Firefox */
-            padding: 1rem 0;
+            padding: 0.2rem 0; /* Reduced padding */
             gap: 0.5rem;
             width: 100%;
             max-width: 100%;
@@ -414,7 +469,6 @@
                     <li><a href="#" class="active">Home</a></li>
                     <li><a href="#">Meetups</a></li>
                     <li><a href="#">Conference</a></li>
-                    <li><a href="#">Incubator</a></li>
                     <li><a href="#">Academia</a></li>
                     <li><a href="#">Blog</a></li>
                 </ul>
@@ -431,7 +485,6 @@
                     <li><a href="#" class="active">Home</a></li>
                     <li><a href="#">Meetups</a></li>
                     <li><a href="#">Conference</a></li>
-                    <li><a href="#">Incubator</a></li>
                     <li><a href="#">Academia</a></li>
                     <li><a href="#">Blog</a></li>
                 </ul>
@@ -439,122 +492,78 @@
         </div>
     </header>
 
-    <!-- Hero Banner -->
-    <section class="hero-banner">
-        <div class="hero-vignette"></div>
+    <!-- Hero Section -->
+    <section class="hero-section">
         <div class="hero-content">
-            <h1 class="hero-title">ETHCluj Conference 2025</h1>
-            <p class="hero-description">Join us for the premier Ethereum event in Romania. Three days of workshops, talks, and networking with the brightest minds in blockchain.</p>
-            <div class="hero-buttons">
-                <a href="#" class="btn btn-primary"><span class="btn-icon">▶️</span> Watch Trailer</a>
-                <a href="#" class="btn btn-secondary"><span class="btn-icon">ℹ️</span> More Info</a>
+            <div class="hero-image-placeholder">
+                <div class="placeholder-text">Hero Section</div>
+                <div class="placeholder-dimensions">Portrait Proportions</div>
+                <div class="hero-buttons">
+                    <button class="btn btn-secondary" style="background-color: transparent !important; color: #FE304C !important; border: 2px solid #FE304C !important;">Secondary</button>
+                    <button class="btn btn-primary" style="background-color: #FE304C !important; color: white;">Primary</button>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Content Rows -->
-    <main class="content">
-        <!-- Featured Row - Upcoming Events -->
-        <section class="row featured-row">
-            <div class="row-header">
-                <h2 class="row-title">Upcoming Events</h2>
-                <a href="#" class="see-all">See All</a>
-            </div>
-            <div class="slider">
-                <div class="slider-container">
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1607799279861-4dd421887fb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="ETHCluj Conference 2025">
-                        <div class="card-overlay">
-                            <h3 class="card-title">ETHCluj Conference 2025</h3>
-                            <div class="card-meta">June 26-28, 2025</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1591115765373-5207764f72e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="DeFi Workshop Series">
-                        <div class="card-overlay">
-                            <h3 class="card-title">DeFi Workshop Series</h3>
-                            <div class="card-meta">Monthly, Starting April 2025</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1558403194-611308249627?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Ethereum Developer Bootcamp">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Ethereum Developer Bootcamp</h3>
-                            <div class="card-meta">May 15-19, 2025</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Web3 Hackathon">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Web3 Hackathon</h3>
-                            <div class="card-meta">July 10-12, 2025</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1559445368-b8a993676d7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="NFT Art Exhibition">
-                        <div class="card-overlay">
-                            <h3 class="card-title">NFT Art Exhibition</h3>
-                            <div class="card-meta">August 5-10, 2025</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="slider-nav prev">
-                    <div class="slider-nav-icon">❮</div>
-                </div>
-                <div class="slider-nav next">
-                    <div class="slider-nav-icon">❯</div>
-                </div>
-            </div>
-        </section>
+    <main class="content" style="margin-top: 20px;">
 
         <!-- Meetups Row -->
         <section class="row">
             <div class="row-header">
                 <h2 class="row-title">Meetups</h2>
-                <a href="#" class="see-all">See All</a>
+                <a href="#" class="see-all">→</a>
             </div>
             <div class="slider">
                 <div class="slider-container">
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1540304453527-62f979142a17?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Smart Contract Security">
+                        <img src="resources/meetups/01. Gasly - X Landscape.png" alt="Meetup 1">
                         <div class="card-overlay">
-                            <h3 class="card-title">Smart Contract Security</h3>
-                            <div class="card-meta">March 15, 2025</div>
+                            <h3 class="card-title">Gasly</h3>
+                            <div class="card-meta">Meetup #1</div>
                         </div>
                     </div>
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="DeFi Protocols Deep Dive">
+                        <img src="resources/meetups/02. X Landscape.png" alt="Meetup 2">
                         <div class="card-overlay">
-                            <h3 class="card-title">DeFi Protocols Deep Dive</h3>
-                            <div class="card-meta">April 2, 2025</div>
+                            <h3 class="card-title">ETHCluj</h3>
+                            <div class="card-meta">Meetup #2</div>
                         </div>
                     </div>
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Ethereum Layer 2 Solutions">
+                        <img src="resources/meetups/03. Buzea - X Landscape.png" alt="Meetup 3">
                         <div class="card-overlay">
-                            <h3 class="card-title">Ethereum Layer 2 Solutions</h3>
-                            <div class="card-meta">April 18, 2025</div>
+                            <h3 class="card-title">Buzea</h3>
+                            <div class="card-meta">Meetup #3</div>
                         </div>
                     </div>
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Web3 UX Design">
+                        <img src="resources/meetups/04. Marius X Landscape.png" alt="Meetup 4">
                         <div class="card-overlay">
-                            <h3 class="card-title">Web3 UX Design</h3>
-                            <div class="card-meta">May 5, 2025</div>
+                            <h3 class="card-title">Marius</h3>
+                            <div class="card-meta">Meetup #4</div>
                         </div>
                     </div>
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Blockchain for Business">
+                        <img src="resources/meetups/05. Pranshu - X Landscape.png" alt="Meetup 5">
                         <div class="card-overlay">
-                            <h3 class="card-title">Blockchain for Business</h3>
-                            <div class="card-meta">May 20, 2025</div>
+                            <h3 class="card-title">Pranshu</h3>
+                            <div class="card-meta">Meetup #5</div>
                         </div>
                     </div>
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="NFT Creation Workshop">
+                        <img src="resources/meetups/06. Starknet - X Landscape.png" alt="Meetup 6">
                         <div class="card-overlay">
-                            <h3 class="card-title">NFT Creation Workshop</h3>
-                            <div class="card-meta">June 8, 2025</div>
+                            <h3 class="card-title">Starknet</h3>
+                            <div class="card-meta">Meetup #6</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="resources/meetups/07. Rob - X Landscape.png" alt="Meetup 7">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Rob</h3>
+                            <div class="card-meta">Meetup #7</div>
                         </div>
                     </div>
                 </div>
@@ -567,11 +576,36 @@
             </div>
         </section>
 
+        <!-- Conference Row -->
+        <section class="row">
+            <div class="row-header">
+                <h2 class="row-title">Conference</h2>
+                <a href="#" class="see-all">→</a>
+            </div>
+            <div class="slider">
+                <div class="slider-container">
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="ETHCluj Conference 2025">
+                        <div class="card-overlay">
+                            <h3 class="card-title">ETHCluj Conference 2025</h3>
+                            <div class="card-meta">May 15-17, 2025</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slider-nav prev">
+                    <div class="slider-nav-icon">❮</div>
+                </div>
+                <div class="slider-nav next">
+                    <div class="slider-nav-icon">❯</div>
+                </div>
+            </div>
+        </section>
+        
         <!-- Incubator Projects Row -->
         <section class="row">
             <div class="row-header">
                 <h2 class="row-title">Incubator Projects</h2>
-                <a href="#" class="see-all">See All</a>
+                <a href="#" class="see-all">→</a>
             </div>
             <div class="slider">
                 <div class="slider-container">
@@ -619,48 +653,45 @@
                 </div>
             </div>
         </section>
-
-        <!-- Educational Resources Row -->
+        
+        <!-- Academia Row -->
         <section class="row">
             <div class="row-header">
-                <h2 class="row-title">Educational Resources</h2>
-                <a href="#" class="see-all">See All</a>
+                <h2 class="row-title">Academia</h2>
+                <a href="#" class="see-all">→</a>
             </div>
             <div class="slider">
                 <div class="slider-container">
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Ethereum Fundamentals">
+                        <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Academic Research">
                         <div class="card-overlay">
-                            <h3 class="card-title">Ethereum Fundamentals</h3>
-                            <div class="card-meta">Beginner Course</div>
+                            <h3 class="card-title">Academic Research</h3>
+                            <div class="card-meta">Blockchain Studies</div>
                         </div>
                     </div>
+                </div>
+                <div class="slider-nav prev">
+                    <div class="slider-nav-icon">❮</div>
+                </div>
+                <div class="slider-nav next">
+                    <div class="slider-nav-icon">❯</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Blog Row -->
+        <section class="row">
+            <div class="row-header">
+                <h2 class="row-title">Blog</h2>
+                <a href="#" class="see-all">→</a>
+            </div>
+            <div class="slider">
+                <div class="slider-container">
                     <div class="card">
-                        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Smart Contract Development">
+                        <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Latest Articles">
                         <div class="card-overlay">
-                            <h3 class="card-title">Smart Contract Development</h3>
-                            <div class="card-meta">Intermediate Course</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1526378722484-bd91ca387e72?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="DeFi Protocols">
-                        <div class="card-overlay">
-                            <h3 class="card-title">DeFi Protocols</h3>
-                            <div class="card-meta">Advanced Course</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Blockchain Economics">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Blockchain Economics</h3>
-                            <div class="card-meta">Intermediate Course</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Web3 Security">
-                        <div class="card-overlay">
-                            <h3 class="card-title">Web3 Security</h3>
-                            <div class="card-meta">Advanced Course</div>
+                            <h3 class="card-title">Latest Articles</h3>
+                            <div class="card-meta">Ethereum News</div>
                         </div>
                     </div>
                 </div>
@@ -936,25 +967,36 @@
             
             /* Adjust hero content for mobile */
             .hero-content {
-                width: 90%;
-                bottom: 15%;
+                width: 100%;
+                padding: 0;
             }
             
-            .hero-title {
-                font-size: 2.5rem;
+            .hero-image-placeholder {
+                height: 70vh;
+            }
+            
+            .placeholder-text {
+                font-size: 1.2rem;
+            }
+            
+            .placeholder-dimensions {
+                font-size: 0.9rem;
+            }
+            
+            .hero-buttons {
+                bottom: 2rem;
+                gap: 0.8rem;
+            }
+            
+            .btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.9rem;
+                min-width: 120px;
+                border-radius: 25px; /* Ensure rounded buttons on mobile */
             }
             
             .hero-description {
                 font-size: 1rem;
-            }
-            
-            .hero-buttons {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .btn {
-                width: 100%;
             }
         }
     </style>
