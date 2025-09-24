@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETHCluj - Netflix Style</title>
+    <meta name="description" content="ETHCluj - Building the Ethereum community in Cluj-Napoca, Romania">
+    
+    <!-- Favicon -->
+    <link href="https://framerusercontent.com/images/szWRHqyOOPGt0DnMp2YdU6ReUw.png" rel="icon">
+    <link rel="apple-touch-icon" href="https://framerusercontent.com/images/szWRHqyOOPGt0DnMp2YdU6ReUw.png">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Styles and Variables */
+        :root {
+            --primary-bg: #141414;
+            --secondary-bg: #181818;
+            --header-bg: rgba(0, 0, 0, 0.8);
+            --card-bg: #2f2f2f;
+            --hover-bg: #333333;
+            --accent-purple: rgb(112, 21, 248);
+            --accent-orange: rgb(236, 151, 33);
+            --accent-blue: rgb(69, 177, 218);
+            --accent-red: rgb(254, 48, 76);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+        }
+        
+        /* Header Styles */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+            padding: 0.4rem 0; /* Reduced padding around the header */
+        }
+        
+        .header.scrolled {
+            background: var(--header-bg);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 4%;
+            box-sizing: border-box;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            gap: 1rem;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .logo-img {
+            height: 80px; /* Doubled from 40px to 80px */
+            width: auto;
+            display: block;
+            background-color: transparent;
+            filter: drop-shadow(0px 0px 3px rgba(254, 48, 76, 0.5));
+            transition: filter 0.3s ease, transform 0.3s ease;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .logo:hover .logo-img {
+            filter: drop-shadow(0px 0px 5px rgba(254, 48, 76, 0.8));
+            transform: scale(1.05);
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 1rem;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-menu a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+            transition: color 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .nav-menu a:hover, 
+        .nav-menu a.active {
+            color: var(--text-primary);
+        }
+        
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .search-icon, 
+        .profile-icon {
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        /* Hero Banner Styles */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            max-width: 100vw;
+            overflow: hidden;
+            margin-top: 80px; /* Space for header */
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .hero-content {
+            text-align: center;
+            width: 100%;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            position: absolute;
+            bottom: 3rem;
+            left: 0;
+            right: 0;
+            z-index: 2;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px; /* Rounded buttons */
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-primary {
+            background-color: #FE304C; /* Explicit red color */
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #FF5A71; /* Lighter red on hover */
+        }
+        
+        .btn-secondary {
+            background-color: #FF5A71; /* Lighter red */
+            color: white;
+            border: none;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #FF8598; /* Even lighter red on hover */
+        }
+        
+        .hero-image-placeholder {
+            width: 100%;
+            height: 70vh; /* 70% of viewport height for portrait proportions */
+            border: none;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-top: 15vh; /* Position text higher */
+            align-items: center;
+            position: relative;
+            color: var(--accent-red);
+        }
+        
+        .hero-image-placeholder::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('resources/hero/Hangout.jpeg');
+            background-size: cover;
+            background-position: center;
+            opacity: 1;
+            z-index: -2;
+        }
+        
+        .hero-image-placeholder::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent black overlay */
+            z-index: -1;
+        }
+        
+        .placeholder-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+            padding: 10px 20px;
+            color: white;
+            position: relative;
+            z-index: 1;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+        
+        .placeholder-dimensions {
+            font-size: 1.5rem;
+            font-weight: 700; /* Bolder */
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+            padding: 5px 15px;
+            color: white; /* White instead of red */
+            position: relative;
+            z-index: 1;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            margin-bottom: 2.5rem; /* More space below the date */
+            letter-spacing: 1px; /* Slightly spaced letters */
+        }
+        
+        .hero-logo {
+            width: 80%;
+            max-width: 500px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.2;
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+        }
+        
+        .hero-description {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 2rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: var(--accent-purple);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: rgba(112, 21, 248, 0.8);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-icon {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        /* Content Row Styles */
+        .content {
+            padding: 0 10px;
+            margin-top: -100px;
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+        
+        .row {
+            margin-bottom: 5vw; /* Increased spacing between sections */
+            position: relative;
+        }
+        
+        .row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.1rem; /* Extremely reduced spacing */
+            padding: 0 2%; /* Reduced side padding */
+        }
+        
+        .row-title {
+            font-size: 1.2rem; /* Smaller font size to match Hero Section on mobile */
+            font-weight: 600;
+            color: #FE304C; /* Red color */
+        }
+        
+        .see-all {
+            color: #FE304C; /* Red color */
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .see-all:hover {
+            transform: translateX(5px);
+        }
+        
+        .slider {
+            position: relative;
+            width: 100%;
+            overflow: hidden; /* Changed from overflow-x: visible to prevent horizontal overflow */
+        }
+        
+        .slider-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none; /* Firefox */
+            padding: 0.2rem 0; /* Reduced padding */
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .slider-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        
+        .card {
+            flex: 0 0 auto;
+            width: 250px;
+            height: 150px;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+        
+        .card:hover {
+            transform: scale(1.05);
+            z-index: 2;
+        }
+        
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .card:hover .card-overlay {
+            opacity: 1;
+        }
+        
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .card-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .slider-nav {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50px;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 3;
+        }
+        
+        .row:hover .slider-nav {
+            opacity: 1;
+        }
+        
+        .slider-nav.prev {
+            left: 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .slider-nav.next {
+            right: 0;
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .slider-nav-icon {
+            font-size: 2rem;
+            color: white;
+        }
+        
+        /* Featured Row Styles */
+        .featured-row .card {
+            width: 400px;
+            height: 225px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">
+                    <img src="resources/logo-text-dark.svg" alt="ETHCluj Logo" class="logo-img">
+                </a>
+                <ul class="nav-menu">
+                    <li><a href="#" class="active">Home</a></li>
+                    <li><a href="#">Meetups</a></li>
+                    <li><a href="#">Conference</a></li>
+                    <li><a href="#">Academia</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+                <div class="nav-right">
+                    <div class="search-icon">🔍</div>
+                    <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav-menu" id="mobile-nav-menu">
+            <div class="mobile-nav-container">
+                <ul class="mobile-nav-list">
+                    <li><a href="#" class="active">Home</a></li>
+                    <li><a href="#">Meetups</a></li>
+                    <li><a href="#">Conference</a></li>
+                    <li><a href="#">Academia</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-image-placeholder">
+                <div class="placeholder-text">Our next Chill 'n Chat hangout</div>
+                <div class="placeholder-dimensions">October 2nd, 7:30 p.m.</div>
+                <div class="hero-buttons">
+                    <button class="btn btn-secondary" style="background-color: transparent !important; color: #FE304C !important; border: 2px solid #FE304C !important;">Learn More</button>
+                    <button class="btn btn-primary" style="background-color: #FE304C !important; color: white;">Attend</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content Rows -->
+    <main class="content" style="margin-top: 20px;">
+
+        <!-- Meetups Row -->
+        <section class="row">
+            <div class="row-header">
+                <h2 class="row-title">Meetups</h2>
+                <a href="#" class="see-all">→</a>
+            </div>
+            <div class="slider">
+                <div class="slider-container">
+                    <div class="card">
+                        <img src="resources/meetups/01. Gasly - X Landscape.png" alt="Meetup 1">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Gasly</h3>
+                            <div class="card-meta">Meetup #1</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="resources/meetups/02. X Landscape.png" alt="Meetup 2">
+                        <div class="card-overlay">
+                            <h3 class="card-title">ETHCluj</h3>
+                            <div class="card-meta">Meetup #2</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="resources/meetups/03. Buzea - X Landscape.png" alt="Meetup 3">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Buzea</h3>
+                            <div class="card-meta">Meetup #3</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="resources/meetups/04. Marius X Landscape.png" alt="Meetup 4">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Marius</h3>
+                            <div class="card-meta">Meetup #4</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="resources/meetups/05. Pranshu - X Landscape.png" alt="Meetup 5">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Pranshu</h3>
+                            <div class="card-meta">Meetup #5</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="resources/meetups/06. Starknet - X Landscape.png" alt="Meetup 6">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Starknet</h3>
+                            <div class="card-meta">Meetup #6</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="resources/meetups/07. Rob - X Landscape.png" alt="Meetup 7">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Rob</h3>
+                            <div class="card-meta">Meetup #7</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slider-nav prev">
+                    <div class="slider-nav-icon">❮</div>
+                </div>
+                <div class="slider-nav next">
+                    <div class="slider-nav-icon">❯</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conference Row -->
+        <section class="row">
+            <div class="row-header">
+                <h2 class="row-title">Conference</h2>
+                <a href="#" class="see-all">→</a>
+            </div>
+            <div class="slider">
+                <div class="slider-container">
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="ETHCluj Conference 2025">
+                        <div class="card-overlay">
+                            <h3 class="card-title">ETHCluj Conference 2025</h3>
+                            <div class="card-meta">May 15-17, 2025</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slider-nav prev">
+                    <div class="slider-nav-icon">❮</div>
+                </div>
+                <div class="slider-nav next">
+                    <div class="slider-nav-icon">❯</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Incubator Row -->
+        <section class="row">
+            <div class="row-header">
+                <h2 class="row-title">Incubator</h2>
+                <a href="#" class="see-all">→</a>
+            </div>
+            <div class="slider">
+                <div class="slider-container">
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="DeFi Lending Protocol">
+                        <div class="card-overlay">
+                            <h3 class="card-title">DeFi Lending Protocol</h3>
+                            <div class="card-meta">Batch 2025.1</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="NFT Marketplace">
+                        <div class="card-overlay">
+                            <h3 class="card-title">NFT Marketplace</h3>
+                            <div class="card-meta">Batch 2025.1</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1639322537228-f710d846310a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="DAO Governance Tool">
+                        <div class="card-overlay">
+                            <h3 class="card-title">DAO Governance Tool</h3>
+                            <div class="card-meta">Batch 2025.1</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1639322537504-6427a16b0a28?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Cross-chain Bridge">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Cross-chain Bridge</h3>
+                            <div class="card-meta">Batch 2024.2</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1642104704074-907c0698cbd9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Web3 Social Platform">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Web3 Social Platform</h3>
+                            <div class="card-meta">Batch 2024.2</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slider-nav prev">
+                    <div class="slider-nav-icon">❮</div>
+                </div>
+                <div class="slider-nav next">
+                    <div class="slider-nav-icon">❯</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Academia Row -->
+        <section class="row">
+            <div class="row-header">
+                <h2 class="row-title">Academia</h2>
+                <a href="#" class="see-all">→</a>
+            </div>
+            <div class="slider">
+                <div class="slider-container">
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Academic Research">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Academic Research</h3>
+                            <div class="card-meta">Blockchain Studies</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slider-nav prev">
+                    <div class="slider-nav-icon">❮</div>
+                </div>
+                <div class="slider-nav next">
+                    <div class="slider-nav-icon">❯</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Blog Row -->
+        <section class="row">
+            <div class="row-header">
+                <h2 class="row-title">Blog</h2>
+                <a href="#" class="see-all">→</a>
+            </div>
+            <div class="slider">
+                <div class="slider-container">
+                    <div class="card">
+                        <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Latest Articles">
+                        <div class="card-overlay">
+                            <h3 class="card-title">Latest Articles</h3>
+                            <div class="card-meta">Ethereum News</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slider-nav prev">
+                    <div class="slider-nav-icon">❮</div>
+                </div>
+                <div class="slider-nav next">
+                    <div class="slider-nav-icon">❯</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p class="footer-organization">Asociația ETHCLUJ, Cluj-Napoca, România</p>
+                    <p class="footer-email">contact@ethcluj.org</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-icon" aria-label="Twitter/X">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon" aria-label="LinkedIn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon" aria-label="Telegram">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="copyright">&copy; 2025 ETHCluj. All rights reserved.</p>
+                <div class="footer-bottom-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms and Conditions</a>
+                    <a href="#">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        /* Footer Styles */
+        .footer {
+            background: #141414;
+            padding: 3rem 0 1.5rem;
+            margin-top: 5vw;
+            border-top: 1px solid rgba(254, 48, 76, 0.3);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            padding: 0 10px;
+        }
+        
+        .footer-info {
+            text-align: center;
+        }
+        
+        .footer-organization {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+        
+        .footer-email {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            justify-content: center;
+        }
+        
+        .social-icon {
+            color: rgba(255, 255, 255, 0.7);
+            transition: color 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            color: #FE304C;
+        }
+        
+        .footer-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(254, 48, 76, 0.2);
+            padding: 1.5rem 10px 0;
+        }
+        
+        .copyright {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-bottom-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .footer-bottom-links a {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-bottom-links a:hover {
+            color: #FE304C;
+        }
+        
+        @media (min-width: 768px) {
+            .footer-content {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            .footer-bottom {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+            
+            .copyright {
+                margin-bottom: 0;
+            }
+        }
+        
+        /* Mobile Menu Styles */
+        .mobile-menu-btn {
+            display: none; /* Hidden by default on desktop */
+            background: none;
+            border: none;
+            color: var(--accent-red); /* Match the reddish SVG logo color */
+            font-size: 1.8rem; /* Smaller font size */
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            min-height: 40px;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        
+        .mobile-nav-menu {
+            position: fixed;
+            top: -100vh;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100vh;
+            background: var(--secondary-bg);
+            z-index: 1000;
+            transition: top 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .mobile-nav-menu.active {
+            top: 0;
+        }
+        
+        .mobile-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: right;
+        }
+        
+        .mobile-nav-list li {
+            margin-bottom: 1rem;
+        }
+        
+        .mobile-nav-list a {
+            color: var(--accent-red);
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            font-family: Montserrat, "Montserrat Placeholder", sans-serif;
+            display: block;
+            padding: 0.8rem 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .mobile-nav-list a:hover,
+        .mobile-nav-list a.active {
+            opacity: 0.8;
+        }
+        
+        /* Mobile menu container styles */
+        .mobile-nav-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center menu items vertically */
+            height: 100%;
+            padding: 2rem;
+        }
+        
+        /* Responsive styles for mobile menu */
+        @media (max-width: 767px) {
+            .nav-menu {
+                display: none; /* Hide desktop menu on mobile */
+            }
+            
+            .mobile-menu-btn {
+                display: flex; /* Show hamburger menu on mobile */
+            }
+            
+            .search-icon {
+                display: none; /* Hide search icon on mobile */
+            }
+            
+            .logo-img {
+                height: 64px; /* Doubled from 32px to 64px for mobile */
+            }
+            
+            /* Adjust hero content for mobile */
+            .hero-content {
+                width: 100%;
+                padding: 0;
+            }
+            
+            .hero-image-placeholder {
+                height: 70vh;
+            }
+            
+            .placeholder-text {
+                font-size: 1.2rem;
+            }
+            
+            .placeholder-dimensions {
+                font-size: 0.9rem;
+            }
+            
+            .hero-buttons {
+                bottom: 2rem;
+                gap: 0.8rem;
+            }
+            
+            .btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.9rem;
+                min-width: 120px;
+                border-radius: 25px; /* Ensure rounded buttons on mobile */
+            }
+            
+            .hero-description {
+                font-size: 1rem;
+            }
+        }
+    </style>
+
+    <script>
+        // Header scroll effect and mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            // Header scroll effect
+            window.addEventListener('scroll', function() {
+                const header = document.querySelector('.header');
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+            
+            // Mobile menu toggle
+            const menuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-nav-menu');
+            
+            if (menuToggle && mobileMenu) {
+                menuToggle.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('active');
+                    if (mobileMenu.classList.contains('active')) {
+                        menuToggle.innerHTML = '✕'; // Change to X when menu is open
+                        menuToggle.style.color = 'var(--accent-red)'; // Keep the reddish color
+                        menuToggle.style.fontSize = '1.8rem'; // Match hamburger icon size
+                        document.body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
+                    } else {
+                        menuToggle.innerHTML = '☰'; // Change back to hamburger when closed
+                        menuToggle.style.color = 'var(--accent-red)'; // Keep the accent-red color
+                        document.body.style.overflow = ''; // Allow scrolling again
+                    }
+                });
+                
+                // Close mobile menu when clicking on a link
+                const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+                mobileMenuLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenu.classList.remove('active');
+                        menuToggle.innerHTML = '☰';
+                        menuToggle.style.color = 'var(--accent-red)';
+                        document.body.style.overflow = '';
+                    });
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (mobileMenu.classList.contains('active') && 
+                        !mobileMenu.contains(event.target) && 
+                        event.target !== menuToggle) {
+                        mobileMenu.classList.remove('active');
+                        menuToggle.innerHTML = '☰';
+                        menuToggle.style.color = 'var(--accent-red)';
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+        });
+        
+        // Slider functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sliders = document.querySelectorAll('.slider');
+            
+            sliders.forEach(slider => {
+                const container = slider.querySelector('.slider-container');
+                const prevBtn = slider.querySelector('.prev');
+                const nextBtn = slider.querySelector('.next');
+                const cards = slider.querySelectorAll('.card');
+                
+                if (!container || !prevBtn || !nextBtn || cards.length === 0) return;
+                
+                const cardWidth = cards[0].offsetWidth + 8; // Card width + gap
+                const visibleCards = Math.floor(container.offsetWidth / cardWidth);
+                
+                // Next button click
+                nextBtn.addEventListener('click', () => {
+                    container.scrollBy({ 
+                        left: cardWidth * Math.min(visibleCards, 3), 
+                        behavior: 'smooth' 
+                    });
+                });
+                
+                // Previous button click
+                prevBtn.addEventListener('click', () => {
+                    container.scrollBy({ 
+                        left: -cardWidth * Math.min(visibleCards, 3), 
+                        behavior: 'smooth' 
+                    });
+                });
+                
+                // Show/hide navigation buttons based on scroll position
+                container.addEventListener('scroll', () => {
+                    const scrollLeft = container.scrollLeft;
+                    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+                    
+                    // Show/hide prev button
+                    if (scrollLeft <= 10) {
+                        prevBtn.style.opacity = '0';
+                        prevBtn.style.pointerEvents = 'none';
+                    } else {
+                        prevBtn.style.opacity = '';
+                        prevBtn.style.pointerEvents = '';
+                    }
+                    
+                    // Show/hide next button
+                    if (scrollLeft >= maxScrollLeft - 10) {
+                        nextBtn.style.opacity = '0';
+                        nextBtn.style.pointerEvents = 'none';
+                    } else {
+                        nextBtn.style.opacity = '';
+                        nextBtn.style.pointerEvents = '';
+                    }
+                });
+                
+                // Trigger scroll event to initialize button states
+                container.dispatchEvent(new Event('scroll'));
+            });
+        });
+    </script>
+</body>
+</html>
