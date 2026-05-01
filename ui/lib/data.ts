@@ -4,9 +4,9 @@ import { Speaker as ApiSpeaker } from "@/hooks/use-speakers"
 // Create conference dates (3 days)
 // Set conference days to match the actual event dates (as in backend session data)
 export const conferenceDays = [
-  new Date('2025-06-26T00:00:00.000Z'),
-  new Date('2025-06-27T00:00:00.000Z'),
-  new Date('2025-06-28T00:00:00.000Z'),
+  new Date(2026, 5, 26), // June 26, 2026
+  new Date(2026, 5, 27), // June 27, 2026
+  new Date(2026, 5, 28), // June 28, 2026
 ]
 
 export type SessionLevel = "For everyone" | "Beginner" | "Intermediate" | "Advanced"
@@ -113,16 +113,25 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
       const isDev = process.env.NODE_ENV === 'development';
       const isLocalhost = window.location.hostname === 'localhost';
       if (isDev && isLocalhost) {
-        apiUrl = 'http://localhost:3001/sessions';
+        apiUrl = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/sessions` : 'http://localhost:3001/sessions';
       }
     }
+
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
     const res = await fetch(apiUrl, {
       cache: 'no-store',
       headers: {
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache'
-      }
+      },
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+
     if (!res.ok) throw new Error("Failed to fetch sessions");
     const responseJson = await res.json();
     
@@ -147,7 +156,11 @@ export const fetchAllSessions = async (): Promise<Session[]> => {
     // Apply favorite status from local storage
     return applyFavoritesToSessions(hydrated);
   } catch (error) {
-    console.error("Error fetching sessions:", error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error("Request timed out while fetching sessions");
+    } else {
+      console.error("Error fetching sessions:", error);
+    }
     return [];
   }
 }

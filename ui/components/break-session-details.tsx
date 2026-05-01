@@ -14,7 +14,7 @@ export function BreakSessionDetails({ session }: BreakSessionDetailsProps) {
     
     if (normalizedTitle.includes("doors open")) {
       return {
-        message: "Welcome to ETHCluj 2025! Registration is now open. Please collect your wristband, badge and food voucher at the check-in desk on the ground floor.",
+        message: "Welcome to ETHCluj 2026! Registration is now open. Please collect your wristband, badge and food voucher at the check-in desk on the ground floor.",
         icon: "🚪"
       }
     } else if (normalizedTitle.includes("coffee")) {

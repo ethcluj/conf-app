@@ -1,6 +1,6 @@
 # ETHCluj Conference App Backend
 
-Backend service for the ETHCluj 2025 conference app, providing API endpoints for sessions, speakers, Q&A functionality with real-time updates via Server-Sent Events (SSE), email verification, and a simple key-value store. This service integrates with Google Sheets to provide real-time event data.
+Backend service for the ETHCluj 2026 conference app, providing API endpoints for sessions, speakers, Q&A functionality with real-time updates via Server-Sent Events (SSE), email verification, and a simple key-value store. This service integrates with Google Sheets to provide real-time event data.
 
 ## Setup
 

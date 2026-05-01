@@ -2,16 +2,17 @@
 
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Maximize, Minimize, MessageCircle, Video, ArrowLeft } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { type Session } from "@/lib/data"
 
 // Mock QR code component until qrcode.react package is installed
 const QRCode = ({ value, size }: { value: string, size: number, level?: string, renderAs?: string }) => (
-  <div 
-    style={{ 
-      width: size, 
-      height: size, 
+  <div
+    style={{
+      width: size,
+      height: size,
       backgroundColor: '#FFFFFF',
       display: 'flex',
       alignItems: 'center',
@@ -26,6 +27,8 @@ const QRCode = ({ value, size }: { value: string, size: number, level?: string, 
   </div>
 );
 
+
+
 interface SessionPresenterViewProps {
   session: Session
   onClose: () => void
@@ -35,8 +38,11 @@ interface SessionPresenterViewProps {
 export function SessionPresenterView({ session, onClose, autoFullscreen = false }: SessionPresenterViewProps) {
   const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
+
+
   
   // Enter fullscreen mode
   const enterFullscreen = useCallback(() => {
@@ -81,19 +87,56 @@ export function SessionPresenterView({ session, onClose, autoFullscreen = false 
     if (event.key === 'v' || event.key === 'V') {
       setShowVideo(prev => !prev)
     }
-    
+
     // Q key for Q&A presenter view
     if (event.key === 'q' || event.key === 'Q') {
       router.push(`/qna/presenter/${session.id}`)
     }
-    
+
     // S key to return to session view (when in video mode)
     if ((event.key === 's' || event.key === 'S') && showVideo) {
       setShowVideo(false)
     }
-    
+
     // Escape key handling is done by the browser for fullscreen
   }, [router, session.id, showVideo])
+
+  // Play video when showVideo becomes true
+  useEffect(() => {
+    if (showVideo && videoRef.current) {
+      const playVideo = async () => {
+        try {
+          videoRef.current!.currentTime = 0 // Reset to beginning
+          await videoRef.current!.play()
+        } catch (err) {
+          console.error('Error playing video:', err)
+        }
+      }
+      // Small delay to ensure video is ready
+      setTimeout(playVideo, 100)
+    }
+  }, [showVideo])
+
+  // Play video when showVideo becomes true
+  useEffect(() => {
+    if (showVideo && videoRef.current) {
+      // Try to play immediately, with fallback
+      const playVideo = async () => {
+        try {
+          await videoRef.current!.play()
+        } catch (err) {
+          console.error('Error playing video:', err)
+          // Fallback: try again after a short delay
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(e => console.error('Fallback play failed:', e))
+            }
+          }, 500)
+        }
+      }
+      playVideo()
+    }
+  }, [showVideo])
   
   useEffect(() => {
     // Add event listener for keyboard shortcuts
@@ -134,8 +177,21 @@ export function SessionPresenterView({ session, onClose, autoFullscreen = false 
           <div className="text-center">
             <div className="text-4xl font-bold mb-4">ETHCluj Intro Video</div>
             <div className="w-[800px] h-[450px] bg-gray-800 flex items-center justify-center">
-              <p className="text-xl">Video would play here</p>
-              <p className="text-sm text-gray-400 mt-2">(Mock implementation)</p>
+              <video
+                ref={videoRef}
+                src="/intro01.mp4?v=1"
+                controls
+                muted
+                preload="auto"
+                className="w-full h-full"
+                onError={(e) => {
+                  console.error('Video failed to load:', e)
+                }}
+                onEnded={() => setShowVideo(false)}
+              >
+                <p className="text-xl">Video would play here</p>
+                <p className="text-sm text-gray-400 mt-2">(Mock implementation)</p>
+              </video>
             </div>
           </div>
         </div>

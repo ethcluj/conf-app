@@ -69,13 +69,13 @@ export default function SessionDetails() {
                 foundSession.levelColor = "green";
             }
           }
-          
+
           // Check if this session is a favorite using our favorites system
           const sessionIsFavorite = checkIsFavorite(foundSession.id)
-          
+
           // Update the session object with the correct favorite status
           foundSession.isFavorite = sessionIsFavorite
-          
+
           setSession(foundSession)
           setIsFavorite(sessionIsFavorite)
         }
@@ -85,9 +85,21 @@ export default function SessionDetails() {
         setIsLoading(false)
       }
     }
-    
+
     fetchSession()
   }, [sessionId])
+
+  // Add a timeout to stop loading after 10 seconds to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('Session fetch timed out, stopping loading')
+        setIsLoading(false)
+      }
+    }, 10000)
+
+    return () => clearTimeout(timeout)
+  }, [isLoading])
 
   if (isLoading) {
     return (

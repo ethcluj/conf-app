@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   ui:
@@ -38,6 +36,7 @@ services:
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       # Google Sheets configuration
       - DATA_SOURCE=google-sheet
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID:-1VdAZ7B7btKPM0nfuELswvrD1d0ISeeuBSwPLyW9DZU4}
       - GOOGLE_SHEET_NAME=${GOOGLE_SHEET_NAME:-APP}
       # Email configuration
@@ -54,7 +53,7 @@ services:
       retries: 5
 
   db:
-    image: postgres:15
+    image: postgres:17
     ports:
       - "5432:5432"
     volumes:
@@ -70,7 +69,7 @@ services:
       retries: 5
 
   nginx:
-    image: nginx:1.25
+    image: nginx:1.30
     ports:
       - "8080:80"
     volumes:

@@ -26,7 +26,7 @@ export function useSpeakers() {
           const isDev = process.env.NODE_ENV === 'development';
           const isLocalhost = window.location.hostname === 'localhost';
           if (isDev && isLocalhost) {
-            apiUrl = 'http://localhost:3001/speakers';
+            apiUrl = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/speakers` : 'http://localhost:3001/speakers';
           }
         }
         

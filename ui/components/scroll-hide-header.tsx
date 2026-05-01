@@ -11,8 +11,10 @@ interface ScrollHideHeaderProps {
 export function ScrollHideHeader({ children, className }: ScrollHideHeaderProps) {
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const handleScroll = () => {
       const currentScrollY = window.scrollY
 
@@ -36,7 +38,7 @@ export function ScrollHideHeader({ children, className }: ScrollHideHeaderProps)
     <div
       className={cn(
         "fixed top-0 left-0 right-0 z-20 bg-[#0d1117] transition-transform duration-300 ease-in-out",
-        isVisible ? "transform-none" : "-translate-y-full",
+        mounted && (isVisible ? "transform-none" : "-translate-y-full"),
         className,
       )}
     >

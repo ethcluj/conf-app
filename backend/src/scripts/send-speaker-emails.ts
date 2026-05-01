@@ -448,7 +448,7 @@ function formatCalendarDate(dateTimeStr: string, sessionType: string): { start: 
     // Log the input date string for debugging
     console.log('Formatting calendar date from original startTime:', dateTimeStr);
     
-    // The startTime is in ISO format (e.g., "2025-06-26T14:30:00.000Z")
+    // The startTime is in ISO format (e.g., "2026-06-26T14:30:00.000Z")
     // Parse it directly
     const utcDate = new Date(dateTimeStr);
     
@@ -499,7 +499,7 @@ function formatCalendarDate(dateTimeStr: string, sessionType: string): { start: 
     console.log('Formatted end date time (EEST):', endDateTime);
     
     // Log the generated dates for debugging with example URL
-    const exampleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Example%20Session&details=Session%20at%20ETHCluj%202025&location=Main%20Stage&dates=${startDateTime}%2F${endDateTime}&ctz=Europe/Bucharest&add=reminder&crm=POPUP&crr=60`;
+    const exampleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Example%20Session&details=Session%20at%20ETHCluj%202026&location=Main%20Stage&dates=${startDateTime}%2F${endDateTime}&ctz=Europe/Bucharest&add=reminder&crm=POPUP&crr=60`;
     console.log('Calendar dates generated (EEST):', { start: startDateTime, end: endDateTime });
     console.log('Example calendar URL:', exampleUrl);
     

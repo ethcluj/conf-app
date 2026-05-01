@@ -72,7 +72,7 @@ export default function InfoPage() {
         </div>
         <div className="bg-gray-800 p-3 rounded-md">
           <p className="text-gray-300"><span className="font-medium">Network:</span> ETHCluj</p>
-          <p className="text-gray-300"><span className="font-medium">Password:</span> welcome2025</p>
+          <p className="text-gray-300"><span className="font-medium">Password:</span> welcome2026</p>
         </div>
       </Card>
       
@@ -179,7 +179,7 @@ export default function InfoPage() {
           <h2 className="text-xl font-semibold">Links</h2>
         </div>
         <div className="space-y-3">
-          <Link href="https://lu.ma/ETHCluj2025" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
+          <Link href="https://lu.ma/ETHCluj2026" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
             <span className="text-gray-300">Side Events</span>
             <ExternalLink className="h-4 w-4 text-gray-400" />
           </Link>

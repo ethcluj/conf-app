@@ -9,20 +9,20 @@ services:
         - NEXT_PUBLIC_API_URL=https://app.ethcluj.org/api
     restart: always
     container_name: ui
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=https://app.ethcluj.org/api
+     environment:
+       - NODE_ENV=production
+       - NEXT_PUBLIC_API_URL=https://app.ethcluj.org/api
     depends_on:
       - backend
 
-  backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
-    restart: always
-    container_name: backend
-    env_file:
-      - ../.env
+   backend:
+     build:
+       context: ../backend
+       dockerfile: Dockerfile
+     restart: always
+     container_name: backend
+      env_file:
+        - .env
     environment:
       - NODE_ENV=production
       - POSTGRES_USER=${POSTGRES_USER}
@@ -50,8 +50,8 @@ services:
     image: postgres:15-alpine
     restart: always
     container_name: db
-    env_file:
-      - ../.env
+     env_file:
+       - .env
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

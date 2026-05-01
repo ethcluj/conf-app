@@ -66,7 +66,7 @@ function parseMockTimeParam(timeParam: string): Date {
   const hour = parseInt(timePart.substring(0, 2));
   const minute = parseInt(timePart.substring(2, 4));
   
-  const currentYear = new Date().getFullYear();
+  const currentYear = 2026; // ETHCluj conference year
   return new Date(currentYear, month, day, hour, minute);
 }
 
@@ -188,9 +188,9 @@ export function getCurrentConferenceDay(days?: Date[]): Date | null {
   // If days are provided, use them, otherwise import from data.ts
   // We can't import directly due to circular dependency
   const conferenceDays = days || [
-    new Date(2025, 5, 26), // June 26, 2025
-    new Date(2025, 5, 27), // June 27, 2025
-    new Date(2025, 5, 28)  // June 28, 2025
+    new Date(2026, 5, 26), // June 26, 2026
+    new Date(2026, 5, 27), // June 27, 2026
+    new Date(2026, 5, 28)  // June 28, 2026
   ];
   
   // Find the conference day that matches today

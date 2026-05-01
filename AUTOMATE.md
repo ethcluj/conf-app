@@ -1,6 +1,6 @@
 # ETHCluj Conference App Deployment Automation
 
-This document outlines strategies for automating the deployment of the ETHCluj 2025 conference application to minimize manual steps when setting up on a new server.
+This document outlines strategies for automating the deployment of the ETHCluj 2026 conference application to minimize manual steps when setting up on a new server.
 
 ## Current Manual Steps
 

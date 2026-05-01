@@ -32,7 +32,7 @@ export function BottomNavigation() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-10 bg-[#161b22] border-t border-gray-800">
+    <div className="fixed bottom-0 left-0 right-0 z-10 bg-[#161b22] border-t border-gray-800" suppressHydrationWarning>
       <div className="container mx-auto max-w-md px-4">
         <div className="flex w-full">
           {tabs.map((tab) => {

@@ -15,6 +15,7 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showLeftScroll, setShowLeftScroll] = useState(false)
   const [showRightScroll, setShowRightScroll] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   // Check if scrolling is needed
   useEffect(() => {
@@ -37,14 +38,15 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
 
   // State to track current day (for client-side rendering)
   const [currentDays, setCurrentDays] = useState<number[]>([])
-  
+
   // Update current day after component mounts (client-side only)
   useEffect(() => {
+    setMounted(true)
     // Check which days are "today" based on client-side time
     const todayIndices = conferenceDays
       .map((day, index) => isToday(day) ? index : -1)
       .filter(index => index !== -1)
-    
+
     setCurrentDays(todayIndices)
   }, []) // Empty dependency array ensures this runs once after mount
 
@@ -122,7 +124,7 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
             >
               <span className="whitespace-nowrap">{dateLabel}</span>
               {/* Only show the current day indicator on the client side after hydration */}
-              {isCurrentDay && (
+              {mounted && isCurrentDay && (
                 <span
                   className={cn("ml-1.5 inline-block h-2 w-2 rounded-full animate-pulse", isSelected ? "bg-white" : "bg-red-600")}
                 ></span>

@@ -2,7 +2,8 @@
 
 import { Clock, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { type Session, formatSessionTime, isSessionPast, isSessionActive, getFullStageName } from "@/lib/data"
+import { type Session, formatSessionTime, isSessionPast, getFullStageName } from "@/lib/data"
+import { isSessionActive } from "@/lib/time-utils"
 
 interface BreakSessionCardProps {
   session: Session

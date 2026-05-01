@@ -1,6 +1,6 @@
 # ETHCluj Conference App
 
-The official ETHCluj conference application with backend and UI components. This application provides conference schedule, speaker information, and other event details for the ETHCluj 2025 conference.
+The official ETHCluj conference application with backend and UI components. This application provides conference schedule, speaker information, and other event details for the ETHCluj 2026 conference.
 
 ## Features
 

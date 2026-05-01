@@ -60,8 +60,8 @@ function parseDateTime(timeSlot: string): { day: Date, hour: number, minute: num
       return getFallbackDateTime();
     }
     
-    // Create date with current year
-    const currentYear = new Date().getFullYear();
+    // Create date with conference year (ETHCluj 2026)
+    const currentYear = 2026;
     const date = new Date(currentYear, monthIndex, day);
     date.setHours(0, 0, 0, 0); // Reset time part
     

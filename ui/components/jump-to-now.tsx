@@ -9,8 +9,10 @@ interface JumpToNowProps {
 
 export function JumpToNow({ onJump }: JumpToNowProps) {
   const [visible, setVisible] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const handleScroll = () => {
       // Show button when user has scrolled down a bit
       setVisible(window.scrollY > 300)
@@ -20,7 +22,7 @@ export function JumpToNow({ onJump }: JumpToNowProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  if (!visible) return null
+  if (!mounted || !visible) return null
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })

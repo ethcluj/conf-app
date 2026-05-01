@@ -13,64 +13,48 @@ import { useSpeakers } from "@/hooks/use-speakers"
 import { QRCodeSVG } from "qrcode.react"
 import { fetchAllSessions } from "@/lib/data"
 
-// Custom hook for video caching
+// Custom hook for video preloading
 function useVideoCache(videoUrl: string) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
-  const [videoObjectUrl, setVideoObjectUrl] = useState<string | null>(null)
-  
+
   useEffect(() => {
-    // Check if we already have this video in sessionStorage
     if (typeof window !== 'undefined') {
-      const cachedVideoKey = `video-cache-${videoUrl}`
-      const cachedVideo = sessionStorage.getItem(cachedVideoKey)
-      
-      if (cachedVideo) {
-        console.log(`Using cached video for ${videoUrl}`)
-        setVideoObjectUrl(cachedVideo)
-        setIsVideoLoaded(true)
-        return
-      }
-      
-      // If not cached, fetch and cache the video
+      // Preload the video by creating a video element and waiting for it to load
       console.log(`Preloading video: ${videoUrl}`)
-      
-      fetch(videoUrl)
-        .then(response => response.blob())
-        .then(blob => {
-          // Create a local URL for the video blob
-          const objectUrl = URL.createObjectURL(blob)
-          
-          // Store in sessionStorage for this browser session
-          try {
-            sessionStorage.setItem(cachedVideoKey, objectUrl)
-          } catch (error) {
-            console.warn('Failed to cache video in sessionStorage:', error)
-          }
-          
-          setVideoObjectUrl(objectUrl)
-          setIsVideoLoaded(true)
-          console.log(`Video loaded and cached: ${videoUrl}`)
-        })
-        .catch(error => {
-          console.error(`Error preloading video ${videoUrl}:`, error)
-          // If caching fails, fall back to direct URL
-          setVideoObjectUrl(null)
-          setIsVideoLoaded(true)
-        })
+
+      const video = document.createElement('video')
+      video.preload = 'auto'
+      video.src = videoUrl
+
+      const handleLoadedData = () => {
+        setIsVideoLoaded(true)
+        console.log(`Video loaded: ${videoUrl}`)
+        video.removeEventListener('loadeddata', handleLoadedData)
+        video.removeEventListener('error', handleError)
+      }
+
+      const handleError = (error: Event) => {
+        console.error(`Error loading video ${videoUrl}:`, error)
+        setIsVideoLoaded(true) // Still set to true to show the video element even if preload fails
+        video.removeEventListener('loadeddata', handleLoadedData)
+        video.removeEventListener('error', handleError)
+      }
+
+      video.addEventListener('loadeddata', handleLoadedData)
+      video.addEventListener('error', handleError)
+
+      // Cleanup
+      return () => {
+        video.removeEventListener('loadeddata', handleLoadedData)
+        video.removeEventListener('error', handleError)
+      }
     } else {
       // Server-side rendering case
       setIsVideoLoaded(true)
     }
-    
-    // Cleanup function to revoke object URL when component unmounts
-    return () => {
-      if (videoObjectUrl && !videoObjectUrl.startsWith('/')) {
-        URL.revokeObjectURL(videoObjectUrl)
-      }
-    }
   }, [videoUrl])
-  
-  return { videoSrc: videoObjectUrl || videoUrl, isLoaded: isVideoLoaded }
+
+  return { videoSrc: videoUrl, isLoaded: isVideoLoaded }
 }
 
 // QR code configuration
@@ -803,31 +787,14 @@ export function UnifiedPresenterView({
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-6 flex flex-col h-screen">
-        {/* Main content area with 3 sections */}
-        <div className="flex flex-col h-full">
-          {/* Top section - Session Title */}
-          <div className="flex-grow-0 pt-8 pb-4 mt-[8vh]">
-            <h1 className="text-6xl font-bold text-center">{session.title}</h1>
-          </div>
-          
-          {/* Middle section - QR Code (centered) */}
-          <div className="flex-grow flex items-center justify-center mt-[2vh]">
-            <div className="text-center">
-              <div className="bg-white p-6 rounded-lg inline-block mb-4">
-                <QRCodeSVG
-                  value={qrCodeUrl}
-                  size={240}
-                  level={QR_CODE_LEVEL}
-                />
-              </div>
-              <div className="text-2xl mb-2">Scan to ask questions</div>
-              <div className="text-lg font-bold text-white">{qrCodeUrl}</div>
-            </div>
-          </div>
-          
-          {/* Bottom section - Logo and Speakers */}
-          <div className="flex-grow-0 flex justify-between pb-8 relative">
+      <div className="container mx-auto px-4 py-6 flex flex-col h-screen justify-between">
+        {/* Header - Session Title */}
+        <div className="pt-8 pb-4">
+          <h1 className="text-6xl font-bold text-center">{session.title}</h1>
+        </div>
+
+        {/* Footer - Logo and Speakers */}
+        <div className="flex justify-between pb-8 relative">
             {/* Akasha Logo - Bottom Left */}
             <div className="flex items-start">
               <div className="h-28 w-28 flex items-center justify-center">
@@ -890,7 +857,6 @@ export function UnifiedPresenterView({
               </div>
             )}
           </div>
-        </div>
       </div>
     </div>
   )

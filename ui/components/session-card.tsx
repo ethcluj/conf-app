@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
@@ -21,6 +21,11 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
   const { speakers: apiSpeakers, isLoading: speakersLoading } = useSpeakers();
   const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null);
   const [showSpeakerDetails, setShowSpeakerDetails] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Map level to color if levelColor is not provided
   if (!session.levelColor && session.level) {
@@ -70,15 +75,17 @@ export function SessionCard({ session, onClick, onToggleFavorite, isActive: prop
       )}
       onClick={onClick}
     >
-      <button
-        className="absolute top-3 right-3 text-gray-400 hover:text-yellow-400 transition-colors"
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggleFavorite(session.id)
-        }}
-      >
-        <Star className={`h-5 w-5 ${session.isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
-      </button>
+      {mounted && (
+        <button
+          className="absolute top-3 right-3 text-gray-400 hover:text-yellow-400 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleFavorite(session.id)
+          }}
+        >
+          <Star className={`h-5 w-5 ${session.isFavorite ? "text-yellow-400 fill-yellow-400" : ""}`} />
+        </button>
+      )}
 
       {/* Stage/Location with active indicator */}
       <div className="mb-2 text-sm font-medium text-red-500 flex items-center">
