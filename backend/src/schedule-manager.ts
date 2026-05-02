@@ -248,36 +248,32 @@ function createSessionFromRow(row: RawScheduleRow, slotCount: number, id: string
   try {
     // Parse date and time info
     const { day, hour, minute } = parseDateTime(row.timeSlot);
-    
-    // Calculate duration based on slot count
-    const durationMinutes = slotCount * SLOT_DURATION;
-    
+
     // Use raw stage value directly from Google Sheet
     const stage = row.stage || 'NA';
-    
+
     // Use the level directly from the sheet
     const level: SessionLevel = (row.level || 'For everyone') as SessionLevel;
-    
+
     // Process speakers
     const speakers = processSpeakers(row.speakers || '');
-    
+
     // Get the track value directly from the sheet
     const rawTrack = row.track || '';
-    
+
     // Use the trackMapping to validate and map the track value
     // Now the trackMapping maps each value to itself, preserving the original values
     const track = validateSessionTrack(rawTrack);
-    
+
     // Get the raw type value from the sheet
     const sessionType = row.type || '';
-    
+
     // Create the session object
     return createSession(
       sessionId,
       day,
       hour,
       minute,
-      durationMinutes,
       stage,
       row.title || 'Untitled Session',
       speakers,

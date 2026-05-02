@@ -115,7 +115,11 @@ export default function ConferenceSchedule() {
     }
   }
 
-  const tabs = ["All", "Main", "Tech", "Biz", "Work"]
+  // Generate tabs dynamically from unique stages in the selected day's sessions
+  const uniqueStages = Array.from(new Set(sessionsForSelectedDay.map(session => session.stage)))
+    .filter(stage => stage !== 'NA') // Exclude break sessions
+    .sort() // Sort alphabetically for consistent ordering
+  const tabs = ["All", ...uniqueStages]
 
   // Separate break sessions (NA stage) from regular sessions
   const breakSessions = sessionsForSelectedDay.filter(session => session.stage === 'NA');
@@ -131,15 +135,14 @@ export default function ConferenceSchedule() {
   // We need to deduplicate break sessions that happen at the same time
   const uniqueBreakSessions = breakSessions.reduce((unique, session) => {
     // Check if we already have a break session at this time
-    const existingSessionIndex = unique.findIndex(s => 
-      s.startTime.getTime() === session.startTime.getTime() && 
-      s.endTime.getTime() === session.endTime.getTime()
+    const existingSessionIndex = unique.findIndex(s =>
+      s.startTime.getTime() === session.startTime.getTime()
     );
-    
+
     if (existingSessionIndex === -1) {
       unique.push(session);
     }
-    
+
     return unique;
   }, [] as typeof breakSessions);
   

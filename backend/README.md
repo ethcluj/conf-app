@@ -115,8 +115,8 @@ All API endpoints follow a standardized response format:
           "description": "string",
           "speakers": "string",
           "stage": "string", // "Main", "Tech", "Biz", "Work", or "NA"
-          "startTime": "string", // ISO datetime
-          "endTime": "string", // ISO datetime
+          "date": "string", // ISO date
+          "startTime": "string", // ISO datetime for starting time
           "type": "string",
           "track": "string"
         },

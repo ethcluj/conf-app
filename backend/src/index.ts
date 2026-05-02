@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import { allSessions, refreshSessions } from './sessions';
+import { allSessions, refreshSessions, getSessionNavigation } from './sessions';
 import { allSpeakers, refreshSpeakers } from './speakers';
 import { initQnaSchema } from './qna-schema';
 import { createQnaRoutes } from './qna-routes';
@@ -85,6 +85,18 @@ app.post('/refresh-sessions', async (req, res) => {
   } catch (error) {
     console.error('Error refreshing sessions:', error);
     res.status(500).json(createErrorResponse('Failed to refresh sessions', { message: (error as Error).message }));
+  }
+});
+
+// Session navigation endpoint
+app.get('/sessions/:id/navigation', (req, res) => {
+  try {
+    const { id } = req.params;
+    const navigation = getSessionNavigation(id);
+    res.json(createSuccessResponse(navigation));
+  } catch (error) {
+    console.error('Error getting session navigation:', error);
+    res.status(500).json(createErrorResponse('Failed to get session navigation', { message: (error as Error).message }));
   }
 });
 

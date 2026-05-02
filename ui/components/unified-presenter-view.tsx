@@ -567,8 +567,7 @@ export function UnifiedPresenterView({
               <h2 className="text-2xl mb-4">{session.title}</h2>
               <p className="text-xl text-gray-300 mb-2">{getFullStageName(session.stage)}</p>
               <p className="text-xl text-red-500">
-                {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
-                {new Date(session.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </p>
               {/* Session navigation indicator for QnA mode */}
               {sessionsOnSameStage.length > 1 && (

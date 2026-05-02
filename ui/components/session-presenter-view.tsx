@@ -214,8 +214,7 @@ export function SessionPresenterView({ session, onClose, autoFullscreen = false 
           
           {/* Time */}
           <div className="text-xl text-gray-300 mb-8">
-            {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
-            {new Date(session.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            {new Date(session.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
           </div>
           
           {/* Speakers */}

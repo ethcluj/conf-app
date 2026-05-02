@@ -71,21 +71,23 @@ function parseMockTimeParam(timeParam: string): Date {
 }
 
 /**
- * Check if a session is currently active based on its start and end times
+ * Check if a session is currently active based on its start time
  * A session is considered active if the current time is after or equal to the start time
- * AND before (but not equal to) the end time
+ * and within 1 hour of the start time (assuming 1-hour sessions)
  */
-export function isSessionActive(session: { startTime: Date; endTime: Date }): boolean {
+export function isSessionActive(session: { startTime: Date }): boolean {
   const now = getCurrentTime();
-  return now >= session.startTime && now < session.endTime;
+  const sessionEndTime = new Date(session.startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+  return now >= session.startTime && now < sessionEndTime;
 }
 
 /**
  * Check if a session is in the past
  */
-export function isSessionPast(session: { endTime: Date }): boolean {
+export function isSessionPast(session: { startTime: Date }): boolean {
   const now = getCurrentTime();
-  return now > session.endTime;
+  const sessionEndTime = new Date(session.startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+  return now > sessionEndTime;
 }
 
 /**
@@ -100,37 +102,38 @@ export function isSessionFuture(session: { startTime: Date }): boolean {
  * Check if QnA is available for a session
  * QnA is available 5 minutes before the session starts, during the session, and 5 minutes after it ends
  */
-export function isQnAAvailable(session: { startTime: Date; endTime: Date }): boolean {
-  // const now = getCurrentTime();
-  // const fiveMinutesMs = 5 * 60 * 1000; // 5 minutes in milliseconds
-  
-  // // Available 5 minutes before session starts
-  // const qnaStartTime = new Date(session.startTime.getTime() - fiveMinutesMs);
-  
-  // // Available until 5 minutes after session ends
-  // const qnaEndTime = new Date(session.endTime.getTime() + fiveMinutesMs);
-  
-  // return now >= qnaStartTime && now <= qnaEndTime;
-  return true;
+export function isQnAAvailable(session: { startTime: Date }): boolean {
+  const now = getCurrentTime();
+  const fiveMinutesMs = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const sessionEndTime = new Date(session.startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+
+  // Available 5 minutes before session starts
+  const qnaStartTime = new Date(session.startTime.getTime() - fiveMinutesMs);
+
+  // Available until 5 minutes after session ends
+  const qnaEndTime = new Date(sessionEndTime.getTime() + fiveMinutesMs);
+
+  return now >= qnaStartTime && now <= qnaEndTime;
 }
 
 /**
  * Get a human-readable status for a session based on its timing
  * @returns An object with the status text and whether the session is active
  */
-export function getSessionTimeStatus(session: { startTime: Date; endTime: Date }): { text: string; isActive: boolean } {
+export function getSessionTimeStatus(session: { startTime: Date }): { text: string; isActive: boolean } {
   const now = getCurrentTime();
-  
+
   // If session is active
   if (isSessionActive(session)) {
     return { text: "Happening now", isActive: true };
   }
-  
+
   // If session is in the past
   if (isSessionPast(session)) {
-    return { text: `Ended ${formatTimeDifference(session.endTime, now)} ago`, isActive: false };
+    const sessionEndTime = new Date(session.startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+    return { text: `Ended ${formatTimeDifference(sessionEndTime, now)} ago`, isActive: false };
   }
-  
+
   // If session is in the future
   return { text: `Starts in ${formatTimeDifference(now, session.startTime)}`, isActive: false };
 }

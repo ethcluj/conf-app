@@ -33,7 +33,6 @@ export interface Session {
   id: string
   date: Date
   startTime: Date
-  endTime: Date
   stage: string
   title: string
   speakers: Speaker[]
@@ -61,7 +60,7 @@ const levelToDifficultyMapping: Record<SessionLevel, SessionDifficulty> = {
 const hydrateSession = (session: any): Session => {
   // Determine session difficulty based on level or use default
   let sessionDifficulty: SessionDifficulty;
-  
+
   if (session.difficulty) {
     sessionDifficulty = session.difficulty;
   } else if (session.level && typeof session.level === 'string' && session.level in levelToDifficultyMapping) {
@@ -72,18 +71,18 @@ const hydrateSession = (session: any): Session => {
     // Default to intermediate
     sessionDifficulty = 3;
   }
-  
+
   // Parse dates treating them as local time
   // This ignores the timezone part of the ISO string
   const parseLocalTime = (dateStr: string) => {
     // Extract date parts from the ISO string, ignoring timezone
     const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
     if (!match) return new Date(dateStr); // Fallback to standard parsing
-    
+
     const [_, year, month, day, hours, minutes, seconds] = match;
     // Create date using local time components
     return new Date(
-      parseInt(year), 
+      parseInt(year),
       parseInt(month) - 1, // Month is 0-indexed in JS Date
       parseInt(day),
       parseInt(hours),
@@ -91,12 +90,11 @@ const hydrateSession = (session: any): Session => {
       parseInt(seconds)
     );
   };
-  
+
   return {
     ...session,
     date: parseLocalTime(session.date),
     startTime: parseLocalTime(session.startTime),
-    endTime: parseLocalTime(session.endTime),
     difficulty: sessionDifficulty,
   };
 }
@@ -194,16 +192,24 @@ export const getSessionsByDay = async (day: Date): Promise<Session[]> => {
 export const getCurrentAndUpcomingSessions = async (): Promise<Session[]> => {
   const now = new Date();
   const sessions = await fetchAllSessions();
+  // Assume sessions are 1 hour long for determining if they're upcoming
   return sessions
-    .filter((session) => isAfter(session.endTime, now))
+    .filter((session) => {
+      const sessionEndTime = new Date(session.startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+      return isAfter(sessionEndTime, now);
+    })
     .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 }
 
 export const getPastSessions = async (): Promise<Session[]> => {
   const now = new Date();
   const sessions = await fetchAllSessions();
+  // Assume sessions are 1 hour long for determining if they're past
   return sessions
-    .filter((session) => isBefore(session.endTime, now))
+    .filter((session) => {
+      const sessionEndTime = new Date(session.startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+      return isBefore(sessionEndTime, now);
+    })
     .sort((a, b) => b.startTime.getTime() - a.startTime.getTime()); // Most recent first
 }
 
@@ -216,21 +222,19 @@ export const isSessionUpcoming = (session: Session): boolean => {
 
 export const isSessionPast = (session: Session): boolean => {
   const now = new Date();
-  return isBefore(session.endTime, now);
+  // Assume sessions are 1 hour long for determining if they're past
+  const sessionEndTime = new Date(session.startTime.getTime() + 60 * 60 * 1000); // 1 hour later
+  return isBefore(sessionEndTime, now);
 }
 
 export const formatSessionTime = (session: Session): string => {
-  // Format times in a.m./p.m. format with minutes, treating API times as local times
+  // Format time in a.m./p.m. format with minutes, treating API times as local times
   // Convert to lowercase for better visual appearance
-  const startTime = format(session.startTime, "h:mm a").toLowerCase();
-  const endTime = format(session.endTime, "h:mm a").toLowerCase();
-  return `${startTime} - ${endTime}`;
+  return format(session.startTime, "h:mm a").toLowerCase();
 }
 
 export const formatSessionDateTime = (session: Session): string => {
-  const startTime = format(session.startTime, "h:mm a").toLowerCase();
-  const endTime = format(session.endTime, "h:mm a").toLowerCase();
-  return `${format(session.date, "MMMM d, yyyy")} • ${startTime} - ${endTime}`;
+  return `${format(session.date, "MMMM d, yyyy")} • ${format(session.startTime, "h:mm a").toLowerCase()}`;
 }
 
 export const formatDayDate = (date: Date): string => {
@@ -253,21 +257,25 @@ export const getFullStageName = (stageCode: string, sessionTitle?: string): stri
     if (normalizedTitle.includes('doors open')) {
       return 'Check-in Desk (ground floor)';
     } else if (normalizedTitle.includes('coffee')) {
-      return 'Sponsors area (ground floor)';
+      return 'Coffee & Sponsors area (3rd floor)';
     } else if (normalizedTitle.includes('lunch')) {
-      return 'Cafeteria (1st floor)';
+      return 'Lunch (3rd floor)';
+    } else if (normalizedTitle.includes('closing')) {
+      return 'Closing Ceremony (2nd floor)';
+    } else if (normalizedTitle.includes('opening')) {
+      return 'Opening Ceremony (2nd floor)';
     }
   }
-  
+
   // Default stage names
   switch (stageCode) {
     case 'Main':
-      return 'Main Stage (3rd floor)';
+      return 'Main Stage (2nd floor)';
     case 'Tech':
-      return 'Tech Stage (1st floor)';
+      return 'Tech Stage (3rd floor)';
     case 'Biz':
-      return 'Business Room (3rd floor)';
-    case 'Work':
+      return 'Business Room (4th floor)';
+    case 'Workshop':
       return 'Workshop Room (3rd floor)';
     case 'NA':
       return 'All Stages';

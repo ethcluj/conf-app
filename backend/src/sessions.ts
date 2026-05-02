@@ -1,9 +1,13 @@
 /**
  * Sessions module for the ETHCluj conference app
- * 
+ *
  * This module provides types, interfaces, and functions for working with
  * conference sessions. It includes data structures and utilities for
  * fetching and managing session data from Google Sheets.
+ *
+ * Navigation Features:
+ * - getSessionNavigation(): Find previous/next sessions on the same stage and date
+ * - API endpoint: GET /sessions/:id/navigation returns navigation data for a session
  */
 import { getSessionsFromGoogleSheet } from './schedule-manager';
 
@@ -39,7 +43,7 @@ export interface Speaker {
 
 /**
  * Represents a conference session
- * 
+ *
  * Contains all information about a session including timing, speakers,
  * content details, and metadata for filtering and display.
  */
@@ -50,8 +54,6 @@ export interface Session {
   date: string
   /** ISO string for the session start time */
   startTime: string
-  /** ISO string for the session end time */
-  endTime: string
   /** Location/stage where the session takes place */
   stage: string
   /** Session title */
@@ -85,25 +87,22 @@ const conferenceDays = [
 
 /**
  * Creates a new Session object with the provided parameters
- * 
+ *
  * This function handles the creation of Session objects with proper date/time
- * calculations and level color mapping. It ensures all required fields are
- * properly formatted and calculated.
- * 
+ * calculations. It ensures all required fields are properly formatted.
+ *
  * @param id Unique identifier for the session
  * @param day Date object representing the day of the session
  * @param startHour Hour when the session starts (24-hour format)
  * @param startMinute Minute when the session starts
- * @param durationMinutes Duration of the session in minutes
  * @param stage Location/stage where the session takes place
  * @param title Session title
  * @param speakers Array of speakers for this session
  * @param level Session difficulty level
- * @param isFavorite Whether the session is marked as favorite (default: false)
  * @param description Optional detailed description of the session
  * @param track Optional track/category for the session
- * @param difficulty Optional numeric difficulty rating (1-5)
  * @param learningPoints Optional array of key takeaways
+ * @param type Optional session type
  * @returns A fully formed Session object
  */
 export function createSession(
@@ -111,7 +110,6 @@ export function createSession(
   day: Date,
   startHour: number,
   startMinute: number,
-  durationMinutes: number,
   stage: string,
   title: string,
   speakers: Speaker[],
@@ -124,42 +122,32 @@ export function createSession(
   if (!id) {
     throw new Error('Session ID is required');
   }
-  
+
   if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
     console.warn(`Invalid day provided for session "${title}", using current date`);
     day = new Date();
   }
-  
+
   // Validate time parameters
   if (typeof startHour !== 'number' || startHour < 0 || startHour > 23) {
     console.warn(`Invalid startHour for session "${title}", using 9 AM`);
     startHour = 9;
   }
-  
+
   if (typeof startMinute !== 'number' || startMinute < 0 || startMinute > 59) {
     console.warn(`Invalid startMinute for session "${title}", using 0`);
     startMinute = 0;
   }
-  
-  if (typeof durationMinutes !== 'number' || durationMinutes <= 0) {
-    console.warn(`Invalid durationMinutes for session "${title}", using 30`);
-    durationMinutes = 30;
-  }
-  
-  // Calculate start and end times
+
+  // Calculate start time
   const startTime = new Date(day);
   startTime.setHours(startHour, startMinute, 0, 0);
-  const endTime = new Date(startTime);
-  endTime.setMinutes(endTime.getMinutes() + durationMinutes);
-  
-  // No need to determine level color anymore as it's been removed from the API
-  
+
   // Create and return the session object
   return {
     id,
     date: day.toISOString(),
     startTime: startTime.toISOString(),
-    endTime: endTime.toISOString(),
     stage: stage || 'NA', // Use 'NA' as default if stage is not provided
     title: title || 'Untitled Session',
     speakers: Array.isArray(speakers) ? speakers : [],
@@ -235,35 +223,91 @@ async function getSessionData(): Promise<Session[]> {
 }
 
 /**
+ * Navigation information for a session
+ */
+export interface SessionNavigation {
+  /** ID of the previous session on the same stage and date, or null if none */
+  previous?: string | null;
+  /** ID of the next session on the same stage and date, or null if none */
+  next?: string | null;
+}
+
+/**
+ * Gets navigation information for a specific session
+ *
+ * Finds the previous and next sessions that occur on the same stage and date,
+ * ordered by start time.
+ *
+ * @param sessionId The ID of the session to get navigation for
+ * @param sessions Array of all sessions (defaults to allSessions)
+ * @returns Navigation information with previous/next session IDs
+ */
+export function getSessionNavigation(sessionId: string, sessions: Session[] = allSessions): SessionNavigation {
+  const currentSession = sessions.find(s => s.id === sessionId);
+  if (!currentSession) {
+    return { previous: null, next: null };
+  }
+
+  // Find all sessions on the same stage and date
+  const sameStageAndDate = sessions
+    .filter(s =>
+      s.stage === currentSession.stage &&
+      s.date === currentSession.date &&
+      s.id !== sessionId
+    )
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  // Find the position of current session in this list
+  const currentTime = new Date(currentSession.startTime).getTime();
+  let previousSession: Session | null = null;
+  let nextSession: Session | null = null;
+
+  for (const session of sameStageAndDate) {
+    const sessionTime = new Date(session.startTime).getTime();
+    if (sessionTime < currentTime) {
+      previousSession = session;
+    } else if (sessionTime > currentTime && nextSession === null) {
+      nextSession = session;
+      break; // We found the next one, no need to continue
+    }
+  }
+
+  return {
+    previous: previousSession?.id || null,
+    next: nextSession?.id || null
+  };
+}
+
+/**
  * Refreshes the in-memory session cache from the data source
- * 
+ *
  * This function fetches the latest session data and updates the in-memory cache.
  * It's designed to be called periodically to ensure the data is up to date.
- * 
+ *
  * @returns Promise resolving to an array of Session objects
  */
 export async function refreshSessions(): Promise<Session[]> {
   console.log('Refreshing sessions data...');
-  
+
   try {
     // Get the latest data
     const sessions = await getSessionData();
-    
+
     // Update the in-memory cache
     const previousCount = allSessions.length;
     allSessions = sessions;
-    
+
     console.log(`Sessions refreshed: ${previousCount} → ${sessions.length}`);
     return allSessions;
   } catch (error: any) {
     console.error(`Error during session refresh: ${error?.message || 'Unknown error'}`);
-    
+
     // If we have existing data, return it instead of throwing
     if (allSessions.length > 0) {
       console.warn(`Using ${allSessions.length} cached sessions due to refresh failure`);
       return allSessions;
     }
-    
+
     // Only throw if we have no existing data
     throw error;
   }

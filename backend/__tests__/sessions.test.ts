@@ -1,4 +1,4 @@
-import { createSession, refreshSessions, allSessions, Speaker } from '../src/sessions';
+import { createSession, refreshSessions, allSessions, getSessionNavigation, Speaker } from '../src/sessions';
 import { getSessionsFromGoogleSheet } from '../src/schedule-manager';
 import { mockRawScheduleData } from './mocks/googleSheetsMock';
 
@@ -18,7 +18,6 @@ describe('Sessions Module', () => {
         id: '1',
         date: '2023-06-26T00:00:00.000Z',
         startTime: '2023-06-26T09:00:00.000Z',
-        endTime: '2023-06-26T09:30:00.000Z',
         stage: 'NA',
         title: 'Doors Open',
         speakers: [],
@@ -32,7 +31,6 @@ describe('Sessions Module', () => {
         id: '2',
         date: '2023-06-26T00:00:00.000Z',
         startTime: '2023-06-26T10:00:00.000Z',
-        endTime: '2023-06-26T10:30:00.000Z',
         stage: 'Main',
         title: 'Opening Keynote',
         speakers: [{ name: 'John Doe', image: '/placeholder.svg?height=40&width=40' }],
@@ -74,14 +72,10 @@ describe('Sessions Module', () => {
       
       // Check date and time properties
       expect(session.date).toBe(day.toISOString());
-      
+
       const startTime = new Date(session.startTime);
       expect(startTime.getHours()).toBe(9);
       expect(startTime.getMinutes()).toBe(0);
-      
-      const endTime = new Date(session.endTime);
-      expect(endTime.getHours()).toBe(9);
-      expect(endTime.getMinutes()).toBe(30);
       
       // Check speakers
       expect(session.speakers).toHaveLength(1);
@@ -175,13 +169,12 @@ describe('Sessions Module', () => {
         day,
         -1, // Invalid hour
         60, // Invalid minute
-        -30, // Invalid duration
         'Main',
         'Test Session',
         [],
         'Beginner'
       );
-      
+
       // Should have logged warnings
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining('Invalid startHour for session "Test Session"')
@@ -189,18 +182,11 @@ describe('Sessions Module', () => {
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining('Invalid startMinute for session "Test Session"')
       );
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid durationMinutes for session "Test Session"')
-      );
-      
+
       // Should have used fallback values
       const startTime = new Date(session.startTime);
       expect(startTime.getHours()).toBe(9); // Default hour
       expect(startTime.getMinutes()).toBe(0); // Default minute
-      
-      const endTime = new Date(session.endTime);
-      expect(endTime.getHours()).toBe(9);
-      expect(endTime.getMinutes()).toBe(30); // Default 30 min duration
       
       consoleWarnSpy.mockRestore();
     });
@@ -373,6 +359,144 @@ describe('Sessions Module', () => {
         consoleLogSpy.mockRestore();
         consoleErrorSpy.mockRestore();
       }
+    });
+  });
+
+  describe('getSessionNavigation', () => {
+    const mockSessions = [
+      {
+        id: '1',
+        date: '2023-06-26T00:00:00.000Z',
+        startTime: '2023-06-26T09:00:00.000Z',
+        stage: 'Main',
+        title: 'Morning Session',
+        speakers: [],
+        level: 'For everyone' as const,
+        type: 'Keynote'
+      },
+      {
+        id: '2',
+        date: '2023-06-26T00:00:00.000Z',
+        startTime: '2023-06-26T10:00:00.000Z',
+        stage: 'Main',
+        title: 'Mid-morning Session',
+        speakers: [],
+        level: 'For everyone' as const,
+        type: 'Workshop'
+      },
+      {
+        id: '3',
+        date: '2023-06-26T00:00:00.000Z',
+        startTime: '2023-06-26T11:00:00.000Z',
+        stage: 'Main',
+        title: 'Afternoon Session',
+        speakers: [],
+        level: 'For everyone' as const,
+        type: 'Panel'
+      },
+      {
+        id: '4',
+        date: '2023-06-26T00:00:00.000Z',
+        startTime: '2023-06-26T14:00:00.000Z',
+        stage: 'Side',
+        title: 'Side Stage Session',
+        speakers: [],
+        level: 'For everyone' as const,
+        type: 'Talk'
+      },
+      {
+        id: '5',
+        date: '2023-06-27T00:00:00.000Z',
+        startTime: '2023-06-27T09:00:00.000Z',
+        stage: 'Main',
+        title: 'Next Day Session',
+        speakers: [],
+        level: 'For everyone' as const,
+        type: 'Keynote'
+      }
+    ];
+
+    beforeEach(() => {
+      // Set up mock sessions for testing
+      allSessions.splice(0, allSessions.length, ...mockSessions);
+    });
+
+    it('should return previous and next sessions on same stage and date', () => {
+      const navigation = getSessionNavigation('2', mockSessions);
+
+      expect(navigation.previous).toBe('1'); // Morning Session at 9:00
+      expect(navigation.next).toBe('3'); // Afternoon Session at 11:00
+    });
+
+    it('should return null for previous when session is first on stage/date', () => {
+      const navigation = getSessionNavigation('1', mockSessions);
+
+      expect(navigation.previous).toBeNull();
+      expect(navigation.next).toBe('2'); // Mid-morning Session at 10:00
+    });
+
+    it('should return null for next when session is last on stage/date', () => {
+      const navigation = getSessionNavigation('3', mockSessions);
+
+      expect(navigation.previous).toBe('2'); // Mid-morning Session at 10:00
+      expect(navigation.next).toBeNull();
+    });
+
+    it('should return null for both when session is on different stage', () => {
+      const navigation = getSessionNavigation('4', mockSessions);
+
+      expect(navigation.previous).toBeNull();
+      expect(navigation.next).toBeNull();
+    });
+
+    it('should return null for both when session is on different date', () => {
+      const navigation = getSessionNavigation('5', mockSessions);
+
+      expect(navigation.previous).toBeNull();
+      expect(navigation.next).toBeNull();
+    });
+
+    it('should return null for both when session does not exist', () => {
+      const navigation = getSessionNavigation('nonexistent', mockSessions);
+
+      expect(navigation.previous).toBeNull();
+      expect(navigation.next).toBeNull();
+    });
+
+    it('should handle sessions with same start time (edge case)', () => {
+      const sessionsWithSameTime = [
+        {
+          id: '1',
+          date: '2023-06-26T00:00:00.000Z',
+          startTime: '2023-06-26T10:00:00.000Z',
+          stage: 'Main',
+          title: 'Session 1',
+          speakers: [],
+          level: 'For everyone' as const,
+          type: 'Talk'
+        },
+        {
+          id: '2',
+          date: '2023-06-26T00:00:00.000Z',
+          startTime: '2023-06-26T10:00:00.000Z',
+          stage: 'Main',
+          title: 'Session 2',
+          speakers: [],
+          level: 'For everyone' as const,
+          type: 'Talk'
+        }
+      ];
+
+      const navigation = getSessionNavigation('1', sessionsWithSameTime);
+      expect(navigation.previous).toBeNull();
+      expect(navigation.next).toBeNull(); // Both have same time, so no clear next
+    });
+
+    it('should use allSessions by default when no sessions parameter provided', () => {
+      const navigation = getSessionNavigation('2'); // No sessions parameter
+
+      expect(navigation.previous).toBe('1');
+      expect(navigation.next).toBe('3');
     });
   });
 });
