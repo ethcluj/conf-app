@@ -10,11 +10,11 @@ import { Session, SessionLevel, SessionTrack, createSession } from './sessions';
 const SLOT_DURATION = 30;
 
 /**
- * Parse date and time from the time slot format (e.g., "26 June 13:00")
- * 
- * @param timeSlot String in format "DD Month HH:MM"
- * @returns Object containing day (Date), hour (number), and minute (number)
- */
+  * Parse date and time from the time slot format (e.g., "13 May 13:00")
+  *
+  * @param timeSlot String in format "DD Month HH:MM"
+  * @returns Object containing day (Date), hour (number), and minute (number)
+  */
 function parseDateTime(timeSlot: string): { day: Date, hour: number, minute: number } {
   if (!timeSlot || typeof timeSlot !== 'string') {
     console.error('Invalid timeSlot provided:', timeSlot);
@@ -25,7 +25,7 @@ function parseDateTime(timeSlot: string): { day: Date, hour: number, minute: num
     // Split the time slot into date and time parts
     const parts = timeSlot.trim().split(' ');
     
-    // Format should be like "26 June 13:00"
+    // Format should be like "13 May 13:00"
     if (parts.length < 3) {
       console.error(`Invalid time slot format: ${timeSlot} (expected format: "DD Month HH:MM")`);
       return getFallbackDateTime();

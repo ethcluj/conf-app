@@ -5,7 +5,7 @@ import { SpeakerDetails } from '../../src/speakers';
 // Mock raw schedule data that would come from Google Sheets
 export const mockRawScheduleData: RawScheduleRow[] = [
   {
-    timeSlot: '26 June 09:00',
+    timeSlot: '13 May 09:00',
     visible: true,
     stage: 'NA',
     title: 'Doors Open',
@@ -17,7 +17,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     notes: ''
   },
   {
-    timeSlot: '26 June 10:00',
+    timeSlot: '13 May 10:00',
     visible: true,
     stage: 'Main',
     title: 'Opening Keynote',
@@ -29,7 +29,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     notes: ''
   },
   {
-    timeSlot: '26 June 11:00',
+    timeSlot: '13 May 11:00',
     visible: true,
     stage: 'Tech',
     title: 'Scaling Solutions',
@@ -41,7 +41,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     notes: ''
   },
   {
-    timeSlot: '26 June 12:00',
+    timeSlot: '13 May 12:00',
     visible: true,
     stage: 'NA',
     title: 'Lunch',
@@ -53,7 +53,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     notes: ''
   },
   {
-    timeSlot: '26 June 13:00',
+    timeSlot: '14 May 13:00',
     visible: true,
     stage: 'Biz',
     title: 'DeFi Panel',
@@ -65,7 +65,7 @@ export const mockRawScheduleData: RawScheduleRow[] = [
     notes: ''
   },
   {
-    timeSlot: '26 June 13:00',
+    timeSlot: '14 May 13:00',
     visible: false, // This one should be filtered out
     stage: 'Work',
     title: 'Hidden Workshop',
@@ -80,12 +80,12 @@ export const mockRawScheduleData: RawScheduleRow[] = [
 
 // Mock CSV data as it would be returned from the direct fetch
 export const mockCSVData = `"Time Slot","Visible","Stage","Title","Speakers","Description","Type","Track","Notes"
-"26 June 09:00","true","NA","Doors Open","","Registration starts","NA","NA",""
-"26 June 10:00","true","Main","Opening Keynote","John Doe","Welcome to ETHCluj","Keynote","Ethereum Roadmap",""
-"26 June 11:00","true","Tech","Scaling Solutions","Jane Smith","Technical deep dive","Workshop","Development",""
-"26 June 12:00","true","NA","Lunch","","Lunch break","NA","NA",""
-"26 June 13:00","true","Biz","DeFi Panel","Alice Johnson;Bob Williams","Industry leaders discuss DeFi","Panel","DeFi",""
-"26 June 13:00","false","Work","Hidden Workshop","Hidden Speaker","This should not appear","Workshop","Development",""`;
+"13 May 09:00","true","NA","Doors Open","","Registration starts","NA","NA",""
+"13 May 10:00","true","Main","Opening Keynote","John Doe","Welcome to ETHCluj","Keynote","Ethereum Roadmap",""
+"13 May 11:00","true","Tech","Scaling Solutions","Jane Smith","Technical deep dive","Workshop","Development",""
+"13 May 12:00","true","NA","Lunch","","Lunch break","NA","NA",""
+"14 May 13:00","true","Biz","DeFi Panel","Alice Johnson;Bob Williams","Industry leaders discuss DeFi","Panel","DeFi",""
+"14 May 13:00","false","Work","Hidden Workshop","Hidden Speaker","This should not appear","Workshop","Development",""`;
 
 // Mock speaker data
 export const mockSpeakerData: SpeakerDetails[] = [
@@ -135,12 +135,12 @@ export const mockGoogleSheetsResponse = {
   data: {
     values: [
       ['Time Slot', 'Visible', 'Stage', 'ID', 'Title', 'Speakers', 'Description', 'Type', 'Track', 'Level', 'NOTES'],
-      ['26 June 09:00', 'true', 'NA', '1', 'Doors Open', '', 'Registration starts', 'NA', 'NA', 'For everyone', ''],
-      ['26 June 10:00', 'true', 'Main', '2', 'Opening Keynote', 'John Doe', 'Welcome to ETHCluj', 'Keynote', 'Ethereum Roadmap', 'For everyone', ''],
-      ['26 June 11:00', 'true', 'Tech', '3', 'Scaling Solutions', 'Jane Smith', 'Technical deep dive', 'Workshop', 'Development', 'Intermediate', ''],
-      ['26 June 12:00', 'true', 'NA', '4', 'Lunch', '', 'Lunch break', 'NA', 'NA', 'For everyone', ''],
-      ['26 June 13:00', 'true', 'Biz', '5', 'DeFi Panel', 'Alice Johnson;Bob Williams', 'Industry leaders discuss DeFi', 'Panel', 'DeFi', 'Beginner', ''],
-      ['26 June 13:00', 'false', 'Work', '6', 'Hidden Workshop', 'Hidden Speaker', 'This should not appear', 'Workshop', 'Development', 'Advanced', '']
+      ['13 May 09:00', 'true', 'NA', '1', 'Doors Open', '', 'Registration starts', 'NA', 'NA', 'For everyone', ''],
+      ['13 May 10:00', 'true', 'Main', '2', 'Opening Keynote', 'John Doe', 'Welcome to ETHCluj', 'Keynote', 'Ethereum Roadmap', 'For everyone', ''],
+      ['13 May 11:00', 'true', 'Tech', '3', 'Scaling Solutions', 'Jane Smith', 'Technical deep dive', 'Workshop', 'Development', 'Intermediate', ''],
+      ['13 May 12:00', 'true', 'NA', '4', 'Lunch', '', 'Lunch break', 'NA', 'NA', 'For everyone', ''],
+      ['14 May 13:00', 'true', 'Biz', '5', 'DeFi Panel', 'Alice Johnson;Bob Williams', 'Industry leaders discuss DeFi', 'Panel', 'DeFi', 'Beginner', ''],
+      ['14 May 13:00', 'false', 'Work', '6', 'Hidden Workshop', 'Hidden Speaker', 'This should not appear', 'Workshop', 'Development', 'Advanced', '']
     ]
   }
 };

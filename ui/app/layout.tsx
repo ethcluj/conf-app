@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "ETHCluj 2026",
-  description: "Conference Schedule (June 26-28)",
+  description: "Conference Schedule (May 13-14)",
   generator: 'dappcoder.org',
   icons: {
     icon: '/favicon.png'
@@ -20,7 +20,7 @@ export const metadata = {
     url: 'https://app.ethcluj.org',
     siteName: 'ETHCluj 2026',
     title: 'ETHCluj 2026',
-    description: 'Conference Schedule (June 26-28)',
+    description: 'Conference Schedule (May 13-14)',
     images: [
       {
         url: 'https://app.ethcluj.org/og-image.png',
@@ -34,7 +34,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'ETHCluj 2026',
-    description: 'Conference Schedule (June 26-28)',
+    description: 'Conference Schedule (May 13-14)',
     images: ['https://app.ethcluj.org/og-image.png'],
     creator: '@ethcluj',
     site: '@ethcluj',

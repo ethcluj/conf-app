@@ -1,12 +1,11 @@
 import { format, isBefore, isAfter, isSameDay } from "date-fns"
 import { Speaker as ApiSpeaker } from "@/hooks/use-speakers"
 
-// Create conference dates (3 days)
+// Create conference dates (2 days)
 // Set conference days to match the actual event dates (as in backend session data)
 export const conferenceDays = [
-  new Date(2026, 5, 26), // June 26, 2026
-  new Date(2026, 5, 27), // June 27, 2026
-  new Date(2026, 5, 28), // June 28, 2026
+  new Date(2026, 4, 13), // May 13, 2026
+  new Date(2026, 4, 14), // May 14, 2026
 ]
 
 export type SessionLevel = "For everyone" | "Beginner" | "Intermediate" | "Advanced"

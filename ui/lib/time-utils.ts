@@ -12,9 +12,9 @@ export function clearMockedTime(): void {
 }
 
 /**
- * Get the current time, either from URL parameter, localStorage, or system time
- * URL parameter format: DDMM-HHmm (e.g., 0906-1430 for June 9, 14:30)
- */
+  * Get the current time, either from URL parameter, localStorage, or system time
+  * URL parameter format: DDMM-HHmm (e.g., 1305-1430 for May 13, 14:30)
+  */
 export function getCurrentTime(): Date {
   if (typeof window !== 'undefined') {
     // Check for time parameter in URL
@@ -188,9 +188,8 @@ export function getCurrentConferenceDay(days?: Date[]): Date | null {
   // If days are provided, use them, otherwise import from data.ts
   // We can't import directly due to circular dependency
   const conferenceDays = days || [
-    new Date(2026, 5, 26), // June 26, 2026
-    new Date(2026, 5, 27), // June 27, 2026
-    new Date(2026, 5, 28)  // June 28, 2026
+    new Date(2026, 4, 13), // May 13, 2026
+    new Date(2026, 4, 14), // May 14, 2026
   ];
   
   // Find the conference day that matches today

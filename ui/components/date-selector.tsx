@@ -108,7 +108,7 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
       >
         {conferenceDays.map((day, index) => {
           // Hardcoded date labels
-          const dateLabel = index === 0 ? "Jun 26" : index === 1 ? "Jun 27" : "Jun 28"
+          const dateLabel = index === 0 ? "May 13" : "May 14"
           const isCurrentDay = currentDays.includes(index) // Use client-side state instead of direct function call
           const isSelected = day.toDateString() === selectedDate.toDateString()
 

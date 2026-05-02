@@ -353,23 +353,7 @@ export default function SessionDetails() {
             </div>
           </div>
 
-          {/* Q&A Button */}
-          <div className="mb-8">
-            {isQnAAvailable(session) ? (
-              <Link href={`/qna/${sessionId}`}>
-                <Button className="w-full bg-red-600 hover:bg-red-700 py-6 font-medium text-white">
-                  Join Q&A
-                </Button>
-              </Link>
-            ) : (
-              <Button 
-                className="w-full bg-gray-600 py-6 font-medium text-white cursor-not-allowed opacity-60" 
-                disabled
-              >
-                Q&A Available 5 Min Before Session
-              </Button>
-            )}
-          </div>
+
         </div>
       </div>
     </div>

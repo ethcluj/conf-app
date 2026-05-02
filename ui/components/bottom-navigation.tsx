@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Star, Info, Trophy } from "lucide-react"
+import { Home, Star, Info } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -18,11 +18,6 @@ export function BottomNavigation() {
       name: "Favourites",
       href: "/favourites",
       icon: Star,
-    },
-    {
-      name: "Leaderboard",
-      href: "/qna/leaderboard",
-      icon: Trophy,
     },
     {
       name: "Info",
@@ -43,7 +38,7 @@ export function BottomNavigation() {
                 key={tab.name}
                 href={tab.href}
                 className={cn(
-                  "flex flex-col items-center justify-center py-3 w-1/4 text-center",
+                  "flex flex-col items-center justify-center py-3 w-1/3 text-center",
                   isActive ? "text-red-600" : "text-gray-400",
                 )}
               >

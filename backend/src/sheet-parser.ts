@@ -7,7 +7,7 @@ import { Session, Speaker, SessionLevel, SessionTrack } from './sessions';
  * Each property corresponds to a specific column in the sheet.
  */
 export interface RawScheduleRow {
-  /** Time slot in format "DD Month HH:MM" (e.g., "26 June 13:00") */
+  /** Time slot in format "DD Month HH:MM" (e.g., "13 May 13:00") */
   timeSlot: string;
   /** Whether this session should be visible in the app */
   visible: boolean;
