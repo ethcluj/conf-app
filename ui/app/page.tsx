@@ -116,9 +116,16 @@ export default function ConferenceSchedule() {
   }
 
   // Generate tabs dynamically from unique stages in the selected day's sessions
+  const stageOrder = ['Main', 'Tech', 'Biz', 'Workshop'];
   const uniqueStages = Array.from(new Set(sessionsForSelectedDay.map(session => session.stage)))
     .filter(stage => stage !== 'NA') // Exclude break sessions
-    .sort() // Sort alphabetically for consistent ordering
+    .sort((a, b) => {
+      const indexA = stageOrder.indexOf(a);
+      const indexB = stageOrder.indexOf(b);
+      if (indexA === -1) return 1; // a not in order, put after
+      if (indexB === -1) return -1; // b not in order, put after
+      return indexA - indexB;
+    });
   const tabs = ["All", ...uniqueStages]
 
   // Separate break sessions (NA stage) from regular sessions
