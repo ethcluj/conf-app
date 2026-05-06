@@ -116,15 +116,19 @@ export default function ConferenceSchedule() {
   }
 
   // Generate tabs dynamically from unique stages in the selected day's sessions
-  const stageOrder = ['Main', 'Tech', 'Biz', 'Workshop'];
+  // Order stages by the earliest session ID for each stage
   const uniqueStages = Array.from(new Set(sessionsForSelectedDay.map(session => session.stage)))
     .filter(stage => stage !== 'NA') // Exclude break sessions
     .sort((a, b) => {
-      const indexA = stageOrder.indexOf(a);
-      const indexB = stageOrder.indexOf(b);
-      if (indexA === -1) return 1; // a not in order, put after
-      if (indexB === -1) return -1; // b not in order, put after
-      return indexA - indexB;
+      // Find the earliest session ID for each stage
+      const sessionsA = sessionsForSelectedDay.filter(session => session.stage === a);
+      const sessionsB = sessionsForSelectedDay.filter(session => session.stage === b);
+
+      // Get the minimum session ID for each stage (convert to number for proper sorting)
+      const minIdA = Math.min(...sessionsA.map(session => parseInt(session.id)));
+      const minIdB = Math.min(...sessionsB.map(session => parseInt(session.id)));
+
+      return minIdA - minIdB;
     });
   const tabs = ["All", ...uniqueStages]
 

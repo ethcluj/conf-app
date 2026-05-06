@@ -273,8 +273,8 @@ export const getFullStageName = (stageCode: string, sessionTitle?: string): stri
       return 'Main Stage (2nd floor)';
     case 'Tech':
       return 'Tech Stage (3rd floor)';
-    case 'Biz':
-      return 'Business Room (4th floor)';
+    case 'Business':
+      return 'Business Stage (4th floor)';
     case 'Workshop':
       return 'Workshop Room (3rd floor)';
     case 'NA':
