@@ -2,11 +2,25 @@
 # ETHCluj Conference QnA Application SSL Fix Script
 
 # Configuration
+# Try to auto-detect APP_DIR if not set
+if [ -z "${APP_DIR}" ]; then
+    # Get the directory containing this script
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # Go up two levels (from deploy/scripts/ to project root)
+    APP_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+fi
 APP_DIR="${APP_DIR:-/opt/conf-app}"
 PRIMARY_DOMAIN="app.ethcluj.org"
 LETSENCRYPT_DIR="/etc/letsencrypt/live/${PRIMARY_DOMAIN}"
 CERTS_DIR="${APP_DIR}/certs"
 COMPOSE_FILE="${APP_DIR}/deploy/docker-compose.prod.yml"
+
+echo "Script configuration:"
+echo "  APP_DIR: ${APP_DIR}"
+echo "  LETSENCRYPT_DIR: ${LETSENCRYPT_DIR}"
+echo "  CERTS_DIR: ${CERTS_DIR}"
+echo "  Running as user: $(whoami)"
+echo "  Current working directory: $(pwd)"
 
 # Print colored output
 GREEN='\033[0;32m'
@@ -30,11 +44,26 @@ error() {
     exit 1
 }
 
+# Check if running as root (needed to access /etc/letsencrypt/)
+if [ "$(id -u)" -ne 0 ]; then
+    error "This script must be run as root to access SSL certificates. Try: sudo $0"
+fi
+
 # Check for SSL certificates
 section "Checking for SSL certificates"
 
 CERT_PATH=""
 KEY_PATH=""
+
+echo "Checking for SSL certificates..."
+echo "  Looking for: ${LETSENCRYPT_DIR}/fullchain.pem"
+echo "  File exists: $([ -f "${LETSENCRYPT_DIR}/fullchain.pem" ] && echo "YES" || echo "NO")"
+echo "  Looking for: ${LETSENCRYPT_DIR}/privkey.pem"
+echo "  File exists: $([ -f "${LETSENCRYPT_DIR}/privkey.pem" ] && echo "YES" || echo "NO")"
+echo "  Looking for: ${CERTS_DIR}/fullchain.pem"
+echo "  File exists: $([ -f "${CERTS_DIR}/fullchain.pem" ] && echo "YES" || echo "NO")"
+echo "  Looking for: ${CERTS_DIR}/privkey.pem"
+echo "  File exists: $([ -f "${CERTS_DIR}/privkey.pem" ] && echo "YES" || echo "NO")"
 
 # Check Let's Encrypt directory first
 if [ -f "${LETSENCRYPT_DIR}/fullchain.pem" ] && [ -f "${LETSENCRYPT_DIR}/privkey.pem" ]; then
