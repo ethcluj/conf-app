@@ -68,14 +68,24 @@ jobs:
            nvm install 24
            nvm use 24
           
-          # Verify Node.js version
-          echo "Node.js version: $(node -v)"
-          echo "NPM version: $(npm -v)"
-          
-          cd /opt/conf-app
-          
-          # Pull latest code
-          git pull
+           # Verify Node.js version
+           echo "Node.js version: $(node -v)"
+           echo "NPM version: $(npm -v)"
+
+           # Ensure repository is cloned
+           if [ ! -d /opt/conf-app ]; then
+             echo "Cloning repository..."
+             git clone https://github.com/ethcluj/conf-app.git /opt/conf-app
+           elif [ ! -d /opt/conf-app/.git ]; then
+             echo "Directory exists but not a git repo, re-cloning..."
+             rm -rf /opt/conf-app
+             git clone https://github.com/ethcluj/conf-app.git /opt/conf-app
+           fi
+
+           cd /opt/conf-app
+
+           # Pull latest code
+           git pull
           
           # Create deploy directory structure if it doesn't exist
           mkdir -p deploy/nginx
@@ -111,24 +121,24 @@ jobs:
           
           # Create a database backup before deployment (just for safety)
           echo "Creating database backup..."
-          if docker-compose --env-file .env -f deploy/docker-compose.prod.yml ps | grep -q db; then
+          if docker compose --env-file .env -f deploy/docker-compose.prod.yml ps | grep -q db; then
             BACKUP_DIR="/opt/conf-app/backups"
             mkdir -p "$BACKUP_DIR"
             TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-            docker-compose --env-file .env -f deploy/docker-compose.prod.yml exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
+            docker compose --env-file .env -f deploy/docker-compose.prod.yml exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
             echo "Database backup created at ${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
           else
             echo "Database container not running, skipping backup"
           fi
-          
+
           # Simple rebuild and restart of all containers
           echo "Rebuilding and restarting all containers..."
-          docker-compose --env-file .env -f deploy/docker-compose.prod.yml up -d --build
-          
+          docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d --build
+
           # Run the SSL fix script to ensure HTTPS is working
           echo "Running SSL fix script..."
           sudo ./deploy/scripts/fix-ssl.sh
-          
+
           # Show status
           echo "Deployment complete. Showing container status:"
-          docker-compose --env-file .env -f deploy/docker-compose.prod.yml ps
+          docker compose --env-file .env -f deploy/docker-compose.prod.yml ps
