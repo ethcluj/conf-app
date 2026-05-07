@@ -170,7 +170,7 @@ export default function ConferenceSchedule() {
       <ScrollHideHeader>
         <div className="container mx-auto max-w-md px-4 pt-6 pb-3">
           <header className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">ETHCluj 2026 (alpha)</h1>
+            <h1 className="text-2xl font-bold">ETHCluj 2026</h1>
             <div className="w-1/2">
               <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
             </div>
