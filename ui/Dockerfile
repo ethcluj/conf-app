@@ -11,7 +11,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 COPY package.json .yarnrc.yml yarn.lock ./
 RUN corepack enable && corepack prepare yarn@4.10.3 --activate
-RUN yarn install --immutable
+RUN yarn install
 COPY . .
 RUN yarn build
 
