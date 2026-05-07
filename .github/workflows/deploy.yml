@@ -24,8 +24,7 @@ jobs:
     - name: Set up Node.js for UI
       uses: actions/setup-node@v4
       with:
-        node-version: '22.16.0'
-        yarn-version: '4.10.3'
+        node-version: '24'
         cache: 'yarn'
         cache-dependency-path: ui/yarn.lock
         
@@ -39,7 +38,7 @@ jobs:
     - name: Set up Node.js for Backend
       uses: actions/setup-node@v4
       with:
-        node-version: '22.16.0'
+        node-version: '24'
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
         
@@ -69,10 +68,10 @@ jobs:
           # Verify NVM is working
           echo "NVM version: $(nvm --version || echo 'NVM not found')"
           
-          # Install Node.js v22.16.0
-          echo "Installing Node.js v22.16.0..."
-          nvm install 22.16.0
-          nvm use 22.16.0
+           # Install Node.js v24
+           echo "Installing Node.js v24..."
+           nvm install 24
+           nvm use 24
           
           # Verify Node.js version
           echo "Node.js version: $(node -v)"
