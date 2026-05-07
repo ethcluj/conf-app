@@ -10,7 +10,8 @@ ARG NEXT_PUBLIC_API_URL=https://app.ethcluj.org/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN corepack enable
+RUN yarn install --immutable
 COPY . .
 RUN yarn build
 

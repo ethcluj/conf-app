@@ -29,11 +29,6 @@ error() {
     exit 1
 }
 
-# Create Nginx SSL directory
-section "Creating Nginx SSL directory"
-mkdir -p "${NGINX_SSL_DIR}"
-chmod 755 "${NGINX_SSL_DIR}"
-
 # Check for SSL certificates
 section "Checking for SSL certificates"
 
