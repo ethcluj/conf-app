@@ -30,8 +30,10 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Yarn install state
+# Yarn lockfiles and install state
+ui/yarn.lock
 ui/.yarn/install-state.gz
+backend/package-lock.json
 
 # Debug files and directories
 backend/src/scripts/debug/

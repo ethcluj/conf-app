@@ -62,9 +62,13 @@ else
 fi
 
 # Pull latest code
-section "Updating code"
-echo "Pulling latest code from repository..."
 git pull
+
+# Remove lockfiles to ensure fresh dependency resolution
+section "Cleaning lockfiles"
+echo "Removing yarn.lock and package-lock.json files for fresh installs..."
+rm -f ui/yarn.lock backend/package-lock.json
+echo "Lockfiles removed"
 
 # Copy .env file to deploy directory if it exists in root but not in deploy
 if [ -f "$APP_DIR/.env" ] && [ ! -f "$(dirname "$COMPOSE_FILE")/.env" ]; then
