@@ -72,64 +72,76 @@ jobs:
            echo "Node.js version: $(node -v)"
            echo "NPM version: $(npm -v)"
 
+           # Set app directory to user home
+           APP_DIR="$HOME/conf-app"
+
            # Ensure repository is cloned
-           if [ ! -d /opt/conf-app ]; then
+           if [ ! -d "$APP_DIR" ]; then
              echo "Cloning repository..."
-             git clone https://github.com/ethcluj/conf-app.git /opt/conf-app
-           elif [ ! -d /opt/conf-app/.git ]; then
+             git clone https://github.com/ethcluj/conf-app.git "$APP_DIR"
+           elif [ ! -d "$APP_DIR/.git" ]; then
              echo "Directory exists but not a git repo, re-cloning..."
-             rm -rf /opt/conf-app
-             git clone https://github.com/ethcluj/conf-app.git /opt/conf-app
+             rm -rf "$APP_DIR"
+             git clone https://github.com/ethcluj/conf-app.git "$APP_DIR"
            fi
 
-           cd /opt/conf-app
+           cd "$APP_DIR"
 
            # Pull latest code
            git pull
-          
-          # Create deploy directory structure if it doesn't exist
-          mkdir -p deploy/nginx
-          
-          # Ensure scripts are executable
-          chmod +x deploy/scripts/*.sh
-          
-          # Create or update .env file
-          if [ ! -f .env ]; then
-            echo "Creating .env file"
-            cp .env.example .env
-          fi
-          
-          # Update environment variables
-          echo "Updating environment variables..."
-          sed -i "s/^EMAIL_USER=.*/EMAIL_USER=${{ secrets.EMAIL_USER }}/g" .env
-          sed -i "s/^EMAIL_PASSWORD=.*/EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}/g" .env
-          sed -i "s/^EMAIL_FROM=.*/EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"/g" .env
-          sed -i "s/^POSTGRES_USER=.*/POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}/g" .env
-          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'postgres' }}/g" .env
-          sed -i "s/^POSTGRES_DB=.*/POSTGRES_DB=${{ secrets.POSTGRES_DB || 'value_db' }}/g" .env
-          sed -i "s/^POSTGRES_HOST=.*/POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}/g" .env
-          sed -i "s/^POSTGRES_PORT=.*/POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}/g" .env
-          sed -i "s/^GOOGLE_SHEET_ID=.*/GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}/g" .env
-          sed -i "s/^GOOGLE_SHEET_NAME=.*/GOOGLE_SHEET_NAME=${{ secrets.GOOGLE_SHEET_NAME }}/g" .env
-          sed -i "s/^GOOGLE_API_KEY=.*/GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}/g" .env
-          sed -i "s/^GOOGLE_SPEAKERS_SHEET_NAME=.*/GOOGLE_SPEAKERS_SHEET_NAME=${{ secrets.GOOGLE_SPEAKERS_SHEET_NAME }}/g" .env
-          sed -i "s/^GOOGLE_STAGE_MANAGERS_SHEET_NAME=.*/GOOGLE_STAGE_MANAGERS_SHEET_NAME=${{ secrets.GOOGLE_STAGE_MANAGERS_SHEET_NAME }}/g" .env
-          
-          # Copy .env file to deploy directory
-          echo "Copying .env file to deploy directory..."
-          cp .env deploy/.env
-          
-          # Create a database backup before deployment (just for safety)
-          echo "Creating database backup..."
-          if docker compose --env-file .env -f deploy/docker-compose.prod.yml ps | grep -q db; then
-            BACKUP_DIR="/opt/conf-app/backups"
-            mkdir -p "$BACKUP_DIR"
-            TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-            docker compose --env-file .env -f deploy/docker-compose.prod.yml exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
-            echo "Database backup created at ${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
-          else
-            echo "Database container not running, skipping backup"
-          fi
+
+           # Create deploy directory structure if it doesn't exist
+           mkdir -p deploy/nginx
+
+           # Ensure scripts are executable
+           chmod +x deploy/scripts/*.sh
+
+           # Create or update .env file
+           if [ ! -f .env ]; then
+             echo "Creating .env file"
+             cp .env.example .env
+           fi
+
+           # Update environment variables
+           echo "Updating environment variables..."
+           sed -i "s/^EMAIL_USER=.*/EMAIL_USER=${{ secrets.EMAIL_USER }}/g" .env
+           sed -i "s/^EMAIL_PASSWORD=.*/EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}/g" .env
+           sed -i "s/^EMAIL_FROM=.*/EMAIL_FROM=\"ETHCluj Conference <noreply@ethcluj.org>\"/g" .env
+           sed -i "s/^POSTGRES_USER=.*/POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}/g" .env
+           sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD || 'postgres' }}/g" .env
+           sed -i "s/^POSTGRES_DB=.*/POSTGRES_DB=${{ secrets.POSTGRES_DB || 'value_db' }}/g" .env
+           sed -i "s/^POSTGRES_HOST=.*/POSTGRES_HOST=${{ secrets.POSTGRES_HOST || 'db' }}/g" .env
+           sed -i "s/^POSTGRES_PORT=.*/POSTGRES_PORT=${{ secrets.POSTGRES_PORT || '5432' }}/g" .env
+           sed -i "s/^GOOGLE_SHEET_ID=.*/GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}/g" .env
+           sed -i "s/^GOOGLE_SHEET_NAME=.*/GOOGLE_SHEET_NAME=${{ secrets.GOOGLE_SHEET_NAME }}/g" .env
+           sed -i "s/^GOOGLE_API_KEY=.*/GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}/g" .env
+           sed -i "s/^GOOGLE_SPEAKERS_SHEET_NAME=.*/GOOGLE_SPEAKERS_SHEET_NAME=${{ secrets.GOOGLE_SPEAKERS_SHEET_NAME }}/g" .env
+           sed -i "s/^GOOGLE_STAGE_MANAGERS_SHEET_NAME=.*/GOOGLE_STAGE_MANAGERS_SHEET_NAME=${{ secrets.GOOGLE_STAGE_MANAGERS_SHEET_NAME }}/g" .env
+
+           # Copy .env file to deploy directory
+           echo "Copying .env file to deploy directory..."
+           cp .env deploy/.env
+
+           # Install Docker if not present
+           if ! command -v docker &> /dev/null; then
+             echo "Installing Docker..."
+             curl -fsSL https://get.docker.com -o get-docker.sh
+             sudo sh get-docker.sh
+             sudo usermod -aG docker $(whoami)
+             echo "Docker installed. You may need to log out and log back in for group changes to take effect."
+           fi
+
+           # Create a database backup before deployment (just for safety)
+           echo "Creating database backup..."
+           if docker compose --env-file .env -f deploy/docker-compose.prod.yml ps | grep -q db; then
+             BACKUP_DIR="$APP_DIR/backups"
+             mkdir -p "$BACKUP_DIR"
+             TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+             docker compose --env-file .env -f deploy/docker-compose.prod.yml exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
+             echo "Database backup created at ${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
+           else
+             echo "Database container not running, skipping backup"
+           fi
 
           # Simple rebuild and restart of all containers
           echo "Rebuilding and restarting all containers..."
@@ -137,7 +149,7 @@ jobs:
 
           # Run the SSL fix script to ensure HTTPS is working
           echo "Running SSL fix script..."
-          sudo ./deploy/scripts/fix-ssl.sh
+          ./deploy/scripts/fix-ssl.sh
 
           # Show status
           echo "Deployment complete. Showing container status:"
