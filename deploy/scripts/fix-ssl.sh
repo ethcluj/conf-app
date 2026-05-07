@@ -3,10 +3,8 @@
 
 # Configuration
 APP_DIR="${APP_DIR:-/opt/conf-app}"
-DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
 PRIMARY_DOMAIN="app.ethcluj.org"
-CERTS_DIR="${APP_DIR}/certs"
-NGINX_SSL_DIR="${APP_DIR}/deploy/nginx/ssl"
+LETSENCRYPT_DIR="/etc/letsencrypt/live/${PRIMARY_DOMAIN}"
 COMPOSE_FILE="${APP_DIR}/deploy/docker-compose.prod.yml"
 
 # Print colored output
@@ -36,40 +34,16 @@ section "Creating Nginx SSL directory"
 mkdir -p "${NGINX_SSL_DIR}"
 chmod 755 "${NGINX_SSL_DIR}"
 
-# Check for certificates in all possible locations
+# Check for SSL certificates
 section "Checking for SSL certificates"
 
-# Define a function to copy certificates if they exist
-copy_certs() {
-    local src_dir="$1"
-    echo "Found certificates in ${src_dir}"
-    echo "Copying to ${NGINX_SSL_DIR}..."
-    cp "${src_dir}/fullchain.pem" "${NGINX_SSL_DIR}/fullchain.pem"
-    cp "${src_dir}/privkey.pem" "${NGINX_SSL_DIR}/privkey.pem"
-    chmod 644 "${NGINX_SSL_DIR}/fullchain.pem" "${NGINX_SSL_DIR}/privkey.pem"
-    return 0
-}
-
-# Try to find certificates in different locations
-FOUND=false
-if [ -f "${CERTS_DIR}/fullchain.pem" ] && [ -f "${CERTS_DIR}/privkey.pem" ]; then
-    copy_certs "${CERTS_DIR}"
-    FOUND=true
-else
-    # Try each domain location
-    for domain in "${DOMAINS[@]}"; do
-        if [ -f "/etc/letsencrypt/live/${domain}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/${domain}/privkey.pem" ]; then
-            copy_certs "/etc/letsencrypt/live/${domain}"
-            FOUND=true
-            break
-        fi
-    done
-fi
-
-if [ "$FOUND" = false ]; then
-    warning "No SSL certificates found!"
+if [ ! -f "${LETSENCRYPT_DIR}/fullchain.pem" ] || [ ! -f "${LETSENCRYPT_DIR}/privkey.pem" ]; then
+    warning "SSL certificates not found at ${LETSENCRYPT_DIR}!"
+    warning "Please ensure Certbot has been run for ${PRIMARY_DOMAIN}"
     exit 1
 fi
+
+echo "SSL certificates found at ${LETSENCRYPT_DIR}"
 
 # Create HTTPS Nginx configuration
 section "Creating HTTPS Nginx configuration"
@@ -90,8 +64,8 @@ server {
     listen 443 ssl;
     server_name app.ethcluj.org;
 
-    ssl_certificate /etc/nginx/ssl/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/app.ethcluj.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.ethcluj.org/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
@@ -122,8 +96,8 @@ server {
     listen 443 ssl;
     server_name ethcluj.org www.ethcluj.org;
 
-    ssl_certificate /etc/nginx/ssl/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/app.ethcluj.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.ethcluj.org/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
