@@ -140,13 +140,13 @@ EOL
 # Restart Nginx
 section "Restarting Nginx"
 cd "${APP_DIR}"
-docker-compose -f "${COMPOSE_FILE}" restart nginx
+sudo docker compose -f "${COMPOSE_FILE}" restart nginx
 
 # Check Nginx status
 section "Checking Nginx status"
 sleep 3
-docker-compose -f "${COMPOSE_FILE}" ps nginx
-docker-compose -f "${COMPOSE_FILE}" logs --tail=20 nginx
+sudo docker compose -f "${COMPOSE_FILE}" ps nginx
+sudo docker compose -f "${COMPOSE_FILE}" logs --tail=20 nginx
 
 section "SSL fix complete!"
 echo "HTTPS should now be working at:"
