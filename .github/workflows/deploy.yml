@@ -156,9 +156,26 @@ jobs:
           echo "Rebuilding and restarting all containers..."
           docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d --build
 
-          # Run the SSL fix script to ensure HTTPS is working
-          echo "Running SSL fix script..."
-          ./deploy/scripts/fix-ssl.sh
+           # Install Certbot for SSL certificates
+           echo "Installing Certbot..."
+           sudo apt update
+           sudo apt install -y certbot
+
+           # Stop nginx temporarily to free ports for Certbot
+           echo "Stopping nginx for Certbot..."
+           docker compose --env-file .env -f deploy/docker-compose.prod.yml stop nginx
+
+           # Obtain SSL certificates
+           echo "Obtaining SSL certificates..."
+           sudo certbot certonly --standalone -d app.ethcluj.org --agree-tos --email ${{ secrets.CERTBOT_EMAIL || 'admin@ethcluj.org' }} --non-interactive
+
+           # Start nginx back up
+           echo "Starting nginx..."
+           docker compose --env-file .env -f deploy/docker-compose.prod.yml start nginx
+
+           # Run the SSL fix script to ensure HTTPS is working
+           echo "Running SSL fix script..."
+           ./deploy/scripts/fix-ssl.sh
 
           # Show status
           echo "Deployment complete. Showing container status:"
