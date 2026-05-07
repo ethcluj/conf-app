@@ -18,7 +18,7 @@ RUN corepack enable && corepack prepare yarn@4.10.3 --activate
 ENV YARN_NODE_LINKER=node-modules
 
 # Install dependencies
-COPY package.json yarn.lock ./
+COPY package.json ./
 RUN yarn install
 
 # Copy source code
