@@ -53,7 +53,6 @@ describe('Sessions Module', () => {
         day,
         9,
         0,
-        30,
         'Main',
         'Test Session',
         [{ name: 'Test Speaker', image: '/test.jpg' }],
@@ -94,19 +93,19 @@ describe('Sessions Module', () => {
       const day = new Date('2023-06-26');
       
       // For everyone
-      const session1 = createSession('1', day, 9, 0, 30, 'Main', 'Session 1', [], 'For everyone');
+      const session1 = createSession('1', day, 9, 0, 'Main', 'Session 1', [], 'For everyone');
       expect(session1.level).toBe('For everyone');
       
       // Beginner
-      const session2 = createSession('2', day, 9, 0, 30, 'Main', 'Session 2', [], 'Beginner');
+      const session2 = createSession('2', day, 9, 0, 'Main', 'Session 2', [], 'Beginner');
       expect(session2.level).toBe('Beginner');
       
       // Intermediate
-      const session3 = createSession('3', day, 9, 0, 30, 'Main', 'Session 3', [], 'Intermediate');
+      const session3 = createSession('3', day, 9, 0, 'Main', 'Session 3', [], 'Intermediate');
       expect(session3.level).toBe('Intermediate');
       
       // Advanced
-      const session4 = createSession('4', day, 9, 0, 30, 'Main', 'Session 4', [], 'Advanced');
+      const session4 = createSession('4', day, 9, 0, 'Main', 'Session 4', [], 'Advanced');
       expect(session4.level).toBe('Advanced');
     });
     
@@ -120,7 +119,6 @@ describe('Sessions Module', () => {
           day,
           9,
           0,
-          30,
           'Main',
           'Test Session',
           [],
@@ -141,7 +139,6 @@ describe('Sessions Module', () => {
         invalidDate, // Invalid day (NaN date)
         9,
         0,
-        30,
         'Main',
         'Test Session',
         [],
@@ -199,7 +196,6 @@ describe('Sessions Module', () => {
         day,
         9,
         0,
-        30,
         'Main',
         'Test Session',
         undefined as any,
@@ -219,7 +215,6 @@ describe('Sessions Module', () => {
         day,
         9,
         0,
-        30,
         '', // Empty stage
         '', // Empty title
         [],
