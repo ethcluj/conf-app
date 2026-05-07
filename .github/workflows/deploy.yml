@@ -156,18 +156,13 @@ jobs:
           echo "Rebuilding and restarting all containers..."
           docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d --build
 
-           # Install Certbot for SSL certificates
-           echo "Installing Certbot..."
-           sudo apt update
-           sudo apt install -y certbot
-
            # Stop nginx temporarily to free ports for Certbot
            echo "Stopping nginx for Certbot..."
            docker compose --env-file .env -f deploy/docker-compose.prod.yml stop nginx
 
-           # Obtain SSL certificates
+           # Obtain SSL certificates using Docker Certbot
            echo "Obtaining SSL certificates..."
-           sudo certbot certonly --standalone -d app.ethcluj.org --agree-tos --email ${{ secrets.CERTBOT_EMAIL || 'admin@ethcluj.org' }} --non-interactive
+           docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -p 80:80 certbot/certbot certonly --standalone -d app.ethcluj.org --agree-tos --email ${{ secrets.CERTBOT_EMAIL || 'admin@ethcluj.org' }} --non-interactive
 
            # Start nginx back up
            echo "Starting nginx..."
