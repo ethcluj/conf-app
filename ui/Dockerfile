@@ -29,4 +29,4 @@ COPY --from=builder /app/package.json ./package.json
 USER nextjs
 EXPOSE $PORT
 ENV HOSTNAME=0.0.0.0
-CMD ["sh", "-c", "corepack yarn start"]
+CMD ["npm", "start"]
