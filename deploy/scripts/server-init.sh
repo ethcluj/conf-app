@@ -3,7 +3,7 @@
 
 # Configuration
 DEPLOY_USER="deploy"
-APP_DIR="/opt/${DEPLOY_USER}/conf-app"
+APP_DIR="/opt/conf-app"
 REPO_URL="https://github.com/ethcluj/conf-app.git"
 SSH_PORT=22
 
@@ -107,7 +107,7 @@ if command -v docker-compose &> /dev/null; then
     warning "Docker Compose is already installed"
 else
     echo "Installing Docker Compose..."
-    curl -L "https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    curl -L "https://github.com/docker/compose/releases/download/v5.1.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
     ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 fi
@@ -115,7 +115,7 @@ fi
 # Create application directory
 section "Creating application directory"
 mkdir -p "${APP_DIR}"
-chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "/opt/${DEPLOY_USER}"
+chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "/opt"
 
 # Clone repository
 section "Cloning repository"
