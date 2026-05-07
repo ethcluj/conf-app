@@ -13,13 +13,16 @@ jobs:
   deploy:
     name: Deploy Application
     runs-on: ubuntu-latest
-    
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Set up Node.js for UI
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'yarn'
@@ -32,7 +35,7 @@ jobs:
         yarn build
     
     - name: Set up Node.js for Backend
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
