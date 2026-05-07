@@ -132,9 +132,7 @@ jobs:
              curl -fsSL https://get.docker.com -o get-docker.sh
              sudo sh get-docker.sh
              sudo usermod -aG docker $(whoami)
-             newgrp docker <<EOF
-             echo "Switched to docker group"
-EOF
+             echo "Docker installed. Group added. Commands may require logout/login for group to take effect."
            fi
 
            # Create a database backup before deployment (just for safety)
