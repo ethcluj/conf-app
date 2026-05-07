@@ -14,9 +14,6 @@ jobs:
     name: Deploy Application
     runs-on: ubuntu-latest
 
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -25,8 +22,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '24'
-        cache: 'yarn'
-        cache-dependency-path: ui/yarn.lock
         
     - name: Install dependencies and build UI
       run: |
