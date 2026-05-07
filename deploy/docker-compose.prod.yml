@@ -62,20 +62,21 @@ services:
       timeout: 5s
       retries: 5
 
-  nginx:
-    image: nginx:1.30-alpine
-    restart: always
-    container_name: nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - ../frontend:/usr/share/nginx/html:ro
-    depends_on:
-      - ui
-      - backend
+   nginx:
+     image: nginx:1.30-alpine
+     restart: always
+     container_name: nginx
+     ports:
+       - "80:80"
+       - "443:443"
+     volumes:
+       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+       - /etc/letsencrypt:/etc/letsencrypt:ro
+       - ./certs:/etc/ssl/certs:ro
+       - ../frontend:/usr/share/nginx/html:ro
+     depends_on:
+       - ui
+       - backend
 
 volumes:
   postgres_data:
