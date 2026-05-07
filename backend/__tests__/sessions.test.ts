@@ -56,11 +56,7 @@ describe('Sessions Module', () => {
         'Main',
         'Test Session',
         [{ name: 'Test Speaker', image: '/test.jpg' }],
-        'Beginner',
-        'Test description',
-        'Development',
-        ['Learning point 1', 'Learning point 2'],
-        'Workshop'
+        'Beginner'
       );
       
       // Check basic properties
