@@ -24,7 +24,7 @@ jobs:
     - name: Set up Node.js for UI
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22.16.0'
         cache: 'yarn'
         cache-dependency-path: ui/yarn.lock
         
@@ -37,7 +37,7 @@ jobs:
     - name: Set up Node.js for Backend
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22.16.0'
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
         
