@@ -5,11 +5,17 @@ WORKDIR /app
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
+# Install yarn
+RUN corepack enable && corepack prepare yarn@4.10.3 --activate
+
+# Configure yarn to use node_modules instead of PnP
+ENV YARN_NODE_LINKER=node-modules
+
 # Copy package files
-COPY package*.json ./
+COPY package*.json yarn.lock ./
 
 # Install dependencies
-RUN npm install
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY . .
