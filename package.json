@@ -1,4 +1,9 @@
 {
+  "private": true,
+  "workspaces": [
+    "ui",
+    "backend"
+  ],
   "dependencies": {
     "js-yaml": "^4.1.0",
     "qrcode.react": "^4.2.0"
