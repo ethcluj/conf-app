@@ -89,10 +89,13 @@ jobs:
              git clone https://github.com/ethcluj/conf-app.git "$APP_DIR"
            fi
 
-           cd "$APP_DIR"
+            cd "$APP_DIR"
 
-           # Pull latest code
-           git pull
+            # Reset to origin/main to ensure clean state
+            git reset --hard origin/main
+
+            # Pull latest code
+            git pull
 
            # Create deploy directory structure if it doesn't exist
            mkdir -p deploy/nginx
