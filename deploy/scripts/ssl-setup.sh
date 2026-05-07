@@ -3,9 +3,10 @@
 
 # Configuration
 APP_DIR="${APP_DIR:-/opt/conf-app}"
-DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
+#DOMAINS=("app.ethcluj.org" "ethcluj.org" "www.ethcluj.org")
+DOMAINS=("app.ethcluj.org")
 PRIMARY_DOMAIN="app.ethcluj.org"
-EMAIL="${SSL_EMAIL:-contact@ethcluj.org}"  # Use environment variable or default
+EMAIL="${SSL_EMAIL:-conference@ethcluj.org}"  # Use environment variable or default
 CERTS_DIR="${APP_DIR}/certs"
 
 # Print colored output

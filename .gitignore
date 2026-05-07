@@ -30,6 +30,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Yarn install state
+ui/.yarn/install-state.gz
+
 # Debug files and directories
 backend/src/scripts/debug/
 SESSIONS-template.txt

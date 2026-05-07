@@ -8,6 +8,15 @@ ARG NEXT_PUBLIC_API_URL=http://localhost:8080/api
 # Set environment variables for development
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++ curl rust cargo build-base vips-dev
+
+# Install yarn
+RUN corepack enable && corepack prepare yarn@4.10.3 --activate
+
+# Configure yarn to use node_modules instead of PnP
+ENV YARN_NODE_LINKER=node-modules
+
 # Install dependencies
 COPY package.json yarn.lock ./
 RUN yarn install
@@ -23,4 +32,4 @@ ENV HOSTNAME=0.0.0.0
 ENV NODE_ENV=development
 
 # Run in development mode with hot reloading
-CMD ["yarn", "dev"]
+CMD ["npm", "run", "dev"]
