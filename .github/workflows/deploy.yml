@@ -132,16 +132,18 @@ jobs:
              curl -fsSL https://get.docker.com -o get-docker.sh
              sudo sh get-docker.sh
              sudo usermod -aG docker $(whoami)
-             echo "Docker installed. You may need to log out and log back in for group changes to take effect."
+             newgrp docker <<EOF
+             echo "Switched to docker group"
+EOF
            fi
 
            # Create a database backup before deployment (just for safety)
            echo "Creating database backup..."
-           if sudo docker compose --env-file .env -f deploy/docker-compose.prod.yml ps | grep -q db; then
+           if docker compose --env-file .env -f deploy/docker-compose.prod.yml ps | grep -q db; then
              BACKUP_DIR="$APP_DIR/backups"
              mkdir -p "$BACKUP_DIR"
              TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-             sudo docker compose --env-file .env -f deploy/docker-compose.prod.yml exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
+             docker compose --env-file .env -f deploy/docker-compose.prod.yml exec -T db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-value_db}" > "${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
              echo "Database backup created at ${BACKUP_DIR}/postgres_backup_${TIMESTAMP}.sql"
            else
              echo "Database container not running, skipping backup"
@@ -149,7 +151,7 @@ jobs:
 
           # Simple rebuild and restart of all containers
           echo "Rebuilding and restarting all containers..."
-          sudo docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d --build
+          docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d --build
 
           # Run the SSL fix script to ensure HTTPS is working
           echo "Running SSL fix script..."
@@ -157,4 +159,4 @@ jobs:
 
           # Show status
           echo "Deployment complete. Showing container status:"
-          sudo docker compose --env-file .env -f deploy/docker-compose.prod.yml ps
+          docker compose --env-file .env -f deploy/docker-compose.prod.yml ps
