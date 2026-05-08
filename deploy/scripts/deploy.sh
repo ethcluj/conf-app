@@ -97,6 +97,29 @@ if [ -f "$HTPASSWD_FILE" ]; then
   echo "Set correct permissions on .htpasswd file"
 fi
 
+# Ensure .htpasswd is not a directory (remove if it is)
+if [ -d "$HTPASSWD_FILE" ]; then
+  echo "Removing .htpasswd directory and recreating as file..."
+  rm -rf "$HTPASSWD_FILE"
+  cat > "$HTPASSWD_FILE" << 'EOF'
+# Empty htpasswd file - authentication disabled
+# To enable authentication, run: cd deploy/scripts && bash create-htpasswd.sh <username> <password>
+# This will replace this file with actual credentials
+EOF
+fi
+
+# Update nginx config based on .htpasswd file status
+echo "Updating nginx configuration for authentication..."
+if [ -f "$HTPASSWD_FILE" ] && [ -s "$HTPASSWD_FILE" ] && ! grep -q "^# Empty htpasswd file" "$HTPASSWD_FILE"; then
+  echo "Enabling authentication in nginx config..."
+  # Add auth directives to nginx config
+  sed -i '/^[[:space:]]*location \/ {/a\
+        auth_basic "ETHCluj Conference QnA";\
+        auth_basic_user_file /etc/nginx/deploy/.htpasswd;' "$APP_DIR/deploy/nginx/default.conf"
+else
+  echo "Authentication disabled (no valid .htpasswd file)"
+fi
+
 # Stop existing containers
 section "Stopping existing containers"
 docker-compose --env-file "$APP_DIR/.env" -f "${COMPOSE_FILE}" down
