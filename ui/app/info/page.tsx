@@ -164,9 +164,14 @@ export default function InfoPage() {
       <Card className="p-4 mb-6">
         <div className="flex items-center gap-2 mb-2">
           <span role="img" aria-label="food" className="text-2xl">🍽️</span>
-          <h2 className="text-xl font-semibold">Food & Refreshments</h2>
+          <h2 className="text-xl font-semibold">Food & Refreshments (3rd floor)</h2>
         </div>
-        <p className="text-gray-300 mb-2"><span className="font-medium">Lunch:</span> Friday and Saturday at 1:00 PM. Have your food voucher with you.</p>
+        <p className="text-gray-300 mb-2"><span className="font-medium">Food Court:</span>
+         Lunch will be served every day between ~12:15 - 2:15 PM. <br/>We have packed a variety of food, with something for every taste and a chance to take a break, relax, and enjoy.</p>
+        <p className="text-gray-300"><span className="font-medium">Refreshments Bar:</span> Swing by anytime for a refreshing drink- water, juices, and soft beverages are here to keep you feeling good and energized throughout the day.</p>
+        <p className="text-gray-300"><span className="font-medium">Matcha Cart:</span> Take a moment to slow down with a carefully prepared matcha latte or tea - something a little different to help you reset and recharge - brought to you by our partners: matcha.xyz powered by 0x</p>
+        <p className="text-gray-300"><span className="font-medium">Chill & Lounge terrace:</span> Step outside, take a breath, and slow things down for a moment. This is your space to unwind, have a quiet chat, or simply enjoy the fresh air between sessions.</p>
+        
         <p className="text-gray-300">Coffee and refreshments will be available throughout the event.</p>
       </Card>
       
