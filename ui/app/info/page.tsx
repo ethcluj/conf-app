@@ -44,9 +44,8 @@ export default function InfoPage() {
         <div>
           <h3 className="text-base font-medium mb-2">Access Times</h3>
           <ul className="space-y-2 text-gray-300">
-            <li><span className="font-medium">Thursday:</span> 1:00 PM - 7:00 PM</li>
-            <li><span className="font-medium">Friday:</span> 10:00 AM - 7:00 PM</li>
-            <li><span className="font-medium">Saturday:</span> 10:00 AM - 6:00 PM</li>
+            <li><span className="font-medium">Wednesday, May 13:</span> 10:00 AM - 7:00 PM</li>
+            <li><span className="font-medium">Thursday, May 14:</span> 10:00 AM - 9:00 PM</li>
           </ul>
         </div>
       </Card>
@@ -84,10 +83,10 @@ export default function InfoPage() {
         </div>
         <p className="text-gray-300 mb-2">We have four stages:</p>
         <ul className="list-disc pl-5 space-y-1 text-gray-300">
-          <li>Main Stage (3rd floor)</li>
-          <li>Business Room (3rd floor)</li>
+          <li>Main Stage (2nd floor)</li>
           <li>Workshop Room (3rd floor)</li>
-          <li>Tech Stage (1st floor)</li>
+          <li>Tech Stage (3rd floor)</li>
+          <li>Business Stage (4th floor)</li>
         </ul>
       </Card>
       
@@ -142,9 +141,9 @@ export default function InfoPage() {
           <h2 className="text-xl font-semibold">Session Formats</h2>
         </div>
         <ul className="space-y-2 text-gray-300">
-          <li><span className="font-medium">Keynotes:</span> 20min + 5min Q&A</li>
-          <li><span className="font-medium">Panels:</span> 45min + 10min Q&A</li>
-          <li><span className="font-medium">Workshops:</span> 50min</li>
+          <li><span className="font-medium">Keynotes:</span> 30 minutes</li>
+          <li><span className="font-medium">Panels:</span> 60 minutes</li>
+          <li><span className="font-medium">Workshops:</span> 60 minutes</li>
         </ul>
       </Card>
       
@@ -156,9 +155,7 @@ export default function InfoPage() {
         </div>
         <p className="text-gray-300 mb-2">We encourage you to speak out and ask questions.</p>
         <ul className="list-disc pl-5 space-y-2 text-gray-300">
-          <li>Use the App to ask questions - scan the QR code at the stage or join Q&A from the session screen (scroll to the bottom).</li>
-          <li>We are recognizing attendees who ask the most engaging questions. Good questions receive points. Check the leaderboard tab.</li>
-          <li>Questions can be asked verbally too - raise your hand and someone will pass you the microphone.</li>
+          <li>Questions can be asked verbally - raise your hand and someone will pass you the microphone.</li>
         </ul>
       </Card>
       
