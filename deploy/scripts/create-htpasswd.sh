@@ -20,8 +20,8 @@ if ! command -v htpasswd &> /dev/null; then
     exit 1
 fi
 
-# Create .htpasswd file
-htpasswd -bc .htpasswd "$USERNAME" "$PASSWORD"
+# Create .htpasswd file in the deploy directory
+htpasswd -bc ../.htpasswd "$USERNAME" "$PASSWORD"
 
 echo "Created .htpasswd file with user: $USERNAME"
-echo "File location: $(pwd)/.htpasswd"
+echo "File location: $(cd .. && pwd)/.htpasswd"

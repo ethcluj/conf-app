@@ -50,8 +50,8 @@ To password protect the deployed application with HTTP basic authentication:
 
 1. Run the htpasswd creation script to generate credentials:
    ```bash
-   cd deploy
-   bash scripts/create-htpasswd.sh <username> <password>
+   cd deploy/scripts
+   bash create-htpasswd.sh <username> <password>
    ```
 
 2. The script will create a `.htpasswd` file in the `deploy/` directory
