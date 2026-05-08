@@ -69,12 +69,13 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - ./certs:/etc/ssl/certs:ro
-      - ../frontend:/usr/share/nginx/html:ro
-      - ./:/etc/nginx/deploy/:ro
+      volumes:
+        - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+        - /etc/letsencrypt:/etc/letsencrypt:ro
+        - ./certs:/etc/ssl/certs:ro
+        - ../frontend:/usr/share/nginx/html:ro
+        - ./:/etc/nginx/deploy/:ro
+        - ./.htpasswd:/etc/nginx/deploy/.htpasswd:rw
     depends_on:
       - ui
       - backend
