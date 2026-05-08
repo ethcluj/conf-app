@@ -44,6 +44,25 @@ To deploy the application:
 2. Navigate to the application directory: `cd /opt/conf-app`
 3. Run the deployment script: `bash deploy/scripts/deploy.sh`
 
+## Password Protection
+
+To password protect the deployed application with HTTP basic authentication:
+
+1. Run the htpasswd creation script to generate credentials:
+   ```bash
+   cd deploy
+   bash scripts/create-htpasswd.sh <username> <password>
+   ```
+
+2. The script will create a `.htpasswd` file in the `deploy/` directory
+
+3. Deploy the application as usual - the password protection will be automatically applied
+
+To remove password protection:
+- Delete the `.htpasswd` file
+- Remove the `auth_basic` and `auth_basic_user_file` directives from `deploy/nginx/default.conf`
+- Redeploy the application
+
 ## Environment Variables
 
 The application requires the following environment variables to be set in a `.env` file in the root directory:

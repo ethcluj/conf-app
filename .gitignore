@@ -12,6 +12,9 @@ build/
 .env.test
 .env.production
 
+# HTTP Basic Authentication
+.htpasswd
+
 # Sent emails tracker
 backend/src/scripts/sent-emails-tracker.json
 
