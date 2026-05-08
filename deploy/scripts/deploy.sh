@@ -167,6 +167,10 @@ server {
 
     # UI
     location / {
+        # Authentication is enabled if .htpasswd file contains credentials
+        # Empty or missing file disables authentication
+        auth_basic "ETHCluj Conference QnA";
+        auth_basic_user_file /etc/nginx/deploy/.htpasswd;
         proxy_pass http://ui:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -177,6 +181,10 @@ server {
 
     # Backend API
     location /api {
+        # Authentication is enabled if .htpasswd file contains credentials
+        # Empty or missing file disables authentication
+        auth_basic "ETHCluj Conference QnA";
+        auth_basic_user_file /etc/nginx/deploy/.htpasswd;
         rewrite ^/api(/.*)$ $1 break;
         proxy_pass http://backend:3001;
         proxy_http_version 1.1;
@@ -214,6 +222,10 @@ server {
 
     # UI
     location / {
+        # Authentication is enabled if .htpasswd file contains credentials
+        # Empty or missing file disables authentication
+        auth_basic "ETHCluj Conference QnA";
+        auth_basic_user_file /etc/nginx/deploy/.htpasswd;
         proxy_pass http://ui:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -224,6 +236,10 @@ server {
 
     # Backend API
     location /api {
+        # Authentication is enabled if .htpasswd file contains credentials
+        # Empty or missing file disables authentication
+        auth_basic "ETHCluj Conference QnA";
+        auth_basic_user_file /etc/nginx/deploy/.htpasswd;
         rewrite ^/api(/.*)$ $1 break;
         proxy_pass http://backend:3001;
         proxy_http_version 1.1;
