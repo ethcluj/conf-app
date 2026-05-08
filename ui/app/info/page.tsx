@@ -31,11 +31,12 @@ export default function InfoPage() {
         <div className="mb-4">
           <h3 className="text-base font-medium mb-2">Location</h3>
           <Link 
-            href="https://maps.app.goo.gl/hN6hF8dKm7snhmxj6" 
+            href="https://maps.app.goo.gl/J4QcgyZubF2dDZjWA" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="flex items-center text-gray-300 hover:text-white transition-colors">
-            <span className="mr-1">Str. Baritiu nr. 4, Hub UTCN, Cluj-Napoca</span>
+            <span className="mr-1">Cluj Arena, 
+              Aleea Stadionului 2, 400375 Cluj-Napoca</span>
             <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
