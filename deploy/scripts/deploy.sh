@@ -181,10 +181,6 @@ server {
 
     # Backend API
     location /api {
-        # Authentication is enabled if .htpasswd file contains credentials
-        # Empty or missing file disables authentication
-        auth_basic "ETHCluj Conference QnA";
-        auth_basic_user_file /etc/nginx/deploy/.htpasswd;
         rewrite ^/api(/.*)$ $1 break;
         proxy_pass http://backend:3001;
         proxy_http_version 1.1;
@@ -236,10 +232,6 @@ server {
 
     # Backend API
     location /api {
-        # Authentication is enabled if .htpasswd file contains credentials
-        # Empty or missing file disables authentication
-        auth_basic "ETHCluj Conference QnA";
-        auth_basic_user_file /etc/nginx/deploy/.htpasswd;
         rewrite ^/api(/.*)$ $1 break;
         proxy_pass http://backend:3001;
         proxy_http_version 1.1;

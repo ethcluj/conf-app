@@ -48,13 +48,13 @@ To deploy the application:
 
 ## Password Protection
 
-The application includes optional HTTP basic authentication that is controlled by the `deploy/.htpasswd` file:
+The application includes optional HTTP basic authentication for the UI only (not the API), controlled by the `deploy/.htpasswd` file:
 
 - **No password protection**: The application ships with an empty `.htpasswd` file, so authentication is disabled by default
-- **Enable password protection**: Run the script below to add credentials
+- **Enable password protection**: Run the script below to add credentials (only affects the UI)
 - **Disable password protection**: Replace the `.htpasswd` file content with an empty file or delete it
 
-### To enable password protection:
+### To enable password protection for the UI:
 
 1. Run the htpasswd creation script:
    ```bash
@@ -62,7 +62,7 @@ The application includes optional HTTP basic authentication that is controlled b
    bash create-htpasswd.sh <username> <password>
    ```
 
-2. Deploy the application - authentication will be automatically enabled
+2. Deploy the application - authentication will be automatically enabled for the UI only
 
 ### To disable password protection:
 
@@ -72,6 +72,8 @@ echo "# Authentication disabled" > deploy/.htpasswd
 ```
 
 Or delete it entirely (the deployment will recreate an empty one if needed)
+
+**Note**: The backend API (`/api/*` routes) remains unprotected for programmatic access.
 
 ## Environment Variables
 
