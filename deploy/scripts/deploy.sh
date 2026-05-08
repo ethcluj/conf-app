@@ -76,14 +76,25 @@ if [ -f "$APP_DIR/.env" ] && [ ! -f "$(dirname "$COMPOSE_FILE")/.env" ]; then
   cp "$APP_DIR/.env" "$(dirname "$COMPOSE_FILE")/.env"
 fi
 
-# Ensure .htpasswd file exists (create empty one if missing)
-if [ ! -f "$(dirname "$COMPOSE_FILE")/.htpasswd" ]; then
+# Ensure .htpasswd file exists (create empty one only if completely missing)
+HTPASSWD_FILE="$(dirname "$COMPOSE_FILE")/.htpasswd"
+if [ ! -f "$HTPASSWD_FILE" ]; then
   echo "Creating empty .htpasswd file for authentication..."
-  cat > "$(dirname "$COMPOSE_FILE")/.htpasswd" << 'EOF'
+  cat > "$HTPASSWD_FILE" << 'EOF'
 # Empty htpasswd file - authentication disabled
 # To enable authentication, run: cd deploy/scripts && bash create-htpasswd.sh <username> <password>
 # This will replace this file with actual credentials
 EOF
+elif [ ! -s "$HTPASSWD_FILE" ] || grep -q "^# Empty htpasswd file" "$HTPASSWD_FILE"; then
+  echo "Found empty or placeholder .htpasswd file, leaving as-is for optional authentication"
+else
+  echo "Found existing .htpasswd file with credentials, preserving authentication settings"
+fi
+
+# Ensure .htpasswd file has correct permissions for nginx
+if [ -f "$HTPASSWD_FILE" ]; then
+  chmod 644 "$HTPASSWD_FILE"
+  echo "Set correct permissions on .htpasswd file"
 fi
 
 # Stop existing containers
