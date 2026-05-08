@@ -76,6 +76,16 @@ if [ -f "$APP_DIR/.env" ] && [ ! -f "$(dirname "$COMPOSE_FILE")/.env" ]; then
   cp "$APP_DIR/.env" "$(dirname "$COMPOSE_FILE")/.env"
 fi
 
+# Ensure .htpasswd file exists (create empty one if missing)
+if [ ! -f "$(dirname "$COMPOSE_FILE")/.htpasswd" ]; then
+  echo "Creating empty .htpasswd file for authentication..."
+  cat > "$(dirname "$COMPOSE_FILE")/.htpasswd" << 'EOF'
+# Empty htpasswd file - authentication disabled
+# To enable authentication, run: cd deploy/scripts && bash create-htpasswd.sh <username> <password>
+# This will replace this file with actual credentials
+EOF
+fi
+
 # Stop existing containers
 section "Stopping existing containers"
 docker-compose --env-file "$APP_DIR/.env" -f "${COMPOSE_FILE}" down
