@@ -25,3 +25,4 @@ htpasswd -bc ../.htpasswd "$USERNAME" "$PASSWORD"
 
 echo "Created .htpasswd file with user: $USERNAME"
 echo "File location: $(cd .. && pwd)/.htpasswd"
+echo "To disable password protection, delete the .htpasswd file"

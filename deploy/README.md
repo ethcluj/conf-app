@@ -59,8 +59,7 @@ To password protect the deployed application with HTTP basic authentication:
 3. Deploy the application as usual - the password protection will be automatically applied
 
 To remove password protection:
-- Delete the `.htpasswd` file
-- Remove the `auth_basic` and `auth_basic_user_file` directives from `deploy/nginx/default.conf`
+- Delete the `deploy/.htpasswd` file (or don't create it)
 - Redeploy the application
 
 ## Environment Variables
