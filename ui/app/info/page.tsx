@@ -98,14 +98,12 @@ export default function InfoPage() {
           <h2 className="text-xl font-semibold">Tracks</h2>
         </div>
         <ul className="list-disc pl-5 space-y-1 text-gray-300">
-          <li>Builders Onboarding</li>
-          <li>Ethereum Roadmap</li>
-          <li>AI and Ethereum</li>
-          <li>Business on Ethereum</li>
-          <li>Usability and Adoption</li>
+          <li>Security on Ethereum</li>
           <li>Privacy</li>
-          <li>Decentralized Finance</li>
-          <li>Philosophy & Community</li>
+          <li>AI and Ethereum</li>
+          <li>DeFi</li>
+          <li>Usability and Adoption</li>
+          <li>Ethereum Culture and Roadmap</li>
         </ul>
       </Card>
       
@@ -167,12 +165,12 @@ export default function InfoPage() {
           <h2 className="text-xl font-semibold">Food & Refreshments (3rd floor)</h2>
         </div>
         <p className="text-gray-300 mb-2"><span className="font-medium">Food Court:</span>
-         Lunch will be served every day between ~12:15 - 2:15 PM. <br/>We have packed a variety of food, with something for every taste and a chance to take a break, relax, and enjoy.</p>
-        <p className="text-gray-300"><span className="font-medium">Refreshments Bar:</span> Swing by anytime for a refreshing drink- water, juices, and soft beverages are here to keep you feeling good and energized throughout the day.</p>
-        <p className="text-gray-300"><span className="font-medium">Matcha Cart:</span> Take a moment to slow down with a carefully prepared matcha latte or tea - something a little different to help you reset and recharge - brought to you by our partners: matcha.xyz powered by 0x</p>
-        <p className="text-gray-300"><span className="font-medium">Chill & Lounge terrace:</span> Step outside, take a breath, and slow things down for a moment. This is your space to unwind, have a quiet chat, or simply enjoy the fresh air between sessions.</p>
+         Lunch will be served every day between ~12:40 - 2:40 PM. <br/>We have packed a variety of food, with something for every taste and a chance to take a break, relax, and enjoy.</p>
+        <p className="text-gray-300 mb-2"><span className="font-medium">Refreshments Bar:</span> Swing by anytime for a refreshing drink- water, juices, and soft beverages are here to keep you feeling good and energized throughout the day.</p>
+        <p className="text-gray-300 mb-2"><span className="font-medium">Matcha Cart:</span> Take a moment to slow down with a carefully prepared matcha latte or tea - something a little different to help you reset and recharge - brought to you by our partners: matcha.xyz powered by 0x</p>
+        <p className="text-gray-300 mb-2"><span className="font-medium">Chill & Lounge terrace:</span> Step outside, take a breath, and slow things down for a moment. This is your space to unwind, have a quiet chat, or simply enjoy the fresh air between sessions.</p>
         
-        <p className="text-gray-300">Coffee and refreshments will be available throughout the event.</p>
+        <p className="text-gray-300 mb-2">Coffee and refreshments will be available throughout the event.</p>
       </Card>
       
       {/* External Links */}
@@ -187,7 +185,7 @@ export default function InfoPage() {
             <ExternalLink className="h-4 w-4 text-gray-400" />
           </Link>
           
-          <Link href="https://lu.ma/cop3p4nx" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
+          <Link href="https://luma.com/qbjx2xcz" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-2 bg-gray-800 rounded-md">
             <span className="text-gray-300">Closing Party</span>
             <ExternalLink className="h-4 w-4 text-gray-400" />
           </Link>
