@@ -10,7 +10,7 @@ export const conferenceDays = [
 
 export type SessionLevel = "For everyone" | "Beginner" | "Intermediate" | "Advanced"
 export type SessionLevelColor = "green" | "blue" | "orange" | "red"
-export type SessionTrack = "Ethereum Roadmap" | "DeFi" | "Security" | "Development" | "Research" | "Community"
+export type SessionTrack = "Security on Ethereum" | "Privacy" | "AI and Ethereum" | "DeFi" | "Usability and Adoption" | "Ethereum Culture and Roadmap"
 export type SessionDifficulty = 1 | 2 | 3 | 4 | 5
 
 export interface Speaker {
